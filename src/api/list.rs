@@ -1,21 +1,8 @@
 use crate::api::headers::mal_headers;
 use serde::{Deserialize, Serialize};
 
-// user list
-#[derive(Debug)]
-pub struct UserListEntry {
-    pub id: u32,
-    pub status: u8,
-    pub score: u8,
-    pub episodes_watched: u16,
-}
+use crate::helper::models::ListEntry;
 
-#[derive(Debug)]
-pub struct UserList {
-    pub entries: Vec<UserListEntry>,
-}
-
-//  mal response
 #[derive(Serialize, Deserialize, Debug)]
 struct MainPicture {
     medium: String,
@@ -32,14 +19,14 @@ struct ListNode {
 #[derive(Serialize, Deserialize, Debug)]
 struct ListStatus {
     status: String,
-    score: u8,
+    score: u16,
     num_episodes_watched: u16,
     is_rewatching: bool,
     updated_at: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct ListEntry {
+struct ListEntryAPI {
     node: ListNode,
     list_status: ListStatus,
 }
@@ -51,12 +38,12 @@ struct Paging {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct GetListResponse {
-    data: Vec<ListEntry>,
+struct ListAPI {
+    data: Vec<ListEntryAPI>,
     paging: Paging,
 }
 
-pub async fn get(user: &str) -> Result<UserList, u16> {
+pub async fn get(user: &str) -> Result<Vec<ListEntry>, u16> {
     let client = reqwest::Client::new();
     let user_name: &str = user;
     let query: &str = "fields=list_status&sort=list_updated_at&limit=1000&nsfw=1&offset=0000";
@@ -64,14 +51,14 @@ pub async fn get(user: &str) -> Result<UserList, u16> {
         "https://api.myanimelist.net/v2/users/{}/animelist?{}",
         user_name, query
     );
-    let mut store: Vec<GetListResponse> = vec![];
+    let mut store: Vec<ListAPI> = vec![];
     let mut res;
 
     loop {
         res = client.get(&url).headers(mal_headers()).send().await.unwrap();
         match res.status() {
             reqwest::StatusCode::OK => {
-                match res.json::<GetListResponse>().await {
+                match res.json::<ListAPI>().await {
                     Ok(response) => match &response.paging.next {
                         Some(next) => {
                             url = next.to_owned();
@@ -89,14 +76,14 @@ pub async fn get(user: &str) -> Result<UserList, u16> {
     Ok(store_to_user_list(store))
 }
 
-fn store_to_user_list(store: Vec<GetListResponse>) -> UserList {
-    let mut list = UserList { entries: vec![] };
+fn store_to_user_list(store: Vec<ListAPI>) -> Vec<ListEntry> {
+    let mut list =  vec![];
     for store_list in store.iter() {
         for store_entry in store_list.data.iter() {
-            list.entries.push(UserListEntry {
+            list.push(ListEntry {
                 id: store_entry.node.id,
                 status: status_to_u8(&store_entry.list_status.status),
-                score: store_entry.list_status.score,
+                score: store_entry.list_status.score * 100,
                 episodes_watched: store_entry.list_status.num_episodes_watched,
             });
         }

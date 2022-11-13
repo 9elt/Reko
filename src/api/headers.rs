@@ -1,8 +1,9 @@
+use dotenvy::dotenv;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, USER_AGENT};
-//use serde_json;
 use std::env;
 
 pub fn mal_headers() -> HeaderMap {
+    dotenv().ok();
     let mut headers: HeaderMap = HeaderMap::new();
     headers.insert(USER_AGENT, HeaderValue::from_static("reqwest"));
     headers.insert(

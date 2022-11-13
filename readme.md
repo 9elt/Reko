@@ -2,7 +2,7 @@
 
 ### development
 - [x] my anime list APIs
-- [ ] postgres setup
+- [X] postgres setup
 - [ ] migration from old db
 - [ ] basic crud
 - [ ] model generation

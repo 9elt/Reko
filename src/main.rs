@@ -1,16 +1,16 @@
 mod api;
+mod db;
+mod helper;
 
 #[tokio::main]
 async fn main() {
-    let anime = api::anime::get(50346).await;
-    match anime {
-        Ok(anime) => println!("{:?}", anime),
-        Err(error) => println!("error! code: {}", error),
-    }
 
-    // let list = api::list::get("_nelt").await;
-    // match list {
-    //     Ok(list) => println!("{:?}", list.entries),
-    //     Err(error) => println!("error! code: {}", error),
-    // }
+    let anime = helper::anime::get(vec![33337]).await;
+    println!("{:?}", anime);
+
+    let list = helper::list::get(format!("gigi_vernice"), false).await;
+    match list {
+        Ok(l) => println!("{:?}", l),
+        Err(e) => println!("{e}") 
+    }
 }
