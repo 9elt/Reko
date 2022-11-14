@@ -18,7 +18,7 @@ diesel::table! {
 diesel::table! {
     lists (user_hash) {
         user_hash -> Varchar,
-        list -> Nullable<Jsonb>,
+        list -> Jsonb,
         updated_at -> Timestamp,
     }
 }

@@ -59,7 +59,7 @@ pub struct ListEntry {
 
 pub struct List {
     pub user_hash: String,
-    pub list: Option<Vec<ListEntry>>,
+    pub list: Vec<ListEntry>,
     pub updated_at: chrono::NaiveDateTime,
 }
 
@@ -73,9 +73,6 @@ impl List {
     }
 }
 
-fn to_list(value: Option<serde_json::Value>) -> Option<Vec<ListEntry>> {
-    match value {
-        Some(value) => Some(<Vec<ListEntry> as Deserialize>::deserialize(value).unwrap()),
-        None => None,
-    }
+fn to_list(value: serde_json::Value) -> Vec<ListEntry> {
+    <Vec<ListEntry> as Deserialize>::deserialize(value).unwrap()
 }

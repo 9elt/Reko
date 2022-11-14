@@ -33,10 +33,7 @@ pub async fn get(s_user: String, reload: bool) -> Result<Vec<ListEntry>, u16> {
             let dur = chrono::Utc::now().naive_local() - l.updated_at;
 
             let res = List::from_db(l);
-            complete_response = match res.list {
-                Some(l) => l,
-                None => return Err(1001),
-            };
+            complete_response = res.list;
 
             dur.num_days() > 3 || reload
         }
@@ -65,12 +62,12 @@ pub async fn get(s_user: String, reload: bool) -> Result<Vec<ListEntry>, u16> {
         match missing {
             true => insert(ListsDB {
                 user_hash: s_user,
-                list: Some(list_to_json(&_tmp)),
+                list: list_to_json(&_tmp),
                 updated_at: chrono::Utc::now().naive_local(),
             }),
             false => update(ListsDB {
                 user_hash: s_user,
-                list: Some(list_to_json(&_tmp)),
+                list: list_to_json(&_tmp),
                 updated_at: chrono::Utc::now().naive_local(),
             }),
         }

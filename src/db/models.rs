@@ -3,7 +3,7 @@ use super::schema::anime;
 use super::schema::lists;
 
 #[derive(Queryable, Insertable, Debug, Clone)]
-#[table_name = "anime"]
+#[diesel(table_name = anime)]
 pub struct AnimeDB {
     pub id: i32,
     pub title: String,
@@ -18,9 +18,9 @@ pub struct AnimeDB {
 }
 
 #[derive(Queryable, Insertable, Debug, Clone, AsChangeset)]
-#[table_name = "lists"]
+#[diesel(table_name = lists)]
 pub struct ListsDB {
     pub user_hash: String,
-    pub list: Option<serde_json::Value>,
+    pub list: serde_json::Value,
     pub updated_at: chrono::NaiveDateTime,
 }
