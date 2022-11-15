@@ -9,6 +9,8 @@ use db::models::ListsDB;
 
 use diesel::prelude::*;
 
+use super::cast::to_json_type;
+
 pub async fn get(s_user: String, reload: bool) -> Result<Vec<ListEntry>, u16> {
     use crate::db::schema::lists::dsl::*;
     let connection = &mut db::connection::establish();
@@ -62,12 +64,12 @@ pub async fn get(s_user: String, reload: bool) -> Result<Vec<ListEntry>, u16> {
         match missing {
             true => insert(ListsDB {
                 user_hash: s_user,
-                list: list_to_json(&_tmp),
+                list: to_json_type::<Vec<ListEntry>>(&_tmp),
                 updated_at: chrono::Utc::now().naive_local(),
             }),
             false => update(ListsDB {
                 user_hash: s_user,
-                list: list_to_json(&_tmp),
+                list: to_json_type::<Vec<ListEntry>>(&_tmp),
                 updated_at: chrono::Utc::now().naive_local(),
             }),
         }
@@ -113,9 +115,4 @@ fn delete(user_h: &String) -> u16 {
 
     println!("{:?} user  deleted", deleted);
     403
-}
-
-fn list_to_json(list: &Vec<ListEntry>) -> serde_json::Value {
-    let j = serde_json::to_string(&list).unwrap();
-    serde_json::from_str(&j).unwrap()
 }

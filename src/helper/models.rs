@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use crate::db::models::AnimeDB;
 use crate::db::models::ListsDB;
 
+use super::cast::from_json;
+
 //  anime details
 #[derive(Debug, Deserialize, Serialize)]
 pub struct RelatedAnime {
@@ -36,15 +38,11 @@ impl AnimeDetails {
             genres: db.genres,
             num_episodes: db.num_episodes,
             rating: db.rating,
-            related: into_related(db.related),
+            related: match db.related {
+                Some(r) => Some(from_json::<Vec<RelatedAnime>>(r)),
+                None => None
+            },
         }
-    }
-}
-
-fn into_related(value: Option<serde_json::Value>) -> Option<Vec<RelatedAnime>> {
-    match value {
-        Some(value) => Some(<Vec<RelatedAnime> as Deserialize>::deserialize(value).unwrap()),
-        None => None,
     }
 }
 
@@ -67,12 +65,8 @@ impl List {
     pub fn from_db(db: ListsDB) -> Self {
         List {
             user_hash: db.user_hash,
-            list: to_list(db.list),
+            list: from_json::<Vec<ListEntry>>(db.list),
             updated_at: db.updated_at,
         }
     }
-}
-
-fn to_list(value: serde_json::Value) -> Vec<ListEntry> {
-    <Vec<ListEntry> as Deserialize>::deserialize(value).unwrap()
 }
