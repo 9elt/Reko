@@ -11,7 +11,7 @@ struct MainPicture {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ListNode {
-    id: u32,
+    id: i32,
     title: String,
     main_picture: Option<MainPicture>,
 }

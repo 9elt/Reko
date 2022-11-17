@@ -6,13 +6,13 @@ use crate::db::models::ListsDB;
 use super::cast::from_json;
 
 //  anime details
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RelatedAnime {
     pub id: u32,
     pub relation: i16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AnimeDetails {
     pub id: i32,
     pub title: String,
@@ -40,16 +40,16 @@ impl AnimeDetails {
             rating: db.rating,
             related: match db.related {
                 Some(r) => Some(from_json::<Vec<RelatedAnime>>(r)),
-                None => None
+                None => None,
             },
         }
     }
 }
 
 //  user list
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ListEntry {
-    pub id: u32,
+    pub id: i32,
     pub status: u8,
     pub score: u16,
     pub episodes_watched: u16,
@@ -69,4 +69,10 @@ impl List {
             updated_at: db.updated_at,
         }
     }
+}
+
+#[derive(Debug)]
+pub struct FullList {
+    pub entry: ListEntry,
+    pub details: AnimeDetails,
 }

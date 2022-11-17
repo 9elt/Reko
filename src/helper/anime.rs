@@ -5,6 +5,9 @@ use crate::helper::models::AnimeDetails;
 use db::models::AnimeDB;
 
 use diesel::prelude::*;
+use std::{thread, time::Duration};
+use std::collections::HashSet;
+use std::iter::FromIterator;
 
 /** returns a vector of animes details. If some are **missing from
 the database**, the missing ones will be **requested to the
@@ -21,7 +24,7 @@ pub async fn get(ids: Vec<i32>) -> Vec<AnimeDetails> {
         query = query.or_filter(id.eq(ids[i]));
     }
 
-    let mut db_result = query
+    let mut db_result: Vec<AnimeDB> = query
         .load::<AnimeDB>(connection)
         .expect("failed to load anime details");
 
@@ -31,28 +34,27 @@ pub async fn get(ids: Vec<i32>) -> Vec<AnimeDetails> {
     if r_missing {
         let r_empty: bool = db_result.len() == 0;
 
-        let mut missing: Vec<i32> = vec![];
+        let missing: Vec<i32>;
 
         if r_empty {
-            missing = ids;
+            missing = ids.to_owned();
         } else {
-            let mut align: usize = 0;
-            for i in 0..ids.len() {
-                if (i - align) < db_result.len() {
-                    if ids[i] != db_result[i - align].id {
-                        align = align + 1;
-                        missing.push(ids[i].to_owned());
-                    };
-                } else {
-                    missing.push(ids[i].to_owned());
-                };
+            let mut db_ids: Vec<i32> = vec![];
+            for db_entr in db_result.iter() {
+                db_ids.push(db_entr.id);
             }
+            let ids_hash_set: HashSet<i32> = HashSet::from_iter(ids);
+            let db_hash_set: HashSet<i32> = HashSet::from_iter(db_ids);
+            let missing_hash_set: HashSet<_> = ids_hash_set.difference(&db_hash_set).cloned().collect();
+            missing = Vec::from_iter(missing_hash_set);
         };
 
         let mut to_insert: Vec<AnimeDB> = vec![];
 
+        let mut dbg_count: usize = 0;
         for m in missing.iter() {
-            println!("requested new anime");
+            dbg_count += 1;
+            println!("requested new anime N {}", dbg_count);
             match api::anime::get(m).await {
                 Ok(a) => {
                     to_insert.push(a.clone());
@@ -63,6 +65,7 @@ pub async fn get(ids: Vec<i32>) -> Vec<AnimeDetails> {
                     continue;
                 }
             };
+            thread::sleep(Duration::from_millis(300));
         }
 
         if to_insert.len() > 0 {

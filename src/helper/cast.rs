@@ -7,7 +7,7 @@ pub fn to_json_type<'a, T: Serialize + Deserialize<'a>>(v: &T) -> serde_json::Va
     serde_json::from_str(&s).unwrap()
 }
 
-pub fn to_json<T: Serialize>(v: &T) -> String {
+pub fn _to_json<T: Serialize>(v: &T) -> String {
     serde_json::to_string(&v).unwrap()
 }
 

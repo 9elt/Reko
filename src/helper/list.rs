@@ -1,21 +1,22 @@
+use diesel::prelude::*;
 use std::vec;
 
 use crate::api;
-
 use crate::db;
-use crate::helper::models::List;
-use crate::helper::models::ListEntry;
+//use crate::helper::models::AnimeDetails;
 use db::models::ListsDB;
 
-use diesel::prelude::*;
+use super::models::FullList;
+use super::models::List;
+use super::models::ListEntry;
 
 use super::cast::to_json_type;
 
-pub async fn get(s_user: String, reload: bool) -> Result<Vec<ListEntry>, u16> {
+pub async fn get_detailed(s_user: String, reload: bool) -> Result<Vec<FullList>, u16> {
     use crate::db::schema::lists::dsl::*;
     let connection = &mut db::connection::establish();
 
-    let mut complete_response: Vec<ListEntry> = vec![];
+    let mut user_list: Vec<ListEntry> = vec![];
 
     let db_check = match lists
         .filter(user_hash.eq(&s_user))
@@ -35,7 +36,7 @@ pub async fn get(s_user: String, reload: bool) -> Result<Vec<ListEntry>, u16> {
             let dur = chrono::Utc::now().naive_local() - l.updated_at;
 
             let res = List::from_db(l);
-            complete_response = res.list;
+            user_list = res.list;
 
             dur.num_days() > 3 || reload
         }
@@ -54,7 +55,7 @@ pub async fn get(s_user: String, reload: bool) -> Result<Vec<ListEntry>, u16> {
             }
             Err(e) => {
                 if e == 403 && missing == false {
-                    return Err(delete(&s_user));
+                    return Err(db::list::delete(&s_user));
                 } else {
                     return Err(e);
                 }
@@ -62,57 +63,41 @@ pub async fn get(s_user: String, reload: bool) -> Result<Vec<ListEntry>, u16> {
         }
 
         match missing {
-            true => insert(ListsDB {
+            true => db::list::insert(ListsDB {
                 user_hash: s_user,
                 list: to_json_type::<Vec<ListEntry>>(&_tmp),
                 updated_at: chrono::Utc::now().naive_local(),
             }),
-            false => update(ListsDB {
+            false => db::list::update(ListsDB {
                 user_hash: s_user,
                 list: to_json_type::<Vec<ListEntry>>(&_tmp),
                 updated_at: chrono::Utc::now().naive_local(),
             }),
         }
 
-        complete_response = _tmp;
+        user_list = _tmp;
     };
 
-    Ok(complete_response)
-}
+    let mut anime_ids = vec![];
+    for e in user_list.iter() {
+        anime_ids.push(e.id);
+    }
 
-fn insert(new_list: ListsDB) {
-    use crate::db::schema::lists::dsl::*;
-    let connection = &mut db::connection::establish();
+    let anime_info = super::anime::get(anime_ids).await;
 
-    let inserted = diesel::insert_into(lists)
-        .values(&new_list)
-        .execute(connection);
+    //ugly... way too ugly
+    let mut full_list: Vec<FullList> = vec![];
+    for i in 0..user_list.len() {
+        let id = user_list[i].id;
+        for j in 0..anime_info.len() {
+            if anime_info[j].id == id {
+                full_list.push(FullList {
+                    entry: user_list[i].clone(),
+                    details: anime_info[j].clone(),
+                })
+            };
+        }
+    }
 
-    println!("inserted {:?} new list", inserted);
-}
-
-fn update(new_list: ListsDB) {
-    use crate::db::schema::lists::dsl::*;
-    let connection = &mut db::connection::establish();
-
-    let user_h = new_list.user_hash.to_owned();
-
-    let updated = diesel::update(lists.find(user_h))
-        .set(new_list)
-        .get_result::<ListsDB>(connection)
-        .unwrap();
-
-    println!("user list update {:?}", updated);
-}
-
-fn delete(user_h: &String) -> u16 {
-    use crate::db::schema::lists::dsl::*;
-    let connection = &mut db::connection::establish();
-
-    let deleted = diesel::delete(lists.find(user_h))
-        .execute(connection)
-        .unwrap();
-
-    println!("{:?} user  deleted", deleted);
-    403
+    Ok(full_list)
 }
