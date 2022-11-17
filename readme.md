@@ -2,8 +2,10 @@
 
 ### development
 - [x] my anime list APIs
-- [X] postgres setup
-- [ ] migration from old db
-- [ ] basic crud
+- [X] diesel postgres setup
+- [X] helpers for lists and anime
+- [ ] setup axum
+- [ ] db connection pool
+- [ ] setup cookie based session
 - [ ] model generation
 - [ ] recommendations
