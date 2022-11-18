@@ -16,7 +16,7 @@
 **structs** modules contian the structs used in the module, while **cast** modules contain
 the type conversion functions.
 
-**fetch** module handles all the data transfer and restructuring
+the **fetch** module handles all the data transfer and restructuring
 
 ```
 src
