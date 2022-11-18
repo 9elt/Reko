@@ -1,4 +1,4 @@
-# anirekome api
+# anirekome api server
 
 ### development
 - [x] connect my anime list apis
@@ -12,7 +12,7 @@
 
 ### planned project structure
 
-Generally, **fun.rs** files contain functions that will be called outside the module,
+Generally, **fun.rs** files contain functions that will be called outside of the module,
 **structs** modules contian the structs used in the module, while **cast** modules contain
 the type conversion functions and methods.
 
