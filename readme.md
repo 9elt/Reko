@@ -11,6 +11,11 @@
 - [ ] recommendations
 
 ### planned project structure
+
+**fun.rs** files contain functions that will be called outside the module,
+**structs** dir contians the structs used in the module, while **cast** dir contains
+type conversion functions.
+
 ```
 src
 │
