@@ -1,50 +1,28 @@
-use serde::{Deserialize, Serialize};
 use chrono::NaiveDate;
 
-use crate::db::models::AnimeDB;
+use super::generic::{to_serde_value, from_serde_value};
+use crate::fetch::structs::anime::{
+    AnimeAPI, AnimeDB, AnimeDetails, Genre, RawRelatedAnime, RelatedAnime,
+};
 
-use crate::helper::models::RelatedAnime;
-use crate::helper::cast::to_json_type;
-
-//  anime details response
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Genre {
-    id: i16,
-    name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct MainPicture {
-    medium: String,
-    large: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RelatedAnimeNode {
-    id: Option<u32>,
-    title: Option<String>,
-    main_picture: Option<MainPicture>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RawRelatedAnime {
-    node: RelatedAnimeNode,
-    relation_type: Option<String>,
-    relation_type_formatted: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct AnimeAPI {
-    id: i32,
-    title: String,
-    main_picture: Option<MainPicture>,
-    start_date: Option<String>,
-    mean: Option<f32>,
-    status: Option<String>,
-    genres: Option<Vec<Genre>>,
-    num_episodes: Option<i16>,
-    rating: Option<String>,
-    related_anime: Option<Vec<RawRelatedAnime>>,
+impl AnimeDetails {
+    pub fn from_db(db: AnimeDB) -> Self {
+        AnimeDetails {
+            id: db.id,
+            title: db.title,
+            picture: db.picture,
+            airing_date: db.airing_date,
+            mean: db.mean,
+            airing_status: db.airing_status,
+            genres: db.genres,
+            num_episodes: db.num_episodes,
+            rating: db.rating,
+            related: match db.related {
+                Some(r) => Some(from_serde_value::<Vec<RelatedAnime>>(r)),
+                None => None,
+            },
+        }
+    }
 }
 
 impl AnimeAPI {
@@ -98,7 +76,7 @@ fn parse_raw_related(api_relate: Option<Vec<RawRelatedAnime>>) -> Option<serde_j
                     },
                 });
             }
-            Some(to_json_type(&related))
+            Some(to_serde_value(&related))
         }
         None => None,
     }

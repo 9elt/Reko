@@ -1,12 +1,10 @@
-mod api;
-mod db;
-mod helper;
+mod fetch;
 
 #[tokio::main]
 async fn main() {
-    let list = helper::list::get_detailed(format!("_nelt"), false).await;
+    let list = fetch::fun::get_detailed_list(format!("acha_uwu"), false).await;
     match list {
-        Ok(_) => println!("OK!!!"),
+        Ok(l) => println!("{:?} OK!!!", l[0]),
         Err(e) => println!("{e}"),
     }
 }

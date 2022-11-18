@@ -1,20 +1,20 @@
 # anirekome api
 
 ### development
-- [x] my anime list APIs
-- [X] diesel postgres setup
+- [x] connect my anime list apis
+- [X] setup diesel postgres
 - [X] helpers for lists and anime
+- [ ] setup db connection pool
 - [ ] setup axum
-- [ ] db connection pool
 - [ ] setup cookie based session
 - [ ] model generation
 - [ ] recommendations
 
 ### planned project structure
 
-**fun.rs** files contain functions that will be called outside the module,
+Generally, **fun.rs** files contain functions that will be called outside the module,
 **structs** modules contian the structs used in the module, while **cast** modules contain
-the type conversion functions.
+the type conversion functions and methods.
 
 * The **fetch** module handles all the data transfer and restructuring.
 
@@ -30,6 +30,7 @@ src
 │   │       list.rs
 │   │       mod.rs
 │   └─> cast
+│   │       generic.rs
 │   │       anime.rs
 │   │       list.rs
 │   │       mod.rs
