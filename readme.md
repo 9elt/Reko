@@ -17,6 +17,7 @@ src
 │   main.rs
 └─> fetch
 │   │   fun.rs
+│   │   mod.rs
 │   └─> structs
 │   │       anime.rs
 │   │       list.rs
