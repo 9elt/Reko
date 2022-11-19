@@ -1,6 +1,6 @@
 use axum::{Router, routing::get};
 
-use super::user::get_user_recommendations;
+use super::controller::get_user_recommendations;
 
 pub fn router() -> axum::Router {
     Router::new()
