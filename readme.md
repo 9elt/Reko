@@ -16,11 +16,16 @@ Generally, **fun.rs** files contain functions that will be called outside of the
 **structs** modules contian the structs used in the module, while **cast** modules contain
 the type conversion functions and methods.
 
+* The **api** module handles the requests to the server.
 * The **fetch** module handles all the data transfering and restructuring.
 
 ```
 src
 │   main.rs
+└─> api
+│       controller.rs
+│       router.rs
+│       mod.rs
 └─> fetch
 │   │   fun.rs
 │   │   mod.rs
@@ -43,8 +48,6 @@ src
 │           schema.rs
 │           mod.rs
 └─> rec
-│   └─> ...
-└─> api
 │   └─> ...
 └─> utils
     └─> ...
