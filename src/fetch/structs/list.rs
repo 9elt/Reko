@@ -20,7 +20,7 @@ pub struct List {
     pub updated_at: chrono::NaiveDateTime,
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DetailedListEntry {
     pub entry: ListEntry,
     pub details: AnimeDetails,

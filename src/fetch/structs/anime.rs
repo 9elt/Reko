@@ -11,7 +11,7 @@ pub struct RelatedAnime {
     pub relation: i16,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AnimeDetails {
     pub id: i32,
     pub title: String,
