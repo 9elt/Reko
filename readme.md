@@ -16,11 +16,10 @@ Generally, **fun.rs** files contain functions that will be called outside of the
 **structs** modules contian the structs used in the module, while **cast** modules contain
 the type conversion functions and methods.
 
-* The **fetch** module handles all the data transfer and restructuring.
+* The **fetch** module handles all the data transfering and restructuring.
 
 ```
 src
-│
 │   main.rs
 └─> fetch
 │   │   fun.rs
