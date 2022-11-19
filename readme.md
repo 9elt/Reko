@@ -4,8 +4,8 @@
 - [x] connect my anime list apis
 - [X] setup diesel postgres
 - [X] helpers for lists and anime
+- [X] setup axum
 - [ ] setup db connection pool
-- [ ] setup axum
 - [ ] setup cookie based session
 - [ ] model generation
 - [ ] recommendations
