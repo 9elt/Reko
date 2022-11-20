@@ -5,9 +5,10 @@
 - [X] setup diesel postgres
 - [X] helpers for lists and anime
 - [X] setup axum
+- [X] base model generation
+- [ ] fill db
 - [ ] setup db connection pool
 - [ ] setup cookie based session
-- [ ] model generation
 - [ ] recommendations
 
 ### planned project structure
