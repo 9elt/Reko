@@ -1,13 +1,16 @@
-use std::{thread, time::Duration};
 use std::collections::HashSet;
 use std::iter::FromIterator;
+use std::time::Instant;
+use std::{thread, time::Duration};
 
-use super::structs::anime::{AnimeDetails, AnimeDB};
-use super::structs::list::{DetailedListEntry, ListEntry, ListsDB, List};
+use super::structs::anime::{AnimeDB, AnimeDetails};
+use super::structs::list::{DetailedListEntry, List, ListEntry, ListsDB};
 
 use super::cast::generic::to_serde_value;
 
-use super::db::fun::{get_db_anime, insert_anime, get_db_list, delete_list, insert_list, update_list};
+use super::db::fun::{
+    delete_list, get_db_anime, get_db_list, insert_anime, insert_list, update_list,
+};
 use super::mal::fun::{get_mal_anime, get_mal_list};
 
 /** returns a vector of animes details. If some are **missing from
@@ -15,10 +18,9 @@ the database**, the missing ones will be **requested to the
 mal api**, if errors occur during any request, the function will
 return the animes it has managed to get successfully */
 pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
-
     let mut db_result: Vec<AnimeDB> = match get_db_anime(ids.to_owned()) {
         Ok(r) => r,
-        Err(_) => vec![]
+        Err(_) => vec![],
     };
 
     let mut complete_response: Vec<AnimeDetails> = vec![];
@@ -38,7 +40,8 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
             }
             let ids_hash_set: HashSet<i32> = HashSet::from_iter(ids);
             let db_hash_set: HashSet<i32> = HashSet::from_iter(db_ids);
-            let missing_hash_set: HashSet<_> = ids_hash_set.difference(&db_hash_set).cloned().collect();
+            let missing_hash_set: HashSet<_> =
+                ids_hash_set.difference(&db_hash_set).cloned().collect();
             missing = Vec::from_iter(missing_hash_set);
         };
 
@@ -72,10 +75,16 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
     complete_response
 }
 
-pub async fn get_detailed_list(s_user: String, reload: bool) -> Result<Vec<DetailedListEntry>, u16> {
+pub async fn get_detailed_list(
+    s_user: String,
+    reload: bool,
+) -> Result<Vec<DetailedListEntry>, u16> {
+    let start = Instant::now();
+
     let mut user_list: Vec<ListEntry> = vec![];
 
     let db_check = get_db_list(&s_user);
+    println!("get_detailed_list > db checked in {} μs", start.elapsed().as_micros());
 
     let missing = match db_check {
         Ok(_) => false,
@@ -135,6 +144,7 @@ pub async fn get_detailed_list(s_user: String, reload: bool) -> Result<Vec<Detai
     }
 
     let anime_info = get_anime_details(anime_ids).await;
+    println!("get_detailed_list > anime details retrieved in {} μs", start.elapsed().as_micros());
 
     //ugly... way too ugly
     let mut full_list: Vec<DetailedListEntry> = vec![];
@@ -150,5 +160,6 @@ pub async fn get_detailed_list(s_user: String, reload: bool) -> Result<Vec<Detai
         }
     }
 
+    println!("get_detailed_list > detailed list done in {} μs", start.elapsed().as_micros());
     Ok(full_list)
 }
