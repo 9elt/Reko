@@ -98,11 +98,10 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
             model[i][c][5] = model[i][c][5] * 1000 / count[i];
             model[i][c][6] = model[i][c][6] * 1000 / count[i];
 
-            model[i][c][0] = model[i][c][0]
-                / match model[i][c][1] {
-                    0 => 1,
-                    _ => model[i][c][1],
-                };
+            model[i][c][0] = match model[i][c][1] {
+                0 => 0,
+                _ => model[i][c][0] / model[i][c][1],
+            };
 
             model[i][c][1] = match tot {
                 0 => 0,
