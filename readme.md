@@ -19,7 +19,7 @@ the type conversion functions and methods.
 
 * The **api** module handles requests to the server.
 * The **model** module handles the user model generation.
-* The **fetch** module handles data transfering and restructuring.
+* The **data** module handles data transfering and restructuring.
 
 ```
 src
@@ -34,7 +34,7 @@ src
 │   └─> cast
 │   │       base.rs
 │   │       mod.rs
-└─> fetch
+└─> data
 │   │   fun.rs
 │   │   mod.rs
 │   └─> structs
