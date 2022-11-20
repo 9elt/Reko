@@ -16,19 +16,19 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
     let mut count: [i32; 6] = [0, 0, 0, 0, 0, 0];
 
     for i in 0..list.len() {
-        let sus = (list[i].entry.status + 1) as usize;
+        let status = (list[i].entry.status + 1) as usize;
         let score = list[i].entry.score;
 
         //airing decade
         match list[i].details.airing_date {
-            Some(d) => {
-                let x = date_to_model_index(d);
-                model[x[0]][x[1]][0] += score as i32;
-                model[x[0]][x[1]][sus] += 1;
-                count[x[0]] += 1;
+            Some(a) => {
+                let d = date_to_model_index(a);
+                model[d[0]][d[1]][0] += score as i32;
+                model[d[0]][d[1]][status] += 1;
+                count[d[0]] += 1;
                 match score {
                     0 => (),
-                    _ => model[x[0]][x[1]][1] += 1,
+                    _ => model[d[0]][d[1]][1] += 1,
                 };
             }
             None => (),
@@ -36,14 +36,14 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
 
         //rating
         match list[i].details.rating {
-            Some(r) => {
-                let x = rating_to_model_index(r);
-                model[x[0]][x[1]][0] += score as i32;
-                model[x[0]][x[1]][sus] += 1;
-                count[x[0]] += 1;
+            Some(a) => {
+                let d = rating_to_model_index(a);
+                model[d[0]][d[1]][0] += score as i32;
+                model[d[0]][d[1]][status] += 1;
+                count[d[0]] += 1;
                 match score {
                     0 => (),
-                    _ => model[x[0]][x[1]][1] += 1,
+                    _ => model[d[0]][d[1]][1] += 1,
                 };
             }
             None => (),
@@ -51,14 +51,14 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
 
         //number of episodes
         match list[i].details.num_episodes {
-            Some(n) => {
-                let x = n_episodes_to_model_index(n);
-                model[x[0]][x[1]][0] += score as i32;
-                model[x[0]][x[1]][sus] += 1;
-                count[x[0]] += 1;
+            Some(a) => {
+                let d = n_episodes_to_model_index(a);
+                model[d[0]][d[1]][0] += score as i32;
+                model[d[0]][d[1]][status] += 1;
+                count[d[0]] += 1;
                 match score {
                     0 => (),
-                    _ => model[x[0]][x[1]][1] += 1,
+                    _ => model[d[0]][d[1]][1] += 1,
                 };
             }
             None => (),
@@ -70,13 +70,13 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
                 for g in genres.iter() {
                     match g.to_owned() {
                         Some(g) => {
-                            let x = genre_id_to_model_index(g);
-                            model[x[0]][x[1]][0] += score as i32;
-                            model[x[0]][x[1]][sus] += 1;
-                            count[x[0]] += 1;
+                            let d = genre_id_to_model_index(g);
+                            model[d[0]][d[1]][0] += score as i32;
+                            model[d[0]][d[1]][status] += 1;
+                            count[d[0]] += 1;
                             match score {
                                 0 => (),
-                                _ => model[x[0]][x[1]][1] += 1,
+                                _ => model[d[0]][d[1]][1] += 1,
                             };
                         }
                         None => (),
