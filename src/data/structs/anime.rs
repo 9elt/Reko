@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use diesel::prelude::*;
 
-use crate::fetch::db::schema::anime;
+use crate::data::db::schema::anime;
 
 //  anime details
 

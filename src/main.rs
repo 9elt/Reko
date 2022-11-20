@@ -1,5 +1,5 @@
 mod api;
-mod fetch;
+mod data;
 mod model;
 
 use axum::Router;

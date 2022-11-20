@@ -1,4 +1,4 @@
-use crate::fetch::fun::get_detailed_list;
+use crate::data::fun::get_detailed_list;
 
 use super::cast::base::{
     date_to_model_index, genre_id_to_model_index, n_episodes_to_model_index, rating_to_model_index,

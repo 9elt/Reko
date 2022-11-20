@@ -1,5 +1,5 @@
 use super::generic::from_serde_value;
-use crate::fetch::structs::list::{ListAPI, ListEntry, List, ListsDB};
+use crate::data::structs::list::{ListAPI, ListEntry, List, ListsDB};
 
 impl List {
     pub fn from_db(db: ListsDB) -> Self {

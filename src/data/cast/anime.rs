@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 
 use super::generic::{to_serde_value, from_serde_value};
-use crate::fetch::structs::anime::{
+use crate::data::structs::anime::{
     AnimeAPI, AnimeDB, AnimeDetails, Genre, RawRelatedAnime, RelatedAnime,
 };
 

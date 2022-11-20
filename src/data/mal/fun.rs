@@ -1,7 +1,7 @@
-use crate::fetch::structs::anime::{AnimeAPI, AnimeDB};
-use crate::fetch::structs::list::{ListAPI, ListEntry};
+use crate::data::structs::anime::{AnimeAPI, AnimeDB};
+use crate::data::structs::list::{ListAPI, ListEntry};
 
-use crate::fetch::cast::list::store_to_user_list;
+use crate::data::cast::list::store_to_user_list;
 
 use super::headers::mal_headers;
 

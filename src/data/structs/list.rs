@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use diesel::prelude::*;
 
-use crate::fetch::db::schema::lists;
+use crate::data::db::schema::lists;
 use super::anime::AnimeDetails;
 
 //  user list

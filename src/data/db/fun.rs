@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 
-use crate::fetch::structs::list::{ListsDB};
-use crate::fetch::structs::anime::AnimeDB;
+use crate::data::structs::list::{ListsDB};
+use crate::data::structs::anime::AnimeDB;
 use super::connection;
 
 //  anime
