@@ -32,8 +32,8 @@ src
 │   │   base.rs
 │   │   mod.rs
 │   └─> cast
-│   │       base.rs
-│   │       mod.rs
+│           base.rs
+│           mod.rs
 └─> data
 │   │   fun.rs
 │   │   mod.rs
