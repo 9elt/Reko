@@ -1,7 +1,9 @@
 mod api;
 mod fetch;
+mod model;
 
 use axum::Router;
+use tower_http::cors::{Any, CorsLayer};
 
 #[tokio::main]
 async fn main() {
@@ -12,5 +14,6 @@ async fn main() {
 }
 
 fn router() -> axum::Router {
-    Router::new().nest("/", api::router::router())
+    let cors = CorsLayer::new().allow_origin(Any);
+    Router::new().nest("/", api::router::router()).layer(cors)
 }
