@@ -1,6 +1,6 @@
 # anirekome api server
 
-### development
+### Development
 - [x] connect my anime list apis
 - [X] setup diesel postgres
 - [X] helpers for lists and anime
@@ -11,7 +11,7 @@
 - [ ] setup cookie based session
 - [ ] recommendations
 
-### planned project structure
+### Project structure
 
 Generally, **fun.rs** files contain functions that will be called outside of the module,
 **structs** modules contian the structs used in the module, while **cast** modules contain
@@ -21,7 +21,7 @@ the type conversion functions and methods.
 * The **model** module handles the user model generation.
 * The **data** module handles data transfering and restructuring.
 
-<details><summary><b>Tree</b></summary>
+<details><summary><b>tree</b></summary>
 
 ```
 src
