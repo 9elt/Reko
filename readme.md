@@ -21,7 +21,7 @@ the type conversion functions and methods.
 * The **model** module handles the user model generation.
 * The **data** module handles data transfering and restructuring.
 
-<details><summary>Tree</summary>
+<details><summary><b>Tree</b></summary>
 
 ```
 src
