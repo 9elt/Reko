@@ -15,14 +15,38 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         Err(e) => return Err(e),
     };
 
-    println!("generate_base_model > list retrieved in {} μs", start.elapsed().as_micros());
+    println!(
+        "generate_base_model > list retrieved in {} μs",
+        start.elapsed().as_micros()
+    );
 
     let mut model: BaseModel = new_model();
     let mut count: [i32; 6] = [0, 0, 0, 0, 0, 0];
+    let mut score_count: [i32; 6] = [0, 0, 0, 0, 0, 0];
 
     for i in 0..list.len() {
         let status = (list[i].entry.status + 1) as usize;
         let score = list[i].entry.score;
+
+        model[6][0][status] += 1;
+
+        match score {
+            0 => (),
+            _ => match list[i].details.mean {
+                Some(mean) => {
+                    let deviation = (score as i16 - mean) as i32;
+                    model[6][0][0] += score as i32;
+                    model[6][0][1] += deviation;
+
+                    model[6][status - 1][0] += score as i32;
+                    model[6][status - 1][1] += deviation;
+
+                    score_count[0] += 1;
+                    score_count[status - 1] += 1;
+                }
+                None => (),
+            },
+        }
 
         //airing decade
         match list[i].details.airing_date {
@@ -92,9 +116,12 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
     }
 
-    println!("generate_base_model > model population done in {} μs", start.elapsed().as_micros());
+    println!(
+        "generate_base_model > model population done in {} μs",
+        start.elapsed().as_micros()
+    );
 
-    for i in 0..model.len() {
+    for i in 0..6 {
         for c in 0..model[i].len() {
             let tot =
                 model[i][c][2] + model[i][c][3] + model[i][c][4] + model[i][c][5] + model[i][c][6];
@@ -117,7 +144,41 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
     }
 
-    println!("generate_base_model > base model done in {} μs", start.elapsed().as_micros());
+    model[6][0][0] = match score_count[0] {
+        0 => 0,
+        _ => model[6][0][0] / score_count[0],
+    };
+    model[6][0][1] = match score_count[1] {
+        0 => 0,
+        _ => model[6][0][1] / score_count[1],
+    };
+
+    let totpct = model[6][0][2] + model[6][0][3] + model[6][0][4] + model[6][0][5] + model[6][0][6];
+
+    for i in 1..model[6].len() {
+        model[6][i][2] = match model[6][0][i + 1] {
+            0 => 0,
+            _ => score_count[i] * 1000 / model[6][0][i + 1],
+        };
+
+        model[6][0][i + 1] = match totpct {
+            0 => 0,
+            _ => model[6][0][i + 1] * 1000 / totpct,
+        };
+
+        match score_count[i] {
+            0 => (),
+            _ => {
+                model[6][i][0] = model[6][i][0] / score_count[i];
+                model[6][i][1] = model[6][i][1] / score_count[i];
+            }
+        }
+    }
+
+    println!(
+        "generate_base_model > base model done in {} μs",
+        start.elapsed().as_micros()
+    );
 
     Ok(model)
 }
@@ -227,6 +288,14 @@ fn new_model() -> BaseModel {
             vec![0, 0, 0, 0, 0, 0, 0],
             vec![0, 0, 0, 0, 0, 0, 0],
             vec![0, 0, 0, 0, 0, 0, 0],
+        ],
+        vec![
+            vec![0, 0, 0, 0, 0, 0, 0],
+            vec![0, 0, 0],
+            vec![0, 0, 0],
+            vec![0, 0, 0],
+            vec![0, 0, 0],
+            vec![0, 0, 0],
         ],
     ]
 }
