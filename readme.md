@@ -6,9 +6,11 @@
 - [X] helpers for lists and anime
 - [X] setup axum
 - [X] base model generation
-- [ ] fill db
+- [ ] jsonb queries
+- [ ] model db table
 - [ ] setup db connection pool
-- [ ] setup cookie based session
+- [ ] average model
+- [ ] model affinity alorithm
 - [ ] recommendations
 
 ### Project structure
