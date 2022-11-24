@@ -161,9 +161,9 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
 
     //  detailed stats
     for x in 1..model.len() {
-        let mut actual_count: i32 = 0;
+        let mut tot_watched: i32 = 0;
         for y in 0..model[x].len() {
-            actual_count += model[x][y][0];
+            tot_watched += model[x][y][0];
         }
 
         for y in 0..model[x].len() {
@@ -194,9 +194,9 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
                 }
             }
             //  stat percentage
-            model[x][y][0] = match actual_count {
+            model[x][y][0] = match tot_watched {
                 0 => 0,
-                _ => model[x][y][0] * 1000 / actual_count,
+                _ => model[x][y][0] * 1000 / tot_watched,
             };
         }
     }
