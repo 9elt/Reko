@@ -52,7 +52,7 @@ pub fn insert_list(new_list: ListsDB) {
         .values(&new_list)
         .execute(connection);
 
-    println!("inserted {:?} new list", inserted);
+    println!("inserted new list");
 }
 
 pub fn update_list(new_list: ListsDB) {
@@ -66,7 +66,7 @@ pub fn update_list(new_list: ListsDB) {
         .get_result::<ListsDB>(connection)
         .unwrap();
 
-    println!("user list update {:?}", updated);
+    println!("user list update");
 }
 
 pub fn delete_list(user_h: &String) -> u16 {
@@ -77,6 +77,6 @@ pub fn delete_list(user_h: &String) -> u16 {
         .execute(connection)
         .unwrap();
 
-    println!("{:?} user  deleted", deleted);
+    println!("user deleted");
     403
 }
