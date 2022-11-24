@@ -1,11 +1,31 @@
 use crate::data::fun::get_detailed_list;
 use std::time::Instant;
 
-use super::cast::base::{
-    date_to_model_index, genre_id_to_model_index, n_episodes_to_model_index, rating_to_model_index,
-};
+use super::cast::base::{date_to_index, genre_id_to_index, n_episodes_to_index, rating_to_index};
 
-type BaseModel = Vec<Vec<Vec<i32>>>;
+use super::empty::new_model;
+
+type BaseModel = Vec<Vec<[i32; 9]>>;
+
+fn pupulate_stat(
+    mut m: BaseModel,
+    x: usize,
+    y: usize,
+    s: i32,
+    d: i32,
+    c: i32,
+    st: Option<usize>,
+) -> BaseModel {
+    m[x][y][0] += 1;
+    m[x][y][1] += s;
+    m[x][y][2] += d;
+    m[x][y][3] += c;
+    match st {
+        Some(st) => m[x][y][st] += 1,
+        None => (),
+    };
+    m
+}
 
 pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseModel, u16> {
     let start = Instant::now();
@@ -21,92 +41,99 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
     );
 
     let mut model: BaseModel = new_model();
-    let mut count: [i32; 6] = [0, 0, 0, 0, 0, 0];
-    let mut score_count: [i32; 6] = [0, 0, 0, 0, 0, 0];
 
     for i in 0..list.len() {
-        let status = (list[i].entry.status + 1) as usize;
-        let score = list[i].entry.score;
+        let status: usize = list[i].entry.status as usize;
+        let status_idx: usize = status + 3;
 
-        model[6][0][status] += 1;
+        let score: i32 = list[i].entry.score as i32;
 
-        match score {
-            0 => (),
-            _ => match list[i].details.mean {
-                Some(mean) => {
-                    let deviation = (score as i16 - mean) as i32;
-                    model[6][0][0] += score as i32;
-                    model[6][0][1] += deviation;
-
-                    model[6][status - 1][0] += score as i32;
-                    model[6][status - 1][1] += deviation;
-
-                    score_count[0] += 1;
-                    score_count[status - 1] += 1;
-                }
-                None => (),
+        let score_dev: i32 = match list[i].details.mean {
+            Some(mean) => match score {
+                0 => 0,
+                _ => score - mean as i32,
             },
-        }
+            None => 0,
+        };
 
-        //airing decade
+        let score_count = match score {
+            0 => 0,
+            _ => 1,
+        };
+
+        //  general stats > Score Stats
+        model = pupulate_stat(model, 0, 0, score, score_dev, score_count, None);
+
+        //  general stats > Status Stats
+        model = pupulate_stat(model, 0, status, score, score_dev, score_count, None);
+
+        //  detailed stats > airing decades
         match list[i].details.airing_date {
-            Some(a) => {
-                let d = date_to_model_index(a);
-                model[d[0]][d[1]][0] += score as i32;
-                model[d[0]][d[1]][status] += 1;
-                count[d[0]] += 1;
-                match score {
-                    0 => (),
-                    _ => model[d[0]][d[1]][1] += 1,
-                };
+            Some(data) => {
+                let v: [usize; 2] = date_to_index(data);
+                model = pupulate_stat(
+                    model,
+                    v[0],
+                    v[1],
+                    score,
+                    score_dev,
+                    score_count,
+                    Some(status_idx),
+                );
             }
             None => (),
         }
 
-        //rating
+        //  detailed stats > ratings
         match list[i].details.rating {
-            Some(a) => {
-                let d = rating_to_model_index(a);
-                model[d[0]][d[1]][0] += score as i32;
-                model[d[0]][d[1]][status] += 1;
-                count[d[0]] += 1;
-                match score {
-                    0 => (),
-                    _ => model[d[0]][d[1]][1] += 1,
-                };
+            Some(data) => {
+                let v: [usize; 2] = rating_to_index(data);
+                model = pupulate_stat(
+                    model,
+                    v[0],
+                    v[1],
+                    score,
+                    score_dev,
+                    score_count,
+                    Some(status_idx),
+                );
             }
             None => (),
         }
 
-        //number of episodes
+        //  detailed stats > series length
         match list[i].details.num_episodes {
-            Some(a) => {
-                let d = n_episodes_to_model_index(a);
-                model[d[0]][d[1]][0] += score as i32;
-                model[d[0]][d[1]][status] += 1;
-                count[d[0]] += 1;
-                match score {
-                    0 => (),
-                    _ => model[d[0]][d[1]][1] += 1,
-                };
+            Some(data) => {
+                let v: [usize; 2] = n_episodes_to_index(data);
+                model = pupulate_stat(
+                    model,
+                    v[0],
+                    v[1],
+                    score,
+                    score_dev,
+                    score_count,
+                    Some(status_idx),
+                );
             }
             None => (),
         }
 
-        //genres
+        //  detailed stats > genres | themes | demographics
         match list[i].details.genres.to_owned() {
             Some(genres) => {
                 for g in genres.iter() {
                     match g.to_owned() {
-                        Some(g) => {
-                            let d = genre_id_to_model_index(g);
-                            model[d[0]][d[1]][0] += score as i32;
-                            model[d[0]][d[1]][status] += 1;
-                            count[d[0]] += 1;
-                            match score {
-                                0 => (),
-                                _ => model[d[0]][d[1]][1] += 1,
-                            };
+                        Some(data) => {
+                            let v: [usize; 2] = genre_id_to_index(data);
+                            model = pupulate_stat(
+                                model,
+                                v[0],
+                                v[1],
+                                score,
+                                score_dev,
+                                score_count,
+                                Some(status_idx),
+                            );
                         }
                         None => (),
                     }
@@ -121,57 +148,88 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         start.elapsed().as_micros()
     );
 
-    for i in 0..6 {
-        for c in 0..model[i].len() {
-            let tot =
-                model[i][c][2] + model[i][c][3] + model[i][c][4] + model[i][c][5] + model[i][c][6];
-
-            model[i][c][2] = model[i][c][2] * 1000 / count[i];
-            model[i][c][3] = model[i][c][3] * 1000 / count[i];
-            model[i][c][4] = model[i][c][4] * 1000 / count[i];
-            model[i][c][5] = model[i][c][5] * 1000 / count[i];
-            model[i][c][6] = model[i][c][6] * 1000 / count[i];
-
-            model[i][c][0] = match model[i][c][1] {
-                0 => 0,
-                _ => model[i][c][0] / model[i][c][1],
-            };
-
-            model[i][c][1] = match tot {
-                0 => 0,
-                _ => model[i][c][1] * 1000 / tot,
-            };
-        }
+    //  general stats > statuses
+    for i in 1..6 {
+        //  status average score
+        model[0][i][1] = match model[0][i][3] {
+            0 => 0,
+            _ => model[0][i][1] / model[0][i][3],
+        };
+        //  total average score deviation
+        model[0][i][2] = match model[0][i][3] {
+            0 => 0,
+            _ => model[0][i][2] / model[0][i][3],
+        };
+        //  total scored percentage
+        model[0][i][3] = match model[0][i][0] {
+            0 => 0,
+            _ => model[0][i][3] * 1000 / model[0][i][0],
+        };
+        //  status percentage
+        model[0][i][0] = match model[0][0][0] {
+            0 => 0,
+            _ => model[0][i][0] * 1000 / model[0][0][0],
+        };
     }
 
-    model[6][0][0] = match score_count[0] {
+    //  total average score
+    model[0][0][1] = match model[0][0][3] {
         0 => 0,
-        _ => model[6][0][0] / score_count[0],
-    };
-    model[6][0][1] = match score_count[1] {
-        0 => 0,
-        _ => model[6][0][1] / score_count[1],
+        _ => model[0][0][1] / model[0][0][3],
     };
 
-    let totpct = model[6][0][2] + model[6][0][3] + model[6][0][4] + model[6][0][5] + model[6][0][6];
+    //  total average score deviation
+    model[0][0][2] = match model[0][0][3] {
+        0 => 0,
+        _ => model[0][0][2] / model[0][0][3],
+    };
 
-    for i in 1..model[6].len() {
-        model[6][i][2] = match model[6][0][i + 1] {
-            0 => 0,
-            _ => score_count[i] * 1000 / model[6][0][i + 1],
-        };
+    //  stotal scored percentage
+    model[0][0][3] = match model[0][0][0] {
+        0 => 0,
+        _ => model[0][0][3] * 1000 / model[0][0][0],
+    };
 
-        model[6][0][i + 1] = match totpct {
-            0 => 0,
-            _ => model[6][0][i + 1] * 1000 / totpct,
-        };
+    //  detailed stats
+    for x in 1..model.len() {
 
-        match score_count[i] {
-            0 => (),
-            _ => {
-                model[6][i][0] = model[6][i][0] / score_count[i];
-                model[6][i][1] = model[6][i][1] / score_count[i];
+        let mut actual_count: i32 = 0;
+        for y in 0..model[x].len() {
+            actual_count += model[x][y][0];
+        }
+
+        for y in 0..model[x].len() {
+            //  average score
+            model[x][y][1] = match model[x][y][3] {
+                0 => 0,
+                _ => model[x][y][1] / model[x][y][3],
+            };
+            //  total average score deviation
+            model[x][y][2] = match model[x][y][3] {
+                0 => 0,
+                _ => model[x][y][2] / model[x][y][3],
+            };
+            //  total scored percentage
+            model[x][y][3] = match model[x][y][0] {
+                0 => 0,
+                _ => model[x][y][3] * 1000 / model[x][y][0],
+            };
+            //  statuses percentages
+            match model[x][y][0] {
+                0 => (),
+                _ => {
+                    model[x][y][4] = model[x][y][4] * 1000 / model[x][y][0];
+                    model[x][y][5] = model[x][y][5] * 1000 / model[x][y][0];
+                    model[x][y][6] = model[x][y][6] * 1000 / model[x][y][0];
+                    model[x][y][7] = model[x][y][7] * 1000 / model[x][y][0];
+                    model[x][y][8] = model[x][y][8] * 1000 / model[x][y][0];
+                }
             }
+            //  stat percentage
+            model[x][y][0] = match actual_count {
+                0 => 0,
+                _ => model[x][y][0] * 1000 / actual_count,
+            };
         }
     }
 
@@ -181,121 +239,4 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
     );
 
     Ok(model)
-}
-
-fn new_model() -> BaseModel {
-    vec![
-        vec![
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-        ],
-        vec![
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-        ],
-        vec![
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-        ],
-        vec![
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-        ],
-        vec![
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-        ],
-        vec![
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0, 0, 0, 0, 0],
-        ],
-        vec![
-            vec![0, 0, 0, 0, 0, 0, 0],
-            vec![0, 0, 0],
-            vec![0, 0, 0],
-            vec![0, 0, 0],
-            vec![0, 0, 0],
-            vec![0, 0, 0],
-        ],
-    ]
 }
