@@ -44,11 +44,11 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
 
     for i in 0..list.len() {
         let status: usize = list[i].entry.status as usize;
-        let status_idx: usize = status + 3;
+        let st_idx: usize = status + 3;
 
         let score: i32 = list[i].entry.score as i32;
 
-        let score_dev: i32 = match list[i].details.mean {
+        let dev: i32 = match list[i].details.mean {
             Some(mean) => match score {
                 0 => 0,
                 _ => score - mean as i32,
@@ -56,30 +56,22 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
             None => 0,
         };
 
-        let score_count = match score {
+        let s_cnt = match score {
             0 => 0,
             _ => 1,
         };
 
         //  general stats > Score Stats
-        model = pupulate_stat(model, 0, 0, score, score_dev, score_count, None);
+        model = pupulate_stat(model, 0, 0, score, dev, s_cnt, None);
 
         //  general stats > Status Stats
-        model = pupulate_stat(model, 0, status, score, score_dev, score_count, None);
+        model = pupulate_stat(model, 0, status, score, dev, s_cnt, None);
 
         //  detailed stats > airing decades
         match list[i].details.airing_date {
             Some(data) => {
                 let v: [usize; 2] = date_to_index(data);
-                model = pupulate_stat(
-                    model,
-                    v[0],
-                    v[1],
-                    score,
-                    score_dev,
-                    score_count,
-                    Some(status_idx),
-                );
+                model = pupulate_stat(model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
             }
             None => (),
         }
@@ -88,15 +80,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         match list[i].details.rating {
             Some(data) => {
                 let v: [usize; 2] = rating_to_index(data);
-                model = pupulate_stat(
-                    model,
-                    v[0],
-                    v[1],
-                    score,
-                    score_dev,
-                    score_count,
-                    Some(status_idx),
-                );
+                model = pupulate_stat(model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
             }
             None => (),
         }
@@ -105,15 +89,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         match list[i].details.num_episodes {
             Some(data) => {
                 let v: [usize; 2] = n_episodes_to_index(data);
-                model = pupulate_stat(
-                    model,
-                    v[0],
-                    v[1],
-                    score,
-                    score_dev,
-                    score_count,
-                    Some(status_idx),
-                );
+                model = pupulate_stat(model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
             }
             None => (),
         }
@@ -125,15 +101,8 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
                     match g.to_owned() {
                         Some(data) => {
                             let v: [usize; 2] = genre_id_to_index(data);
-                            model = pupulate_stat(
-                                model,
-                                v[0],
-                                v[1],
-                                score,
-                                score_dev,
-                                score_count,
-                                Some(status_idx),
-                            );
+                            model =
+                                pupulate_stat(model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
                         }
                         None => (),
                     }
@@ -192,7 +161,6 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
 
     //  detailed stats
     for x in 1..model.len() {
-
         let mut actual_count: i32 = 0;
         for y in 0..model[x].len() {
             actual_count += model[x][y][0];
