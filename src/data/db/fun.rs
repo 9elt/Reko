@@ -48,7 +48,7 @@ pub fn insert_list(new_list: ListsDB) {
     use super::schema::lists::dsl::*;
     let connection = &mut connection::establish();
 
-    let inserted = diesel::insert_into(lists)
+    let _inserted = diesel::insert_into(lists)
         .values(&new_list)
         .execute(connection);
 
@@ -61,7 +61,7 @@ pub fn update_list(new_list: ListsDB) {
 
     let user_h = new_list.user_hash.to_owned();
 
-    let updated = diesel::update(lists.find(user_h))
+    let _updated = diesel::update(lists.find(user_h))
         .set(new_list)
         .get_result::<ListsDB>(connection)
         .unwrap();
@@ -73,7 +73,7 @@ pub fn delete_list(user_h: &String) -> u16 {
     use super::schema::lists::dsl::*;
     let connection = &mut connection::establish();
 
-    let deleted = diesel::delete(lists.find(user_h))
+    let _deleted = diesel::delete(lists.find(user_h))
         .execute(connection)
         .unwrap();
 
