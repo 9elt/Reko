@@ -1,5 +1,5 @@
-use crate::data::fun::get_detailed_list;
 use crate::data::db::user::set_model;
+use crate::data::fun::get_detailed_list;
 
 use super::cast::base::{date_to_index, genre_id_to_index, n_episodes_to_index, rating_to_index};
 

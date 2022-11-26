@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use std::time::Duration;
 use std::thread;
+use std::time::Duration;
 
 use crate::utils::benchmark;
 
@@ -76,7 +76,6 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
 }
 
 pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedListEntry>, u16> {
-
     let mut benchmark = benchmark::Time::start("detailed list");
 
     let mut base_list: Vec<[i32; 4]> = vec![];
