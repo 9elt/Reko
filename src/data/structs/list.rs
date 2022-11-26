@@ -1,22 +1,14 @@
 use serde::{Deserialize, Serialize};
-use diesel::prelude::*;
 
 use super::anime::AnimeDetails;
 
 //  user list
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ListEntry {
     pub id: i32,
     pub status: i32,
     pub score: i32,
     pub episodes_watched: i32,
-}
-
-pub struct List {
-    pub user_hash: String,
-    pub list: Vec<ListEntry>,
-    pub updated_at: chrono::NaiveDateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -66,12 +58,3 @@ pub struct ListAPI {
     pub data: Vec<ListEntryAPI>,
     pub paging: Paging,
 }
-
-// list database
-
-// #[derive(Queryable, Insertable, Debug, Clone, AsChangeset)]
-// pub struct ListsDB {
-//     pub user_hash: String,
-//     pub list: serde_json::Value,
-//     pub updated_at: chrono::NaiveDateTime,
-// }

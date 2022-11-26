@@ -200,5 +200,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
 
     set_model(&s_user, model.to_owned());
 
+    benchmark.end();
+
     Ok(model)
 }

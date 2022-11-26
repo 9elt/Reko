@@ -137,6 +137,7 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
 
     let mut full: Vec<DetailedListEntry> = vec![];
 
+    //  OPTIMIZATION NOTE: find a way to make it linear! 
     for x in 0..base_list.len() {
         for y in 0..anime_info.len() {
             if base_list[x][0] == anime_info[y].id {

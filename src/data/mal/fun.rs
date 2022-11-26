@@ -1,5 +1,5 @@
 use crate::data::structs::anime::{AnimeAPI, AnimeDB};
-use crate::data::structs::list::{ListAPI, ListEntry};
+use crate::data::structs::list::ListAPI;
 
 use crate::data::cast::list::store_to_user_list;
 

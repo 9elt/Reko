@@ -16,8 +16,11 @@ impl Time {
             is_first: true,
         }
     }
+    pub fn end(self) {
+        println!("{} total time: {} ms", self.name, self.start.elapsed().as_millis());
+    }
     pub fn millis(&mut self, s: String) {
-        println!(" {} - {} ms", s, self.last.elapsed().as_millis());
+        println!("{} - {} ms", s, self.last.elapsed().as_millis());
         if self.is_first {
             println!("\n\n{}\n-----------------\n", self.name);
             self.is_first = false;
@@ -25,7 +28,7 @@ impl Time {
         self.last = Instant::now();
     }
     pub fn micros(&mut self, s: String) {
-        println!(" {} - {} μs", s, self.last.elapsed().as_micros());
+        println!("{} - {} μs", s, self.last.elapsed().as_micros());
         if self.is_first {
             println!("\n\n{}\n-----------------\n", self.name);
             self.is_first = false;

@@ -12,7 +12,10 @@ pub async fn get_user_recommendations(Path(user): Path<String>) -> Result<Json<V
 
     match check {
         Ok(o) => match o {
-            Some(m) => return Ok(Json(json!(m))),
+            Some(m) => {
+                println!("{} model retrieved", user);
+                return Ok(Json(json!(m)))
+            },
             None => (),
         },
         Err(_) => (),
