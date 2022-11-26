@@ -6,8 +6,8 @@
 - [X] helpers for lists and anime
 - [X] setup axum
 - [X] base model generation
+- [X] model db table
 - [ ] jsonb queries
-- [ ] model db table
 - [ ] setup db connection pool
 - [ ] average model
 - [ ] model affinity alorithm
