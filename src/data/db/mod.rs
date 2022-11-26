@@ -1,5 +1,3 @@
-pub mod fun;
-
 mod connection;
 
 pub mod anime;
