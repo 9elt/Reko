@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use diesel::prelude::*;
 
-use crate::data::db::schema::lists;
 use super::anime::AnimeDetails;
 
 //  user list
@@ -9,9 +8,9 @@ use super::anime::AnimeDetails;
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ListEntry {
     pub id: i32,
-    pub status: u8,
-    pub score: u16,
-    pub episodes_watched: u16,
+    pub status: i32,
+    pub score: i32,
+    pub episodes_watched: i32,
 }
 
 pub struct List {
@@ -70,10 +69,9 @@ pub struct ListAPI {
 
 // list database
 
-#[derive(Queryable, Insertable, Debug, Clone, AsChangeset)]
-#[diesel(table_name = lists)]
-pub struct ListsDB {
-    pub user_hash: String,
-    pub list: serde_json::Value,
-    pub updated_at: chrono::NaiveDateTime,
-}
+// #[derive(Queryable, Insertable, Debug, Clone, AsChangeset)]
+// pub struct ListsDB {
+//     pub user_hash: String,
+//     pub list: serde_json::Value,
+//     pub updated_at: chrono::NaiveDateTime,
+// }

@@ -1,16 +1,16 @@
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use std::time::Instant;
-use std::{thread, time::Duration};
+use std::time::Duration;
+use std::thread;
+
+use crate::utils::benchmark;
 
 use super::structs::anime::{AnimeDB, AnimeDetails};
-use super::structs::list::{DetailedListEntry, List, ListEntry, ListsDB};
+use super::structs::list::{DetailedListEntry, ListEntry};
+use chrono::Utc;
 
-use super::cast::generic::to_serde_value;
-
-use super::db::fun::{
-    delete_list, get_db_anime, get_db_list, insert_anime, insert_list, update_list,
-};
+use super::db::anime;
+use super::db::user;
 use super::mal::fun::{get_mal_anime, get_mal_list};
 
 /** returns a vector of animes details. If some are **missing from
@@ -18,7 +18,7 @@ the database**, the missing ones will be **requested to the
 mal api**, if errors occur during any request, the function will
 return the animes it has managed to get successfully */
 pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
-    let mut db_result: Vec<AnimeDB> = match get_db_anime(ids.to_owned()) {
+    let mut db_result: Vec<AnimeDB> = match anime::get(ids.to_owned()) {
         Ok(r) => r,
         Err(_) => vec![],
     };
@@ -65,7 +65,7 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
         }
 
         if to_insert.len() > 0 {
-            insert_anime(to_insert);
+            anime::insert(to_insert);
         };
     };
 
@@ -75,91 +75,86 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
     complete_response
 }
 
-pub async fn get_detailed_list(
-    s_user: String,
-    reload: bool,
-) -> Result<Vec<DetailedListEntry>, u16> {
-    let start = Instant::now();
+pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedListEntry>, u16> {
 
-    let mut user_list: Vec<ListEntry> = vec![];
+    let mut benchmark = benchmark::Time::start("detailed list");
 
-    let db_check = get_db_list(&s_user);
-    println!("get_detailed_list > db checked in {} μs", start.elapsed().as_micros());
+    let mut base_list: Vec<[i32; 4]> = vec![];
 
-    let missing = match db_check {
+    let database_list = user::get_list(&u);
+
+    benchmark.millis(format!("[{}] database check", u));
+
+    let list_is_missing: bool = match &database_list {
         Ok(_) => false,
         Err(_) => true,
     };
 
-    let update_required = match db_check {
-        Ok(l) => {
-            let dur = chrono::Utc::now().naive_local() - l.updated_at;
+    let update_required = match &list_is_missing {
+        false => match database_list {
+            Ok(l) => {
+                let is_empty: bool = l.list.len() == 0;
+                let list_life = Utc::now().naive_local() - l.updated_at;
+                base_list = l.list;
 
-            let res = List::from_db(l);
-            user_list = res.list;
-
-            dur.num_days() > 3 || reload
-        }
-        Err(_) => true,
+                list_life.num_days() > 2 || reload || is_empty
+            }
+            Err(_) => true,
+        },
+        true => true,
     };
 
     if update_required {
-        let api_list = get_mal_list(&s_user).await;
-        println!("requested new list");
+        let api_list = get_mal_list(&u).await;
+        benchmark.millis(format!("requested [{}] list", u));
 
-        let tmp: Vec<ListEntry>;
+        let tmp: Vec<[i32; 4]>;
 
         match api_list {
             Ok(l) => {
                 tmp = l;
             }
             Err(e) => {
-                if e == 403 && missing == false {
-                    return Err(delete_list(&s_user));
+                if e == 403 && list_is_missing == false {
+                    return Err(user::delete(&u));
                 } else {
                     return Err(e);
                 }
             }
         }
 
-        match missing {
-            true => insert_list(ListsDB {
-                user_hash: s_user,
-                list: to_serde_value::<Vec<ListEntry>>(&tmp),
-                updated_at: chrono::Utc::now().naive_local(),
-            }),
-            false => update_list(ListsDB {
-                user_hash: s_user,
-                list: to_serde_value::<Vec<ListEntry>>(&tmp),
-                updated_at: chrono::Utc::now().naive_local(),
-            }),
+        match list_is_missing {
+            true => user::insert_list(&u, tmp.to_owned()),
+            false => user::update_list(&u, tmp.to_owned()),
         }
 
-        user_list = tmp;
+        base_list = tmp;
     };
 
-    let mut anime_ids = vec![];
-    for e in user_list.iter() {
-        anime_ids.push(e.id);
-    }
-
+    let anime_ids: Vec<i32> = base_list.iter().map(|e| e[0]).collect();
     let anime_info = get_anime_details(anime_ids).await;
-    println!("get_detailed_list > anime details retrieved in {} μs", start.elapsed().as_micros());
 
-    //ugly... way too ugly
-    let mut full_list: Vec<DetailedListEntry> = vec![];
-    for i in 0..user_list.len() {
-        let id = user_list[i].id;
-        for j in 0..anime_info.len() {
-            if anime_info[j].id == id {
-                full_list.push(DetailedListEntry {
-                    entry: user_list[i].clone(),
-                    details: anime_info[j].clone(),
-                })
-            };
+    benchmark.millis(format!("[{}] anime details", u));
+
+    let mut full: Vec<DetailedListEntry> = vec![];
+
+    for x in 0..base_list.len() {
+        for y in 0..anime_info.len() {
+            if base_list[x][0] == anime_info[y].id {
+                full.push(DetailedListEntry {
+                    entry: ListEntry {
+                        id: base_list[x][0],
+                        status: base_list[x][1],
+                        score: base_list[x][2],
+                        episodes_watched: base_list[x][0],
+                    },
+                    details: anime_info[y].to_owned(),
+                });
+                continue;
+            }
         }
     }
 
-    println!("get_detailed_list > detailed list done in {} μs", start.elapsed().as_micros());
-    Ok(full_list)
+    benchmark.millis(format!("[{}] merge lists", u));
+    Ok(full)
 }

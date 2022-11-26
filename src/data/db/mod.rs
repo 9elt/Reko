@@ -1,3 +1,8 @@
 pub mod fun;
-pub mod schema;
+
 mod connection;
+
+pub mod anime;
+pub mod user;
+
+pub mod schema;

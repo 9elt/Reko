@@ -1,9 +1,10 @@
 use crate::data::fun::get_detailed_list;
-use std::time::Instant;
+use crate::data::db::user::set_model;
 
 use super::cast::base::{date_to_index, genre_id_to_index, n_episodes_to_index, rating_to_index};
 
 use super::empty::new_model;
+use crate::utils::benchmark;
 
 type BaseModel = Vec<Vec<[i32; 9]>>;
 
@@ -28,17 +29,14 @@ fn pupulate_stat(
 }
 
 pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseModel, u16> {
-    let start = Instant::now();
+    let mut benchmark = benchmark::Time::start("model generation");
 
-    let list = match get_detailed_list(s_user, reload).await {
+    let list = match get_detailed_list(&s_user, reload).await {
         Ok(l) => l,
         Err(e) => return Err(e),
     };
 
-    println!(
-        "generate_base_model > list retrieved in {} μs",
-        start.elapsed().as_micros()
-    );
+    benchmark.millis(format!("[{}] list retrieved", s_user));
 
     let mut model: BaseModel = new_model();
 
@@ -46,7 +44,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         let status: usize = list[i].entry.status as usize;
         let st_idx: usize = status + 3;
 
-        let score: i32 = list[i].entry.score as i32;
+        let score: i32 = list[i].entry.score;
 
         let dev: i32 = match list[i].details.mean {
             Some(mean) => match score {
@@ -112,10 +110,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
     }
 
-    println!(
-        "generate_base_model > model population done in {} μs",
-        start.elapsed().as_micros()
-    );
+    benchmark.millis(format!("[{}] model polulation", s_user));
 
     //  general stats > statuses
     for i in 1..6 {
@@ -201,10 +196,9 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
     }
 
-    println!(
-        "generate_base_model > base model done in {} μs",
-        start.elapsed().as_micros()
-    );
+    benchmark.micros(format!("[{}] model generation", s_user));
+
+    set_model(&s_user, model.to_owned());
 
     Ok(model)
 }

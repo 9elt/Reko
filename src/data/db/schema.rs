@@ -16,14 +16,15 @@ diesel::table! {
 }
 
 diesel::table! {
-    lists (user_hash) {
-        user_hash -> Varchar,
+    users (user_name) {
+        user_name -> Varchar,
         list -> Jsonb,
+        model -> Nullable<Jsonb>,
         updated_at -> Timestamp,
     }
 }
 
 diesel::allow_tables_to_appear_in_same_query!(
     anime,
-    lists,
+    users,
 );
