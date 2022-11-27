@@ -50,13 +50,14 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
         let mut dbg_count: usize = 0;
         for m in missing.iter() {
             dbg_count += 1;
-            println!("requested new anime N {}", dbg_count);
             match get_mal_anime(m).await {
                 Ok(a) => {
+                    println!("{} anime OK", dbg_count);
                     to_insert.push(a.clone());
                     db_result.push(a);
                 }
                 Err(e) => {
+                    println!("{} anime ERROR", dbg_count);
                     println!("{e}");
                     continue;
                 }
@@ -78,7 +79,7 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
 pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedListEntry>, u16> {
     let mut benchmark = benchmark::Time::start("detailed list");
 
-    let mut base_list: Vec<[i32; 4]> = vec![];
+    let mut base_list: Vec<Vec<i32>> = vec![];
 
     let database_list = user::get_list(&u);
 
@@ -107,7 +108,7 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
         let api_list = get_mal_list(&u).await;
         benchmark.millis(format!("requested [{}] list", u));
 
-        let tmp: Vec<[i32; 4]>;
+        let tmp: Vec<Vec<i32>>;
 
         match api_list {
             Ok(l) => {

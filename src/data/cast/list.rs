@@ -1,10 +1,10 @@
 use crate::data::structs::list::ListAPI;
 
-pub fn store_to_user_list(store: Vec<ListAPI>) -> Vec<[i32; 4]> {
+pub fn store_to_user_list(store: Vec<ListAPI>) -> Vec<Vec<i32>> {
     let mut list = vec![];
     for store_list in store.iter() {
         for store_entry in store_list.data.iter() {
-            list.push([
+            list.push(vec![
                 store_entry.node.id,
                 status_to_u8(&store_entry.list_status.status) as i32,
                 (store_entry.list_status.score * 100) as i32,

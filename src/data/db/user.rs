@@ -21,7 +21,7 @@ impl UserListRaw {
 }
 
 pub struct UserList {
-    pub list: Vec<[i32; 4]>,
+    pub list: Vec<Vec<i32>>,
     pub updated_at: chrono::NaiveDateTime,
 }
 
@@ -37,7 +37,7 @@ pub fn get_list(user: &String) -> Result<UserList, diesel::result::Error> {
     }
 }
 
-pub fn insert_list(user: &String, l: Vec<[i32; 4]>) {
+pub fn insert_list(user: &String, l: Vec<Vec<i32>>) {
     let inserted = diesel::insert_into(users)
         .values((
             user_name.eq(&user),
@@ -52,7 +52,7 @@ pub fn insert_list(user: &String, l: Vec<[i32; 4]>) {
     };
 }
 
-pub fn update_list(user: &String, l: Vec<[i32; 4]>) {
+pub fn update_list(user: &String, l: Vec<Vec<i32>>) {
     let updated = diesel::update(users.find(&user))
         .set((
             list.eq(common::to_serde_value(&l)),

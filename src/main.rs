@@ -2,6 +2,7 @@ mod api;
 mod data;
 mod model;
 mod utils;
+mod recom;
 
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};

@@ -24,7 +24,7 @@ pub async fn get_mal_anime(id: &i32) -> Result<AnimeDB, u16> {
     }
 }
 
-pub async fn get_mal_list(user: &str) -> Result<Vec<[i32; 4]>, u16> {
+pub async fn get_mal_list(user: &str) -> Result<Vec<Vec<i32>>, u16> {
     let client = reqwest::Client::new();
     let user_name: &str = user;
     let query: &str = "fields=list_status&sort=list_updated_at&limit=1000&nsfw=1&offset=0000";
