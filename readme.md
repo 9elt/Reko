@@ -7,8 +7,8 @@
 - [X] setup axum
 - [X] base model generation
 - [X] model db table
+- [X] setup db connection pool
 - [ ] jsonb queries
-- [ ] setup db connection pool
 - [ ] average model
 - [ ] model affinity alorithm
 - [ ] recommendations
