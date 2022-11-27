@@ -29,7 +29,7 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
 
     if r_missing {
         let how_many = ids.len() - db_result.len();
-        print!("missing {} anime\n", how_many);
+        print!("missing {} / {} anime\n", how_many, ids.len());
 
         let r_empty: bool = db_result.len() == 0;
 
