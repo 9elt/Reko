@@ -5,13 +5,13 @@ use crate::data::db::schema::anime;
 
 //  anime details
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct RelatedAnime {
     pub id: u32,
     pub relation: i16,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, Ord, PartialEq, PartialOrd)]
 pub struct AnimeDetails {
     pub id: i32,
     pub title: String,

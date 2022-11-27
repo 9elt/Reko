@@ -131,27 +131,31 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
     };
 
     let anime_ids: Vec<i32> = base_list.iter().map(|e| e[0]).collect();
-    let anime_info = get_anime_details(anime_ids).await;
+    let mut anime_info = get_anime_details(anime_ids).await;
 
     benchmark.millis(format!("[{}] anime details", u));
 
+    anime_info.sort_unstable_by(|x, y| y.id.cmp(&x.id));
+
+    base_list.sort_unstable_by(|x, y| y[0].cmp(&x[0]));
+
     let mut full: Vec<DetailedListEntry> = vec![];
 
-    //  OPTIMIZATION NOTE: find a way to make it linear! 
-    for x in 0..base_list.len() {
-        for y in 0..anime_info.len() {
-            if base_list[x][0] == anime_info[y].id {
-                full.push(DetailedListEntry {
-                    entry: ListEntry {
-                        id: base_list[x][0],
-                        status: base_list[x][1],
-                        score: base_list[x][2],
-                        episodes_watched: base_list[x][0],
-                    },
-                    details: anime_info[y].to_owned(),
-                });
-                continue;
-            }
+    let mut align: usize = 0;
+
+    for i in 0..base_list.len() {
+        if base_list[i][0] == anime_info[i - align].id {
+            full.push(DetailedListEntry {
+                entry: ListEntry {
+                    id: base_list[i][0],
+                    status: base_list[i][1],
+                    score: base_list[i][2],
+                    episodes_watched: base_list[i][0],
+                },
+                details: anime_info[i].to_owned(),
+            });
+        } else {
+            align += 1;
         }
     }
 

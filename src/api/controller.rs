@@ -10,18 +10,22 @@ pub async fn get_user_recommendations(Path(user): Path<String>) -> Result<Json<V
 
     let check = get_model(&s_user);
 
-    match check {
-        Ok(o) => match o {
-            Some(m) => {
-                println!("{} model retrieved", user);
-                return Ok(Json(json!(m)))
-            },
-            None => (),
-        },
-        Err(_) => (),
-    };
+    let reload = false;
 
-    let model = generate_base_model(s_user, false).await;
+    if reload == false {
+        match check {
+            Ok(o) => match o {
+                Some(m) => {
+                    println!("{} model retrieved", user);
+                    return Ok(Json(json!(m)))
+                },
+                None => (),
+            },
+            Err(_) => (),
+        };
+    }
+
+    let model = generate_base_model(s_user, reload).await;
     match model {
         Ok(m) => Ok(Json(json!(m))),
         Err(e) => Err(StatusCode::from_u16(e).unwrap()),
