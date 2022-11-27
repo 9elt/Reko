@@ -6,6 +6,9 @@ mod utils;
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
+#[macro_use]
+extern crate lazy_static;
+
 #[tokio::main]
 async fn main() {
     axum::Server::bind(&"127.0.0.1:3000".parse().unwrap())

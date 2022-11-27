@@ -26,12 +26,10 @@ pub struct UserList {
 }
 
 pub fn get_list(user: &String) -> Result<UserList, diesel::result::Error> {
-    let connection = &mut connection::establish();
-
     let user_list = users
         .select((list, updated_at))
         .filter(user_name.eq(&user))
-        .first::<UserListRaw>(connection);
+        .first::<UserListRaw>(&mut connection::POOL.get().unwrap());
 
     match user_list {
         Ok(l) => Ok(l.deserialize()),
@@ -40,15 +38,13 @@ pub fn get_list(user: &String) -> Result<UserList, diesel::result::Error> {
 }
 
 pub fn insert_list(user: &String, l: Vec<[i32; 4]>) {
-    let connection = &mut connection::establish();
-
     let inserted = diesel::insert_into(users)
         .values((
             user_name.eq(&user),
             list.eq(common::to_serde_value(&l)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
-        .execute(connection);
+        .execute(&mut connection::POOL.get().unwrap());
 
     match inserted {
         Ok(_) => println!("[{}] list inserted", user),
@@ -57,14 +53,12 @@ pub fn insert_list(user: &String, l: Vec<[i32; 4]>) {
 }
 
 pub fn update_list(user: &String, l: Vec<[i32; 4]>) {
-    let connection = &mut connection::establish();
-
     let updated = diesel::update(users.find(&user))
         .set((
             list.eq(common::to_serde_value(&l)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
-        .execute(connection);
+        .execute(&mut connection::POOL.get().unwrap());
 
     match updated {
         Ok(_) => println!("[{}] list updated", user),
@@ -75,12 +69,10 @@ pub fn update_list(user: &String, l: Vec<[i32; 4]>) {
 //  model
 
 pub fn get_model(user: &String) -> Result<Option<Vec<Vec<[i32; 9]>>>, diesel::result::Error> {
-    let connection = &mut connection::establish();
-
     let user_model = users
         .select(model)
         .filter(user_name.eq(&user))
-        .first::<Option<serde_json::Value>>(connection);
+        .first::<Option<serde_json::Value>>(&mut connection::POOL.get().unwrap());
 
     match user_model {
         Ok(m) => Ok(match m {
@@ -92,14 +84,12 @@ pub fn get_model(user: &String) -> Result<Option<Vec<Vec<[i32; 9]>>>, diesel::re
 }
 
 pub fn set_model(user: &String, m: Vec<Vec<[i32; 9]>>) {
-    let connection = &mut connection::establish();
-
     let updated = diesel::update(users.find(&user))
         .set((
             model.eq(common::to_serde_value(&m)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
-        .execute(connection);
+        .execute(&mut connection::POOL.get().unwrap());
 
     match updated {
         Ok(_) => println!("[{}] model updated", user),
@@ -110,9 +100,7 @@ pub fn set_model(user: &String, m: Vec<Vec<[i32; 9]>>) {
 //  user
 
 pub fn delete(user: &String) -> u16 {
-    let connection = &mut connection::establish();
-
-    let deleted = diesel::delete(users.find(user)).execute(connection);
+    let deleted = diesel::delete(users.find(user)).execute(&mut connection::POOL.get().unwrap());
 
     match deleted {
         Ok(_) => println!("user [{}] deleted", user),

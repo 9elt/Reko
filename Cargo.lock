@@ -25,6 +25,7 @@ dependencies = [
  "futures",
  "hyper",
  "jsonwebtoken",
+ "lazy_static",
  "once_cell",
  "reqwest",
  "serde",
