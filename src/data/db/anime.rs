@@ -8,16 +8,16 @@ pub fn get(ids: Vec<i32>) -> Result<Vec<AnimeDB>, diesel::result::Error> {
 
     let mut result: Vec<AnimeDB> = vec![];
 
-    let max_size = ids.len() / 2000;
+    let max_size = (ids.len() / 300) + 1;
 
     for t in 0..max_size {
         let mut query = anime.into_boxed();
 
-        let curr = t * 2000;
+        let curr = t * 300;
 
         query = query.filter(id.eq(ids[curr]));
         for i in curr..ids.len() {
-            if i == 2000 {
+            if i == curr + 300 {
                 break;
             };
             query = query.or_filter(id.eq(ids[i]));
