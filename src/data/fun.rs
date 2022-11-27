@@ -28,7 +28,8 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
     let r_missing = (ids.len() - db_result.len()) > 0;
 
     if r_missing {
-        print!("missing {} anime\n", ids.len() - db_result.len());
+        let how_many = ids.len() - db_result.len();
+        print!("missing {} anime\n", how_many);
 
         let r_empty: bool = db_result.len() == 0;
 
@@ -55,12 +56,12 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
             dbg_count += 1;
             match get_mal_anime(m).await {
                 Ok(a) => {
-                    println!("{} anime OK", dbg_count);
+                    println!("{} / {} anime OK", dbg_count, how_many);
                     to_insert.push(a.clone());
                     db_result.push(a);
                 }
                 Err(e) => {
-                    println!("{} anime ERROR", dbg_count);
+                    println!("{} / {} anime ERROR", dbg_count, how_many);
                     println!("{e}");
                     continue;
                 }
