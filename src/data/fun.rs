@@ -24,9 +24,12 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
     };
 
     let mut complete_response: Vec<AnimeDetails> = vec![];
+
     let r_missing = (ids.len() - db_result.len()) > 0;
 
     if r_missing {
+        print!("missing {} anime\n", ids.len() - db_result.len());
+
         let r_empty: bool = db_result.len() == 0;
 
         let missing: Vec<i32>;
@@ -103,7 +106,7 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
         },
         true => true,
     };
-    
+
     if update_required {
         let api_list = get_mal_list(&u).await;
         benchmark.millis(format!("requested [{}] list", u));
