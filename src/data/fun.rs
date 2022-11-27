@@ -79,6 +79,7 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
 pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedListEntry>, u16> {
     let mut benchmark = benchmark::Time::start("detailed list");
 
+    //let mut base_list: Box<[Box<[i32; 4]>] = vec![];
     let mut base_list: Vec<Vec<i32>> = vec![];
 
     let database_list = user::get_list(&u);
@@ -96,14 +97,13 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
                 let is_empty: bool = l.list.len() == 0;
                 let list_life = Utc::now().naive_local() - l.updated_at;
                 base_list = l.list;
-
                 list_life.num_days() > 2 || reload || is_empty
             }
             Err(_) => true,
         },
         true => true,
     };
-
+    
     if update_required {
         let api_list = get_mal_list(&u).await;
         benchmark.millis(format!("requested [{}] list", u));

@@ -1,19 +1,38 @@
 use diesel::prelude::*;
 
-use crate::data::structs::anime::AnimeDB;
 use super::connection;
+use crate::data::structs::anime::AnimeDB;
 
 pub fn get(ids: Vec<i32>) -> Result<Vec<AnimeDB>, diesel::result::Error> {
     use super::schema::anime::dsl::*;
 
-    let mut query = anime.into_boxed();
+    let mut result: Vec<AnimeDB> = vec![];
 
-    query = query.filter(id.eq(ids[0]));
-    for i in 1..ids.len() {
-        query = query.or_filter(id.eq(ids[i]));
+    let max_size = ids.len() / 2000;
+
+    for t in 0..max_size {
+        let mut query = anime.into_boxed();
+
+        let curr = t * 2000;
+
+        query = query.filter(id.eq(ids[curr]));
+        for i in curr..ids.len() {
+            if i == 2000 {
+                break;
+            };
+            query = query.or_filter(id.eq(ids[i]));
+        }
+
+        let res: Result<Vec<AnimeDB>, diesel::result::Error> =
+            query.load::<AnimeDB>(&mut connection::POOL.get().unwrap());
+
+        match res {
+            Ok(mut r) => result.append(&mut r),
+            Err(e) => return Err(e),
+        };
     }
 
-    query.load::<AnimeDB>(&mut connection::POOL.get().unwrap())
+    Ok(result)
 }
 
 pub fn insert(entries: Vec<AnimeDB>) -> Vec<AnimeDB> {
