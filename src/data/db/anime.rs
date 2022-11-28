@@ -15,6 +15,10 @@ pub fn get(ids: Vec<i32>) -> Result<Vec<AnimeDB>, diesel::result::Error> {
 
         let curr = t * 300;
 
+        if curr == ids.len() {
+            break;
+        }
+
         query = query.filter(id.eq(ids[curr]));
         for i in curr..ids.len() {
             if i == curr + 300 {
