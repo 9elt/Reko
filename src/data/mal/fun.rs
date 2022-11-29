@@ -16,11 +16,11 @@ pub async fn get_mal_anime(id: &i32) -> Result<AnimeDB, u16> {
         Ok(res) => match res.status() {
             reqwest::StatusCode::OK => match res.json::<AnimeAPI>().await {
                 Ok(response) => Ok(response.to_db()),
-                Err(_) => return Err(1001),
+                Err(_) => return Err(500),
             },
             e => Err(e.as_u16()),
         },
-        Err(_) => Err(2001),
+        Err(_) => Err(500),
     }
 }
 
@@ -47,7 +47,7 @@ pub async fn get_mal_list(user: &str) -> Result<Vec<Vec<i32>>, u16> {
                         }
                         None => break store.push(response),
                     },
-                    Err(_) => return Err(1001),
+                    Err(_) => return Err(500),
                 };
             }
             e => return Err(e.as_u16()),
