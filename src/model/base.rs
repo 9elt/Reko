@@ -4,7 +4,7 @@ use crate::data::fun::get_detailed_list;
 use super::cast::base::{date_to_index, genre_id_to_index, n_episodes_to_index, rating_to_index};
 
 use super::empty::new_model;
-use crate::utils::benchmark;
+use crate::utils::time_elapsed;
 
 type BaseModel = Vec<Vec<[i32; 9]>>;
 
@@ -29,14 +29,14 @@ fn pupulate_stat(
 }
 
 pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseModel, u16> {
-    let mut benchmark = benchmark::Time::start("model generation");
+    let mut time = time_elapsed::start("model");
 
     let list = match get_detailed_list(&s_user, reload).await {
         Ok(l) => l,
         Err(e) => return Err(e),
     };
 
-    benchmark.millis(format!("[{}] list retrieved", s_user));
+    time.log(format!("[{}] list retrieved", s_user)).timestamp();
 
     let mut model: BaseModel = new_model();
 
@@ -110,7 +110,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
     }
 
-    benchmark.millis(format!("[{}] model polulation", s_user));
+    time.log(format!("[{}] model polulation", s_user)).timestamp();
 
     //  general stats > statuses
     for i in 1..6 {
@@ -196,11 +196,11 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
     }
 
-    benchmark.micros(format!("[{}] model generation", s_user));
+    time.log(format!("[{}] model generation", s_user)).timestamp();
 
     set_model(&s_user, model.to_owned());
 
-    benchmark.end();
+    time.end();
 
     Ok(model)
 }

@@ -3,7 +3,7 @@ use std::iter::FromIterator;
 use std::thread;
 use std::time::Duration;
 
-use crate::utils::benchmark;
+use crate::utils::time_elapsed;
 
 use super::structs::anime::{AnimeDB, AnimeDetails};
 use super::structs::list::{DetailedListEntry, ListEntry};
@@ -81,14 +81,14 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
 }
 
 pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedListEntry>, u16> {
-    let mut benchmark = benchmark::Time::start("detailed list");
+    let mut time = time_elapsed::start("list");
 
     //let mut base_list: Box<[Box<[i32; 4]>] = vec![];
     let mut base_list: Vec<Vec<i32>> = vec![];
 
     let database_list = user::get_list(&u);
 
-    benchmark.millis(format!("[{}] database check", u));
+    time.log(format!("[{}] database check", u)).timestamp();
 
     let list_is_missing: bool = match &database_list {
         Ok(_) => false,
@@ -110,7 +110,7 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
 
     if update_required {
         let api_list = get_mal_list(&u).await;
-        benchmark.millis(format!("requested [{}] list", u));
+        time.log(format!("requested [{}] list", u)).timestamp();
 
         let tmp: Vec<Vec<i32>>;
 
@@ -138,7 +138,7 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
     let anime_ids: Vec<i32> = base_list.iter().map(|e| e[0]).collect();
     let mut anime_info = get_anime_details(anime_ids).await;
 
-    benchmark.millis(format!("[{}] anime details", u));
+    time.log(format!("[{}] anime details", u)).timestamp();
 
     anime_info.sort_unstable_by(|x, y| y.id.cmp(&x.id));
 
@@ -164,6 +164,9 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
         }
     }
 
-    benchmark.millis(format!("[{}] merge lists", u));
+    time.log(format!("[{}] extend list", u)).timestamp();
+
+    time.end();
+
     Ok(full)
 }
