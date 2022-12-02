@@ -9,12 +9,12 @@ fn get_unit_of_measurement(nanos: u128) -> &'static str {
         0 => "μs",
         _ => match nanos / 15000000000 {
             0 => "ms",
-            _ => match nanos /  300000000000 {
+            _ => match nanos / 300000000000 {
                 0 => "s",
-                _ => match  nanos / 540000000000 {
+                _ => match nanos / 540000000000 {
                     0 => "min",
-                    _ => "hrs"
-                }
+                    _ => "hrs",
+                },
             },
         },
     }
@@ -27,12 +27,12 @@ fn get_units_of_measurement(nanos: u128) -> [&'static str; 2] {
         "s" => ["s", "ms"],
         "min" => ["min", "s"],
         "hrs" => ["hrs", "min"],
-        _ => ["ns", "ns"]
+        _ => ["ns", "ns"],
     }
 }
 
-fn convert_to_unit_of_meas(nanos: u128, unit_of_meas: &str) -> u128 {
-    match unit_of_meas {
+fn nanos_to_unit_of_msr(nanos: u128, unit_of_msr: &str) -> u128 {
+    match unit_of_msr {
         "μs" => nanos / 1000,
         "ms" => nanos / 1000000,
         "s" => nanos / 1000000000,
@@ -42,8 +42,8 @@ fn convert_to_unit_of_meas(nanos: u128, unit_of_meas: &str) -> u128 {
     }
 }
 
-fn convert_to_units_of_meas(nanos: u128, unit_of_meas: &str) -> [u128; 2] {
-    match unit_of_meas {
+fn nanos_to_units_of_msr(nanos: u128, unit_of_msr: &str) -> [u128; 2] {
+    match unit_of_msr {
         "μs" => [nanos / 1000, nanos],
         "ms" => [nanos / 1000000, nanos / 1000],
         "s" => [nanos / 1000000000, nanos / 1000000],
@@ -61,7 +61,7 @@ pub struct TimeElapsed {
 
 impl TimeElapsed {
     fn init(name: &str) -> Self {
-        println!("{} running...", name);
+        println!("running {}...", name);
         Self {
             name: name.to_string(),
             start_timestamp: Instant::now(),
@@ -71,9 +71,9 @@ impl TimeElapsed {
 
     fn print_message(&mut self, msg: &str, nanos: u128) -> &Self {
         let unit = get_unit_of_measurement(nanos);
-        let time = convert_to_unit_of_meas(nanos, unit);
+        let time = nanos_to_unit_of_msr(nanos, unit);
         println!(
-            "({})\x1b[32m \x1b[1m{} \x1b[0m-> \x1b[93m\x1b[1m{} {} \x1b[0m",
+            "(\x1b[32m\x1b[1m{}\x1b[0m) \x1b[1m{} \x1b[0m-> \x1b[35m\x1b[1m{} {} \x1b[0m",
             self.name, msg, time, unit
         );
         self
@@ -82,9 +82,9 @@ impl TimeElapsed {
     pub fn end(self) {
         let nanos = self.start_timestamp.elapsed().as_nanos();
         let units = get_units_of_measurement(nanos);
-        let times = convert_to_units_of_meas(nanos, units[0]);
+        let times = nanos_to_units_of_msr(nanos, units[0]);
         println!(
-            "\x1b[32m\x1b[1m{} \x1b[0mfinished in \x1b[93m\x1b[1m{} {} \x1b[0m({} {})",
+            "\x1b[32m\x1b[1m{} finished\x1b[0m in \x1b[35m\x1b[1m{} {} \x1b[0m({} {})",
             self.name, times[0], units[0], times[1], units[1],
         );
     }
@@ -95,7 +95,7 @@ impl TimeElapsed {
         self
     }
 
-    pub fn _log_from_start<S: AsRef<str>>(&mut self, msg: S) -> &mut Self {
+    pub fn _log_overall<S: AsRef<str>>(&mut self, msg: S) -> &mut Self {
         let nanos = self.start_timestamp.elapsed().as_nanos();
         self.print_message(msg.as_ref(), nanos);
         self
