@@ -28,39 +28,37 @@ the type conversion functions and methods.
 ```
 src
 │   main.rs
-└─> api
-│       controller.rs
-│       router.rs
+│   router.rs
+│   controller.rs
+└─> helper
+│       └─> database
+│               anime.rs
+│               user.rs
+│               mod.rs
+│       └─> mal_api
+│               anime.rs
+│               list.rs
+│               mod.rs
 │       mod.rs
-└─> model
-│   │   base.rs
+└─> models
 │   │   mod.rs
-│   └─> cast
-│           base.rs
-│           mod.rs
-└─> data
-│   │   fun.rs
-│   │   mod.rs
-│   └─> structs
-│   │       anime.rs
-│   │       list.rs
-│   │       mod.rs
-│   └─> cast
-│   │       generic.rs
-│   │       anime.rs
-│   │       list.rs
-│   │       mod.rs
-│   └─> MAL
-│   │       fun.rs
-│   │       headers.rs
-│   │       mod.rs
-│   └─> database
-│           fun.rs
-│           connection.rs
-│           schema.rs
+│   └─> recommendations
+│   └─> user_model
+│           gen.rs
+│           conversion.rs
+│           empty.rs
+│           avg.rs
 │           mod.rs
 └─> utils
-    └─> ...
+│   │   mod.rs
+│   │   mal_api.rs
+│   │   time_elapsed.rs
+│   └─> database
+│   │       connection.rs
+│   │       schema.rs
+│   │       mod.rs
+│   └─> converison
+│           common.rs
 ```
 
 </details>
