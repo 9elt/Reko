@@ -1,6 +1,6 @@
+pub mod empty;
 mod avg;
 mod conversion;
-mod empty;
 mod gen;
 
 use crate::helper;

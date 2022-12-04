@@ -1,8 +1,57 @@
+use super::DBUserNames;
+use crate::utils::time_elapsed;
 use crate::utils::conversion::common;
 use crate::utils::database::connection;
 use crate::utils::database::schema::users::dsl::*;
-use diesel::prelude::*;
+use diesel::{prelude::*, sql_query};
 use chrono::Utc;
+
+/*
+*  AFFINITY USERS
+*/
+
+pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2]) -> Result<Vec<String>, diesel::result::Error> {
+
+    let time = time_elapsed::start("db users");
+
+    let mut query = format!("
+        SELECT user_name FROM users
+        WHERE 1 = 1
+    ");
+
+    let gte = affinity_model[0].to_owned();
+    let lte = affinity_model[1].to_owned();
+
+    for x in 0..gte.len() {
+        for y in 0..gte[x].len() {
+            for z in 0..gte[x][y].len() {
+
+                query = format!(
+                    "{}
+                    AND (model->{}->{}->{})::int >= {}
+                    AND (model->{}->{}->{})::int <= {}",
+                    query,
+                    x,y,z,gte[x][y][z],
+                    x,y,z,lte[x][y][z]
+                );
+
+                println!("AND (model->{}->{}->{})::int >= {}", x,y,z,gte[x][y][z]);
+                println!("AND (model->{}->{}->{})::int <= {}", x,y,z,lte[x][y][z]);
+
+            }
+        }
+    }
+
+    let affinity_users = sql_query(query)
+        .load::<DBUserNames>(&mut connection::POOL.get().unwrap());
+
+    time.end();
+
+    match affinity_users {
+        Ok(u) => Ok(u.iter().map(|e| e.user_name.to_owned()).collect()),
+        Err(e) => Err(e)
+    }
+}
 
 /*
 *  USER LIST
