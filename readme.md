@@ -41,13 +41,13 @@ src
 │           list.rs
 │           mod.rs
 └─> utils
-│   │   mod.rs
-│   │   mal_api.rs
-│   │   time_elapsed.rs
-│   └─> database
-│   │       connection.rs
-│   │       schema.rs
-│   │       mod.rs
-│   └─> converison
-│           common.rs
+    │   mod.rs
+    │   mal_api.rs
+    │   time_elapsed.rs
+    └─> database
+    │       connection.rs
+    │       schema.rs
+    │       mod.rs
+    └─> converison
+            common.rs
 ```
