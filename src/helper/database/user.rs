@@ -34,8 +34,8 @@ pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2], user: &String
                     AND (model->{}->{}->{})::int >= {}
                     AND (model->{}->{}->{})::int <= {}",
                     query,
-                    x,y,z,gte[x][y][z],
-                    x,y,z,lte[x][y][z]
+                    x, y, z, gte[x][y][z],
+                    x, y, z, lte[x][y][z]
                 );
             }
         }
