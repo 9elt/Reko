@@ -21,6 +21,8 @@ pub async fn get_user_model(
         None => false
     };
 
+    println!("(\x1b[34m\x1b[1mGET\x1b[0m: model) user: \x1b[33m\x1b[1m{}\x1b[0m, reload: \x1b[33m\x1b[1m{}\x1b[0m", user, reload);
+
     match user_model::get_user_model(user, reload).await {
         Ok(model) => Ok(Json(json!(model))),
         Err(error) => Err(StatusCode::from_u16(error).unwrap()),
