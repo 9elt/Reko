@@ -1,4 +1,4 @@
-pub fn new_model() -> Vec<Vec<[i32; 9]>> {
+pub fn model() -> Vec<Vec<[i32; 9]>> {
     vec![
 
         //  0 => General Stats

@@ -1,52 +1,34 @@
-use crate::data::db::user::set_model;
-use crate::data::fun::get_detailed_list;
-
-use super::cast::base::{date_to_index, genre_id_to_index, n_episodes_to_index, rating_to_index};
-
-use super::empty::new_model;
 use crate::utils::time_elapsed;
+use crate::helper;
+use super::empty;
+use super::conversion::{
+    date_to_index,
+    genre_id_to_index,
+    n_episodes_to_index,
+    rating_to_index
+};
 
 type BaseModel = Vec<Vec<[i32; 9]>>;
 
-fn pupulate_stat(
-    mut m: BaseModel,
-    x: usize,
-    y: usize,
-    s: i32,
-    d: i32,
-    c: i32,
-    st: Option<usize>,
-) -> BaseModel {
-    m[x][y][0] += 1;
-    m[x][y][1] += s;
-    m[x][y][2] += d;
-    m[x][y][3] += c;
-    match st {
-        Some(st) => m[x][y][st] += 1,
-        None => (),
-    };
-    m
-}
-
-pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseModel, u16> {
+pub async fn generate_base_model(user: String, reload: bool) -> Result<BaseModel, u16> {
     let mut time = time_elapsed::start("model");
 
-    let list = match get_detailed_list(&s_user, reload).await {
+    let list = match helper::get_detailed_list(&user, reload).await {
         Ok(l) => l,
         Err(e) => return Err(e),
     };
 
-    time.log(format!("[{}] list retrieved", s_user)).timestamp();
+    time.log(format!("[{}] list retrieved", user)).timestamp();
 
-    let mut model: BaseModel = new_model();
+    let mut model: BaseModel = empty::model();
 
     for i in 0..list.len() {
-        let status: usize = list[i].entry.status as usize;
+        let status: usize = list[i].status() as usize;
         let st_idx: usize = status + 3;
 
-        let score: i32 = list[i].entry.score;
+        let score: i32 = list[i].score();
 
-        let dev: i32 = match list[i].details.mean {
+        let dev: i32 = match list[i].mean() {
             Some(mean) => match score {
                 0 => 0,
                 _ => score - mean as i32,
@@ -66,7 +48,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         model = pupulate_stat(model, 0, status, score, dev, s_cnt, None);
 
         //  detailed stats > airing decades
-        match list[i].details.airing_date {
+        match list[i].airing_date() {
             Some(data) => {
                 let v: [usize; 2] = date_to_index(data);
                 model = pupulate_stat(model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
@@ -75,7 +57,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
 
         //  detailed stats > ratings
-        match list[i].details.rating {
+        match list[i].rating() {
             Some(data) => {
                 let v: [usize; 2] = rating_to_index(data);
                 model = pupulate_stat(model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
@@ -84,7 +66,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
 
         //  detailed stats > series length
-        match list[i].details.num_episodes {
+        match list[i].num_episodes() {
             Some(data) => {
                 let v: [usize; 2] = n_episodes_to_index(data);
                 model = pupulate_stat(model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
@@ -93,7 +75,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
 
         //  detailed stats > genres | themes | demographics
-        match list[i].details.genres.to_owned() {
+        match list[i].genres().to_owned() {
             Some(genres) => {
                 for g in genres.iter() {
                     match g.to_owned() {
@@ -110,7 +92,7 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
     }
 
-    time.log(format!("[{}] model polulation", s_user)).timestamp();
+    time.log(format!("[{}] model polulation", user)).timestamp();
 
     //  general stats > statuses
     for i in 1..6 {
@@ -196,11 +178,33 @@ pub async fn generate_base_model(s_user: String, reload: bool) -> Result<BaseMod
         }
     }
 
-    time.log(format!("[{}] model generation", s_user)).timestamp();
+    time.log(format!("[{}] base model generation", user)).timestamp();
 
-    set_model(&s_user, model.to_owned());
+    helper::save_user_model(&user, model.to_owned());
+
+    time.log(format!("[{}] model saved", user)).timestamp();
 
     time.end();
 
     Ok(model)
+}
+
+fn pupulate_stat(
+    mut m: BaseModel,
+    x: usize,
+    y: usize,
+    s: i32,
+    d: i32,
+    c: i32,
+    st: Option<usize>,
+) -> BaseModel {
+    m[x][y][0] += 1;
+    m[x][y][1] += s;
+    m[x][y][2] += d;
+    m[x][y][3] += c;
+    match st {
+        Some(st) => m[x][y][st] += 1,
+        None => (),
+    };
+    m
 }

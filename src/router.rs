@@ -4,5 +4,5 @@ use super::controller;
 
 pub fn router() -> axum::Router {
     Router::new()
-        .route("/user/:user", get(controller::get_user_recommendations))
+        .route("/model/:user", get(controller::get_user_model))
 }

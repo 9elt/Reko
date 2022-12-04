@@ -1,8 +1,8 @@
-mod api;
-mod data;
-mod model;
+mod models;
+mod controller;
+mod router;
+mod helper;
 mod utils;
-mod recom;
 
 use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
@@ -20,5 +20,5 @@ async fn main() {
 
 fn router() -> axum::Router {
     let cors = CorsLayer::new().allow_origin(Any);
-    Router::new().nest("/", api::router::router()).layer(cors)
+    Router::new().nest("/", router::router()).layer(cors)
 }
