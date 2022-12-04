@@ -31,18 +31,19 @@ src
 │   router.rs
 │   controller.rs
 └─> helper
-│       └─> database
-│               anime.rs
-│               user.rs
-│               mod.rs
-│       └─> mal_api
-│               anime.rs
-│               list.rs
-│               mod.rs
-│       mod.rs
+│   │   mod.rs
+│   └─> database
+│   │       anime.rs
+│   │       user.rs
+│   │       mod.rs
+│   └─> mal_api
+│           anime.rs
+│           list.rs
+│           mod.rs
 └─> models
 │   │   mod.rs
 │   └─> recommendations
+│   │       mod.rs
 │   └─> user_model
 │           gen.rs
 │           conversion.rs
