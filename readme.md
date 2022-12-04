@@ -8,8 +8,8 @@
 - [X] base model generation
 - [X] model db table
 - [X] setup db connection pool
+- [X] average model
 - [ ] jsonb queries
-- [ ] average model
 - [ ] model affinity alorithm
 - [ ] recommendations
 
