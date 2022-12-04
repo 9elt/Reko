@@ -10,8 +10,8 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2]) -> Result<Vec<String>, diesel::result::Error> {
-    database::user::get_affinity_users(affinity_model)
+pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2], user: &String) -> Result<Vec<String>, diesel::result::Error> {
+    database::user::get_affinity_users(affinity_model, user)
 }
 
 pub fn save_user_model(user: &String, model: Vec<Vec<[i32; 9]>>) {

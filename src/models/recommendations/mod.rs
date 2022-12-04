@@ -1,7 +1,7 @@
 use crate::helper;
 use super::user_model::empty;
 
-pub fn get_user_recommendations(model: [Vec<Vec<[i32; 9]>>; 2]) -> Result<Vec<String>, u16> {
+pub fn get_user_recommendations(model: [Vec<Vec<[i32; 9]>>; 2], user: &String) -> Result<Vec<String>, u16> {
 
     let mut gte = empty::model();
     let mut lte = empty::model();
@@ -31,9 +31,12 @@ pub fn get_user_recommendations(model: [Vec<Vec<[i32; 9]>>; 2]) -> Result<Vec<St
         }
     }
 
+    gte[0][0][0] = 69420;
+    lte[0][0][0] = 69420;
+
     let affinity_model = [gte, lte];
 
-    match helper::get_affinity_users(affinity_model) {
+    match helper::get_affinity_users(affinity_model, user) {
         Ok(v) => Ok(v),
         Err(_) => Err(500)
     }

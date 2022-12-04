@@ -6,7 +6,7 @@ mod gen;
 use crate::helper;
 type BaseModel = Vec<Vec<[i32; 9]>>;
 
-pub async fn get_user_model(user: String, reload: bool) -> Result<[BaseModel; 2], u16> {
+pub async fn get_user_model(user: &String, reload: bool) -> Result<[BaseModel; 2], u16> {
     let mut base_model = vec![];
     let mut _update_required = false;
 
@@ -25,7 +25,7 @@ pub async fn get_user_model(user: String, reload: bool) -> Result<[BaseModel; 2]
     }
 
     if _update_required || reload {
-        base_model = match gen::generate_base_model(user, reload).await {
+        base_model = match gen::generate_base_model(user.to_owned(), reload).await {
             Ok(m) => m,
             Err(e) => return Err(e),
         };
