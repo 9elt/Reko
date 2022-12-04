@@ -9,25 +9,25 @@ pub fn get_user_recommendations(model: [Vec<Vec<[i32; 9]>>; 2]) -> Result<Vec<St
     for x in 0..gte.len() {
         for y in 0..gte[x].len() {
 
-            gte[x][y][0] = model[0][x][y][0] - 500;
-            gte[x][y][1] = model[0][x][y][1] - 500;
-            gte[x][y][2] = model[0][x][y][2] - 500;
-            gte[x][y][3] = model[0][x][y][3] - 500;
-            gte[x][y][4] = model[0][x][y][4] - 500;
-            gte[x][y][5] = model[0][x][y][5] - 500;
-            gte[x][y][6] = model[0][x][y][6] - 500;
-            gte[x][y][7] = model[0][x][y][7] - 500;
-            gte[x][y][8] = model[0][x][y][8] - 500;
+            gte[x][y][0] = model[0][x][y][0] - 100;
+            gte[x][y][1] = 69420;
+            gte[x][y][2] = 69420;
+            gte[x][y][3] = 69420;
+            gte[x][y][4] = 69420;
+            gte[x][y][5] = 69420;
+            gte[x][y][6] = 69420;
+            gte[x][y][7] = 69420;
+            gte[x][y][8] = 69420;
 
-            lte[x][y][0] = model[0][x][y][0] + 500;
-            lte[x][y][1] = model[0][x][y][1] + 500;
-            lte[x][y][2] = model[0][x][y][2] + 500;
-            lte[x][y][3] = model[0][x][y][3] + 500;
-            lte[x][y][4] = model[0][x][y][4] + 500;
-            lte[x][y][5] = model[0][x][y][5] + 500;
-            lte[x][y][6] = model[0][x][y][6] + 500;
-            lte[x][y][7] = model[0][x][y][7] + 500;
-            lte[x][y][8] = model[0][x][y][8] + 500;
+            lte[x][y][0] = model[0][x][y][0] + 100;
+            lte[x][y][1] = 69420;
+            lte[x][y][2] = 69420;
+            lte[x][y][3] = 69420;
+            lte[x][y][4] = 69420;
+            lte[x][y][5] = 69420;
+            lte[x][y][6] = 69420;
+            lte[x][y][7] = 69420;
+            lte[x][y][8] = 69420;
         }
     }
 
