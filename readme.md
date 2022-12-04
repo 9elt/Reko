@@ -9,7 +9,7 @@
 - [X] model db table
 - [X] setup db connection pool
 - [X] average model
-- [ ] jsonb queries
+- [X] jsonb queries
 - [ ] model affinity alorithm
 - [ ] recommendations
 
@@ -23,6 +23,7 @@ src
 └─> models
 │   │   mod.rs
 │   └─> recommendations
+│   │       affinity.rs
 │   │       mod.rs
 │   └─> user_model
 │           gen.rs
