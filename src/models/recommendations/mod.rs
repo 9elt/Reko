@@ -10,7 +10,6 @@ pub fn get_user_recommendations(model: [Vec<Vec<[i32; 9]>>; 2], user: &String) -
     let model_values = &model[0];
     let model_avgs = &model[1];
 
-    //let needs_big_list = model_values[0][0][0] > 500;
     let score_is_relavant = model_values[0][0][3] > 250;
 
     gte[0][0][0] = model_values[0][0][0] - 300;
@@ -26,6 +25,7 @@ pub fn get_user_recommendations(model: [Vec<Vec<[i32; 9]>>; 2], user: &String) -
     }
 
     //  general Statuses stats
+
     //  for y in 1..gte[0].len() {
     //      gte[0][y][0] = model_values[0][y][0] - 100;
     //      lte[0][y][0] = model_values[0][y][0] + 100;
@@ -58,3 +58,5 @@ pub fn get_user_recommendations(model: [Vec<Vec<[i32; 9]>>; 2], user: &String) -
         Err(_) => Err(500)
     }
 }
+
+fn calc_affinity_model() {}
