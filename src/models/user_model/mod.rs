@@ -1,6 +1,6 @@
-pub mod empty;
 mod avg;
 mod conversion;
+pub mod empty;
 mod gen;
 
 use crate::helper;
@@ -38,14 +38,13 @@ pub async fn get_user_model(user: &String, reload: bool) -> Result<[BaseModel; 2
     for x in 0..avg_model.len() {
         for y in 0..avg_model[x].len() {
             for z in 0..avg_model[x][y].len() {
-                averaged[x][y][z] = match avg_model[x][y][z] {
-                    0 => 0,
-                    _ => {
-                        let v = &base_model[x][y][z];
-                        let a = &avg_model[x][y][z];
-                        ((v - a) * 100) / (25 + v + a)
-                    },
+                let v = &base_model[x][y][z];
+                let a = &avg_model[x][y][z];
+                let interpolation = match v + a {
+                    -25 => 26,
+                    _ => 25
                 };
+                averaged[x][y][z] = ((v - a) * 100) / (v + a + interpolation);
             }
         }
     }

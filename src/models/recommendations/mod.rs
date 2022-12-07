@@ -56,11 +56,12 @@ impl<'a> AffinityModel<'a> {
         self.lte[0][0][0] = 100 + self.values[0][0][0] * 4;
         // general score limits
         if self.is_score_relevant {
-            self.gte[0][0][1] = self.values[0][0][1] - (25 * accuracy);
-            self.lte[0][0][1] = self.values[0][0][1] + (25 * accuracy);
-
-            self.gte[0][0][2] = self.values[0][0][2] - (15 * accuracy);
-            self.lte[0][0][2] = self.values[0][0][2] + (15 * accuracy);
+            // average score
+            self.gte[0][0][1] = self.values[0][0][1] - (10 * accuracy);
+            self.lte[0][0][1] = self.values[0][0][1] + (10 * accuracy);
+            //  average score deviation
+            self.gte[0][0][2] = self.values[0][0][2] - (10 * accuracy);
+            self.lte[0][0][2] = self.values[0][0][2] + (10 * accuracy);
         }
         self
     }
@@ -78,9 +79,16 @@ impl<'a> AffinityModel<'a> {
                     let v = &self.values[x][y][0];
                     self.gte[x][y][0] =  v - (45 * accuracy + v / 2);
                     self.lte[x][y][0] =  v + (45 * accuracy + v / 2);
-                    if self.is_score_relevant {
-                        self.gte[x][y][1] = self.values[x][y][1] - 150;
-                        self.lte[x][y][2] = self.values[x][y][2] + 150;
+                    let s = &self.values[x][y][1];
+                    if self.is_score_relevant
+                    && Self::is_stat_score_relevant(
+                        self.values[x][y][2],
+                        self.values[0][0][2],
+                        self.values[x][y][3],
+                        self.values[0][0][3],
+                    ) {
+                        self.gte[x][y][1] = s - 150;
+                        self.lte[x][y][1] = s + 150;
                     }
                 }
             }
@@ -90,6 +98,14 @@ impl<'a> AffinityModel<'a> {
 
     fn is_stat_relevant(avg_dev: i32, _value: i32, _accuracy: i32, max_dev: i32) -> bool {
         (avg_dev > max_dev / 3) || (avg_dev < max_dev / -3)
+    }
+
+    fn is_stat_score_relevant(score_dev: i32, tot_score_dev: i32, scored_pct: i32, tot_scored_pct: i32) -> bool{
+        scored_pct > tot_scored_pct
+        && (
+            score_dev < (tot_score_dev - tot_score_dev.abs() / 2)
+            || score_dev > (tot_score_dev + tot_score_dev.abs() / 2)
+        )
     }
 
 }
