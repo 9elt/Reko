@@ -38,10 +38,13 @@ pub async fn get_user_model(user: &String, reload: bool) -> Result<[BaseModel; 2
     for x in 0..avg_model.len() {
         for y in 0..avg_model[x].len() {
             for z in 0..avg_model[x][y].len() {
-                let entry = base_model[x][y][z] - avg_model[x][y][z];
                 averaged[x][y][z] = match avg_model[x][y][z] {
                     0 => 0,
-                    _ => entry * 1000 / avg_model[x][y][z],
+                    _ => {
+                        let v = &base_model[x][y][z];
+                        let a = &avg_model[x][y][z];
+                        ((v - a) * 100) / (25 + v + a)
+                    },
                 };
             }
         }
