@@ -1,3 +1,3 @@
 # Docs
 
-[API endpoints]('docs/api-endpoints')
+[API endpoints]('api-endpoints')
