@@ -1,3 +1,5 @@
+[Docs](../) > [API endpoints](/)
+
 # API endpoints
 
 ### User recommendations
