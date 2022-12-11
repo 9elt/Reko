@@ -46,6 +46,7 @@ impl<'a> AffinityModel<'a> {
     }
 
     fn calc_relevance(&'a mut self) -> &mut Self {
+        // scored percentage > 25%
         self.is_score_relevant = self.values[0][0][3] > 250;
         self
     }
@@ -57,11 +58,11 @@ impl<'a> AffinityModel<'a> {
         // general score limits
         if self.is_score_relevant {
             // average score
-            self.gte[0][0][1] = self.values[0][0][1] - (10 * accuracy);
-            self.lte[0][0][1] = self.values[0][0][1] + (10 * accuracy);
+            self.gte[0][0][1] = self.values[0][0][1] - (50 * accuracy);
+            self.lte[0][0][1] = self.values[0][0][1] + (50 * accuracy);
             //  average score deviation
-            self.gte[0][0][2] = self.values[0][0][2] - (10 * accuracy);
-            self.lte[0][0][2] = self.values[0][0][2] + (10 * accuracy);
+            self.gte[0][0][2] = self.values[0][0][2] - (80 * accuracy);
+            self.lte[0][0][2] = self.values[0][0][2] + (80 * accuracy);
         }
         self
     }
@@ -75,37 +76,44 @@ impl<'a> AffinityModel<'a> {
                 }
             }
             for y in 0..self.gte[x].len() {
-                if Self::is_stat_relevant(self.avgs[x][y][0], self.values[x][y][0], accuracy, max_dev) {
+                if Self::is_stat_relevant(self.avgs[x][y][0], max_dev, self.values[x][y][0]) {
                     let v = &self.values[x][y][0];
-                    self.gte[x][y][0] =  v - (45 * accuracy + v / 2);
-                    self.lte[x][y][0] =  v + (45 * accuracy + v / 2);
-                    let s = &self.values[x][y][1];
-                    if self.is_score_relevant
-                    && Self::is_stat_score_relevant(
-                        self.values[x][y][2],
-                        self.values[0][0][2],
-                        self.values[x][y][3],
-                        self.values[0][0][3],
-                    ) {
-                        self.gte[x][y][1] = s - 150;
-                        self.lte[x][y][1] = s + 150;
+                    if v < &5 {
+                        self.gte[x][y][0] = v - (4 * accuracy + v / 2);
+                        self.lte[x][y][0] = v + (4 * accuracy + v / 2);
+                    } else {
+                        self.gte[x][y][0] = v - (3 * accuracy + v / 2);
+                        self.lte[x][y][0] = v + (3 * accuracy + v / 2);  
                     }
+
+                    // if Self::is_stat_score_relevant(
+                    //     self.values[x][y][2],
+                    //     self.values[0][0][2],
+                    //     self.values[x][y][3],
+                    //     self.values[0][0][3],
+                    // ) {
+                    //     let s = &self.values[x][y][1];
+                    //     self.gte[x][y][1] = s - 80;
+                    //     self.lte[x][y][1] = s + 80;
+                    // }
                 }
             }
         }
         self
     }
 
-    fn is_stat_relevant(avg_dev: i32, _value: i32, _accuracy: i32, max_dev: i32) -> bool {
-        (avg_dev > max_dev / 3) || (avg_dev < max_dev / -3)
+    fn is_stat_relevant(avg_dev: i32, max_dev: i32, value: i32) -> bool {
+        (avg_dev > max_dev / 3) || (avg_dev < max_dev / -3) || value == 0
     }
 
-    fn is_stat_score_relevant(score_dev: i32, tot_score_dev: i32, scored_pct: i32, tot_scored_pct: i32) -> bool{
+    fn _is_stat_score_relevant(
+        score_dev: i32,
+        tot_score_dev: i32,
+        scored_pct: i32,
+        tot_scored_pct: i32,
+    ) -> bool {
         scored_pct > tot_scored_pct
-        && (
-            score_dev < (tot_score_dev - tot_score_dev.abs() / 2)
-            || score_dev > (tot_score_dev + tot_score_dev.abs() / 2)
-        )
+            && (score_dev < (tot_score_dev - tot_score_dev.abs() / 2)
+                || score_dev > (tot_score_dev + tot_score_dev.abs() / 2))
     }
-
 }
