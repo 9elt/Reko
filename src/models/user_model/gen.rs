@@ -13,6 +13,7 @@ type BaseModel = Vec<Vec<[i32; 9]>>;
 pub async fn generate_base_model(user: String, reload: bool) -> Result<BaseModel, u16> {
     let mut time = time_elapsed::start("model");
 
+    //  replace reload !!!
     let list = match helper::get_detailed_list(&user, reload).await {
         Ok(l) => l,
         Err(e) => return Err(e),
@@ -23,20 +24,26 @@ pub async fn generate_base_model(user: String, reload: bool) -> Result<BaseModel
     let mut model: BaseModel = empty::model();
 
     for i in 0..list.len() {
+
         let status: usize = list[i].status() as usize;
         let st_idx: usize = status + 3;
 
-        let score: i32 = list[i].score();
+        let user_score: i32 = list[i].score();
+
+        let score: i32 = match list[i].mean() {
+            Some(mean) =>  mean as i32,
+            None => continue,
+        };
 
         let dev: i32 = match list[i].mean() {
-            Some(mean) => match score {
+            Some(mean) => match user_score {
                 0 => 0,
-                _ => score - mean as i32,
+                _ => user_score - mean as i32,
             },
             None => 0,
         };
 
-        let s_cnt = match score {
+        let s_cnt = match user_score {
             0 => 0,
             _ => 1,
         };
@@ -97,9 +104,9 @@ pub async fn generate_base_model(user: String, reload: bool) -> Result<BaseModel
     //  general stats > statuses
     for i in 1..6 {
         //  status average score
-        model[0][i][1] = match model[0][i][3] {
+        model[0][i][1] = match model[0][i][0] {
             0 => 0,
-            _ => model[0][i][1] / model[0][i][3],
+            _ => model[0][i][1] / model[0][i][0],
         };
         //  total average score deviation
         model[0][i][2] = match model[0][i][3] {
@@ -119,9 +126,9 @@ pub async fn generate_base_model(user: String, reload: bool) -> Result<BaseModel
     }
 
     //  total average score
-    model[0][0][1] = match model[0][0][3] {
+    model[0][0][1] = match model[0][0][0] {
         0 => 0,
-        _ => model[0][0][1] / model[0][0][3],
+        _ => model[0][0][1] / model[0][0][0],
     };
 
     //  total average score deviation
@@ -145,9 +152,9 @@ pub async fn generate_base_model(user: String, reload: bool) -> Result<BaseModel
 
         for y in 0..model[x].len() {
             //  average score
-            model[x][y][1] = match model[x][y][3] {
+            model[x][y][1] = match model[x][y][0] {
                 0 => 0,
-                _ => model[x][y][1] / model[x][y][3],
+                _ => model[x][y][1] / model[x][y][0],
             };
             //  total average score deviation
             model[x][y][2] = match model[x][y][3] {
