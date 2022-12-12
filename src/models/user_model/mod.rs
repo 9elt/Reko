@@ -8,23 +8,23 @@ type BaseModel = Vec<Vec<[i32; 9]>>;
 
 pub async fn get_user_model(user: &String, reload: bool) -> Result<[BaseModel; 2], u16> {
     let mut base_model = vec![];
-    let mut _update_required = false;
+    let mut update_required: bool;
 
     let check_db = helper::get_user_model(&user);
     match check_db {
         Ok(model) => {
-            _update_required = model.requires_update();
+            update_required = model.requires_update();
             match model.model() {
                 Some(m) => {
                     base_model = m;
                 }
-                None => _update_required = true,
+                None => update_required = true,
             }
         }
-        Err(_) => _update_required = true,
+        Err(_) => update_required = true,
     }
 
-    if _update_required || reload {
+    if update_required || reload {
         base_model = match gen::generate_base_model(user.to_owned(), reload).await {
             Ok(m) => m,
             Err(e) => return Err(e),
