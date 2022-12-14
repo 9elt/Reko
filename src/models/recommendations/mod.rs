@@ -76,26 +76,13 @@ impl<'a> AffinityModel<'a> {
                 }
             }
             for y in 0..self.gte[x].len() {
+                let v = &self.values[x][y][0];
                 if Self::is_stat_relevant(self.avgs[x][y][0], max_dev, self.values[x][y][0]) {
-                    let v = &self.values[x][y][0];
-                    if v < &5 {
-                        self.gte[x][y][0] = v - (4 * accuracy + v / 2);
-                        self.lte[x][y][0] = v + (4 * accuracy + v / 2);
-                    } else {
-                        self.gte[x][y][0] = v - (3 * accuracy + v / 2);
-                        self.lte[x][y][0] = v + (3 * accuracy + v / 2);  
-                    }
-
-                    // if Self::is_stat_score_relevant(
-                    //     self.values[x][y][2],
-                    //     self.values[0][0][2],
-                    //     self.values[x][y][3],
-                    //     self.values[0][0][3],
-                    // ) {
-                    //     let s = &self.values[x][y][1];
-                    //     self.gte[x][y][1] = s - 80;
-                    //     self.lte[x][y][1] = s + 80;
-                    // }
+                    self.gte[x][y][0] = v - (5 * accuracy + v / 2);
+                    self.lte[x][y][0] = v + (5 * accuracy + v / 2);
+                } else {
+                    self.gte[x][y][0] = v - (10 * accuracy + v / 2);
+                    self.lte[x][y][0] = v + (10 * accuracy + v / 2);
                 }
             }
         }
@@ -103,7 +90,7 @@ impl<'a> AffinityModel<'a> {
     }
 
     fn is_stat_relevant(avg_dev: i32, max_dev: i32, value: i32) -> bool {
-        (avg_dev > max_dev / 3) || (avg_dev < max_dev / -3) || value == 0
+        (avg_dev > max_dev / 2) || (avg_dev < max_dev / -2) || value == 0
     }
 
     fn _is_stat_score_relevant(

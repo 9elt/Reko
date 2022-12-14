@@ -2,6 +2,7 @@ mod avg;
 mod conversion;
 pub mod empty;
 mod gen;
+mod model_struct;
 
 use crate::helper;
 type BaseModel = Vec<Vec<[i32; 9]>>;
