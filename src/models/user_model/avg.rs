@@ -48,6 +48,22 @@ pub fn model() -> Vec<Vec<[i32; 9]>> {
             [2, 2303, -105, 1, 0, 0, 1, 0, 0],
         ],
 
+            /*
+                Detailed Stats [i32; 9]
+
+                0 => Watched %,
+
+                1 => Average Score,
+                2 => Score deviation,
+                3 => Scored %,
+
+                4 => Completed %,
+                5 => Plan to Watch %,
+                6 => Watching %,
+                7 => On Hold %,
+                8 => Dropped %
+            */
+
         //  1 => Airing Decades
         vec![
             //  0 => 1980s (0 - 1989)
