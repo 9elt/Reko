@@ -25,7 +25,7 @@ pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2], user: &String
     for x in 0..gte.len() {
         for y in 0..gte[x].len() {
             for z in 0..gte[x][y].len() {
-                if gte[x][y][z] == 69420 {
+                if gte[x][y][z] == 4095 {
                     continue;
                 }
 
