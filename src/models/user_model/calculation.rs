@@ -131,7 +131,6 @@ pub async fn stats_model(user: String, reload: bool) -> Result<UserModel, u16> {
 /// takes a user stats model and returns its standard deviation model
 pub fn std_dev_model(base_model: &UserModel) -> UserModel {
     let mut avg_model = UserModel::average();
-
     for x in 0..avg_model.len() {
         for y in 0..avg_model[x].len() {
             for z in 0..avg_model[x][y].len() {
@@ -145,7 +144,7 @@ pub fn std_dev_model(base_model: &UserModel) -> UserModel {
             }
         }
     }
-
+    avg_model[0][6] = [0; 9];
     avg_model
 }
 
