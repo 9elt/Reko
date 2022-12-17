@@ -1,26 +1,16 @@
-use crate::helper;
 use crate::utils::time_elapsed;
+use crate::helper;
+use super::init;
+use super::conversion::{
+    date_to_index,
+    genre_id_to_index,
+    n_episodes_to_index,
+    rating_to_index
+};
 
-use super::model_struct::{ModelHelper, UserModel};
+type UserModel = Vec<Vec<[i32; 9]>>;
 
-pub fn pop_stat(stat: ModelHelper, info: EntryInfo, has_status: bool) {
-    stat.incr_percentage();
-    stat.incr_score(info.score);
-    stat.incr_score_deviation(info.deviation);
-    stat.incr_scored_percentage(info.score_count);
-    if has_status {
-        stat.incr_status(info.status);
-    };
-}
-
-struct EntryInfo {
-    score: i32,
-    deviation: i32,
-    score_count: i32,
-    status: usize,
-}
-
-pub async fn generate_base_model(user: String, reload: bool) -> Result<UserModel, u16> {
+pub async fn base_model(user: String, reload: bool) -> Result<UserModel, u16> {
     let mut time = time_elapsed::start("model");
 
     let list = match helper::get_detailed_list(&user, reload).await {
@@ -30,59 +20,74 @@ pub async fn generate_base_model(user: String, reload: bool) -> Result<UserModel
 
     time.log(format!("[{}] list retrieved", user)).timestamp();
 
-    let mut model = UserModel::empty();
+    let mut model: UserModel = init::empty();
 
     for i in 0..list.len() {
+
+        let status: usize = list[i].status() as usize;
+        let st_idx: usize = status + 3;
+
         let user_score: i32 = list[i].score();
+
         let score: i32 = match list[i].mean() {
-            Some(mean) => mean as i32,
+            Some(mean) =>  mean as i32,
             None => continue,
         };
 
-        let entry_info = EntryInfo {
-            score,
-            deviation: match user_score {
+        let dev: i32 = match list[i].mean() {
+            Some(mean) => match user_score {
                 0 => 0,
-                _ => user_score - score as i32,
+                _ => user_score - mean as i32,
             },
-            score_count: match user_score {
-                0 => 0,
-                _ => 1,
-            },
-            status: list[i].status() as usize,
+            None => 0,
         };
 
-        pop_stat(model.general(), entry_info, false);
+        let s_cnt = match user_score {
+            0 => 0,
+            _ => 1,
+        };
 
-        pop_stat(model.general_status(entry_info.status), entry_info, false);
+        //  general stats > Score Stats
+        pupulate_stat(&mut model, 0, 0, score, dev, s_cnt, None);
 
+        //  general stats > Status Stats
+        pupulate_stat(&mut model, 0, status, score, dev, s_cnt, None);
+
+        //  detailed stats > airing decades
         match list[i].airing_date() {
             Some(data) => {
-                pop_stat(model.date_to_model_airing_decade(data), entry_info, true);
+                let v: [usize; 2] = date_to_index(data);
+                pupulate_stat(&mut model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
             }
             None => (),
         }
 
+        //  detailed stats > ratings
         match list[i].rating() {
             Some(data) => {
-                pop_stat(model.rating_id_to_rating(data), entry_info, true);
+                let v: [usize; 2] = rating_to_index(data);
+                pupulate_stat(&mut model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
             }
             None => (),
         }
 
+        //  detailed stats > series length
         match list[i].num_episodes() {
             Some(data) => {
-                pop_stat(model.n_episodes_to_series_length(data), entry_info, true);
+                let v: [usize; 2] = n_episodes_to_index(data);
+                pupulate_stat(&mut model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
             }
             None => (),
         }
 
-        match list[i].genres() {
+        //  detailed stats > genres | themes | demographics
+        match list[i].genres().to_owned() {
             Some(genres) => {
                 for g in genres.iter() {
                     match g.to_owned() {
                         Some(data) => {
-                            pop_stat(model.genre_id_to_genres(data), entry_info, true);
+                            let v: [usize; 2] = genre_id_to_index(data);
+                            pupulate_stat(&mut model, v[0], v[1], score, dev, s_cnt, Some(st_idx));
                         }
                         None => (),
                     }
@@ -178,8 +183,7 @@ pub async fn generate_base_model(user: String, reload: bool) -> Result<UserModel
         }
     }
 
-    time.log(format!("[{}] base model generation", user))
-        .timestamp();
+    time.log(format!("[{}] base model generation", user)).timestamp();
 
     helper::save_user_model(&user, model.to_owned());
 
@@ -188,4 +192,43 @@ pub async fn generate_base_model(user: String, reload: bool) -> Result<UserModel
     time.end();
 
     Ok(model)
+}
+
+fn pupulate_stat(
+    m: &mut UserModel,
+    stat_type: usize,
+    stat: usize,
+    score: i32,
+    deviation: i32,
+    scored_perc: i32,
+    status: Option<usize>,
+) {
+    m[stat_type][stat][0] += 1;
+    m[stat_type][stat][1] += score;
+    m[stat_type][stat][2] += deviation;
+    m[stat_type][stat][3] += scored_perc;
+    match status {
+        Some(s) => m[stat_type][stat][s] += 1,
+        None => (),
+    };
+}
+
+pub fn std_dev_model(base_model: &UserModel) -> UserModel {
+    let mut avg_model = init::average();
+
+    for x in 0..avg_model.len() {
+        for y in 0..avg_model[x].len() {
+            for z in 0..avg_model[x][y].len() {
+                let v = &base_model[x][y][z];
+                let a = &avg_model[x][y][z];
+                let interpolation = match v + a {
+                    -25 => 26,
+                    _ => 25
+                };
+                avg_model[x][y][z] = ((v - a) * 100) / (v + a + interpolation);
+            }
+        }
+    }
+
+    avg_model
 }

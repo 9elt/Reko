@@ -1,6 +1,5 @@
-mod affinity;
-
 use crate::helper;
+use crate::models::user_model::init;
 
 type Model = Vec<Vec<[i32; 9]>>;
 
@@ -27,8 +26,8 @@ pub fn get_user_recommendations(
 impl<'a> AffinityModel<'a> {
     fn new(values: &'a Model, avgs: &'a Model) -> Self {
         Self {
-            gte: affinity::model(),
-            lte: affinity::model(),
+            gte: init::empty_affinity(),
+            lte: init::empty_affinity(),
             values,
             avgs,
             is_score_relevant: false,
