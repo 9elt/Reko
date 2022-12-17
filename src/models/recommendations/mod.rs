@@ -52,7 +52,7 @@ impl<'a> AffinityModel<'a> {
 
     fn calc_general_stats(&'a mut self, accuracy: i32) -> &mut Self {
         // list size limits
-        self.gte[0][0][0] = self.values[0][0][0] - 300;
+        self.gte[0][0][0] = self.values[0][0][0] / 2;
         self.lte[0][0][0] = 300 + self.values[0][0][0] * 8;
         // average mal mean score +- 0.5
         self.gte[0][0][1] = self.values[0][0][1] - (50 * accuracy);
@@ -81,6 +81,8 @@ impl<'a> AffinityModel<'a> {
     }
 
     fn calc_detailed_stats(&'a mut self, accuracy: i32) -> &mut Self {
+        let mut count: i32 = 1;
+        let mut tot_accuracy: i32 = 0;
         for x in 1..self.gte.len() {
             let mut max_dev: i32 = 0;
             let mut max_val: i32 = 0;
@@ -107,8 +109,14 @@ impl<'a> AffinityModel<'a> {
 
                 self.gte[x][y][0] = v - (10 * stat_accuracy + v);
                 self.lte[x][y][0] = v + (10 * stat_accuracy + v);
+
+                count += 1;
+                tot_accuracy += v + (10 * stat_accuracy + v);
             }
         }
+        tot_accuracy = tot_accuracy / count;
+
+        println!("average accuracy: {tot_accuracy}");
         self
     }
 

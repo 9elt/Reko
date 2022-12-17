@@ -31,12 +31,6 @@ impl UserModel {
         }
     }
 
-    pub fn empty_affinity() -> Self {
-        Self {
-            model: init::empty_affinity(),
-        }
-    }
-
     pub fn average() -> Self {
         Self {
             model: init::average(),
