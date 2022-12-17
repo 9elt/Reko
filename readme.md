@@ -10,7 +10,7 @@
 - [X] setup db connection pool
 - [X] average model
 - [X] jsonb queries
-- [ ] model affinity alorithm
+- [X] model affinity alorithm
 - [ ] recommendations
 
 ### Project structure
