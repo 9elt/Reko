@@ -22,6 +22,7 @@ struct EntryInfo<'a> {
 pub async fn stats_model(user: String, reload: bool) -> Result<UserModel, u16> {
     let mut time = time_elapsed::start("model");
 
+    // retrieve list
     let list = match helper::get_detailed_list(&user, reload).await {
         Ok(l) => l,
         Err(e) => return Err(e),
@@ -31,14 +32,12 @@ pub async fn stats_model(user: String, reload: bool) -> Result<UserModel, u16> {
 
     let mut model = UserModel::empty();
 
-    for i in 0..list.len() {
-
-        let user_score: i32 = list[i].score();
-        let score: i32 = match list[i].mean() {
+    for entry in list.iter() {
+        let user_score: i32 = entry.score();
+        let score: i32 = match entry.mean() {
             Some(mean) =>  mean as i32,
             None => continue,
         };
-
         let mut entry_info = EntryInfo {
             model: &mut model,
             score,
@@ -50,36 +49,36 @@ pub async fn stats_model(user: String, reload: bool) -> Result<UserModel, u16> {
                 0 => 0,
                 _ => 1,
             },
-            status: list[i].status() as usize,
+            status: entry.status() as usize,
         };
 
-        //  general stats > Score Stats
+        // general
         pupulate_stat([0, 0], &mut entry_info);
-        //  general stats > Status Stats
+        // status
         pupulate_stat([0, entry_info.status], &mut entry_info);
-        //  detailed stats > airing decades
-        match list[i].airing_date() {
+        // airing decades
+        match entry.airing_date() {
             Some(data) => {
                 pupulate_stat(date_to_index(data), &mut entry_info);
             }
             None => (),
         }
-        //  detailed stats > ratings
-        match list[i].rating() {
+        // ratings
+        match entry.rating() {
             Some(data) => {
                 pupulate_stat(rating_to_index(data), &mut entry_info);
             }
             None => (),
         }
-        //  detailed stats > series length
-        match list[i].num_episodes() {
+        // series length
+        match entry.num_episodes() {
             Some(data) => {
                 pupulate_stat(n_episodes_to_index(data), &mut entry_info);
             }
             None => (),
         }
-        //  detailed stats > genres | themes | demographics
-        match list[i].genres().to_owned() {
+        // genres | themes | demographics
+        match entry.genres().to_owned() {
             Some(genres) => {
                 for g in genres.iter() {
                     match g.to_owned() {
@@ -123,7 +122,6 @@ pub async fn stats_model(user: String, reload: bool) -> Result<UserModel, u16> {
     helper::save_user_model(&user, model.copy_to_vec());
 
     time.log(format!("[{}] model saved", user)).timestamp();
-
     time.end();
 
     Ok(model)
