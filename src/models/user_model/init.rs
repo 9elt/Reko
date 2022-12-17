@@ -1,6 +1,6 @@
 pub fn empty() -> Vec<Vec<[i32; 9]>> {
     vec![
-        vec![[0; 9]; 6],
+        vec![[0; 9]; 7],
         vec![[0; 9]; 5],
         vec![[0; 9]; 6],
         vec![[0; 9]; 5],
@@ -12,7 +12,7 @@ pub fn empty() -> Vec<Vec<[i32; 9]>> {
 
 pub fn empty_affinity() -> Vec<Vec<[i32; 9]>> {
     vec![
-        vec![[4095; 9]; 6],
+        vec![[4095; 9]; 7],
         vec![[4095; 9]; 5],
         vec![[4095; 9]; 6],
         vec![[4095; 9]; 5],
