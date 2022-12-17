@@ -53,43 +53,67 @@ impl<'a> AffinityModel<'a> {
     fn calc_general_stats(&'a mut self, accuracy: i32) -> &mut Self {
         // list size limits
         self.gte[0][0][0] = self.values[0][0][0] - 300;
-        self.lte[0][0][0] = 100 + self.values[0][0][0] * 4;
-        // general score limits
+        self.lte[0][0][0] = 300 + self.values[0][0][0] * 8;
+        // average mal mean score +- 0.5
+        self.gte[0][0][1] = self.values[0][0][1] - (50 * accuracy);
+        self.lte[0][0][1] = self.values[0][0][1] + (50 * accuracy);
         if self.is_score_relevant {
-            // average score
-            self.gte[0][0][1] = self.values[0][0][1] - (50 * accuracy);
-            self.lte[0][0][1] = self.values[0][0][1] + (50 * accuracy);
-            //  average score deviation
+            //  average score deviation +- 0.8
             self.gte[0][0][2] = self.values[0][0][2] - (80 * accuracy);
             self.lte[0][0][2] = self.values[0][0][2] + (80 * accuracy);
         }
+        // completed += 35%
+        self.gte[0][1][0] = self.values[0][1][0] - (350 * accuracy);
+        self.lte[0][1][0] = self.values[0][1][0] + (350 * accuracy);
+        // ptw += 35%
+        self.gte[0][2][0] = self.values[0][2][0] - (350 * accuracy);
+        self.lte[0][2][0] = self.values[0][2][0] + (350 * accuracy);
+        // watching += 35%
+        self.gte[0][3][0] = self.values[0][3][0] - (350 * accuracy);
+        self.lte[0][3][0] = self.values[0][3][0] + (350 * accuracy);
+        // onhold += 35%
+        self.gte[0][4][0] = self.values[0][4][0] - (350 * accuracy);
+        self.lte[0][4][0] = self.values[0][4][0] + (350 * accuracy);
+        // dropped += 35%
+        self.gte[0][5][0] = self.values[0][5][0] - (350 * accuracy);
+        self.lte[0][5][0] = self.values[0][5][0] + (350 * accuracy);
         self
     }
 
     fn calc_detailed_stats(&'a mut self, accuracy: i32) -> &mut Self {
         for x in 1..self.gte.len() {
             let mut max_dev: i32 = 0;
+            let mut max_val: i32 = 0;
             for y in 0..self.gte[x].len() {
                 if self.avgs[x][y][0].abs() > max_dev.abs() {
                     max_dev = self.avgs[x][y][0].abs();
                 }
+                if self.values[x][y][0] > max_val {
+                    max_val = self.values[x][y][0];
+                }
             }
             for y in 0..self.gte[x].len() {
+                let stat_accuracy = match Self::is_stat_relevant(
+                    self.avgs[x][y][0],
+                    max_dev,
+                    self.values[x][y][0],
+                    max_val,
+                ) {
+                    true => accuracy,
+                    false => accuracy * 5,
+                };
+
                 let v = &self.values[x][y][0];
-                if Self::is_stat_relevant(self.avgs[x][y][0], max_dev, self.values[x][y][0]) {
-                    self.gte[x][y][0] = v - (5 * accuracy + v / 2);
-                    self.lte[x][y][0] = v + (5 * accuracy + v / 2);
-                } else {
-                    self.gte[x][y][0] = v - (10 * accuracy + v / 2);
-                    self.lte[x][y][0] = v + (10 * accuracy + v / 2);
-                }
+
+                self.gte[x][y][0] = v - (10 * stat_accuracy + v);
+                self.lte[x][y][0] = v + (10 * stat_accuracy + v);
             }
         }
         self
     }
 
-    fn is_stat_relevant(avg_dev: i32, max_dev: i32, value: i32) -> bool {
-        (avg_dev > max_dev / 2) || (avg_dev < max_dev / -2) || value == 0
+    fn is_stat_relevant(avg_dev: i32, max_dev: i32, value: i32, max_val: i32) -> bool {
+        (avg_dev > max_dev / 2) || (avg_dev < max_dev / -2) || value == 0 || value > (max_val * 2) / 3
     }
 
     fn _is_stat_score_relevant(

@@ -6,21 +6,23 @@ use crate::utils::database::schema::users::dsl::*;
 use diesel::{prelude::*, sql_query};
 use chrono::Utc;
 
+type Model = Vec<Vec<[i32; 9]>>;
+
 /*
 *  AFFINITY USERS
 */
 
-pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2], user: &String) -> Result<Vec<String>, diesel::result::Error> {
+pub fn get_affinity_users(affinity_model: [Model; 2], user: &String) -> Result<Vec<String>, diesel::result::Error> {
 
-    let time = time_elapsed::start("db users");
+    let mut time = time_elapsed::start("db affinity users");
 
     let mut query = format!("
         SELECT user_name FROM users
         WHERE user_name != '{}'
     ", user);
 
-    let gte = affinity_model[0].to_owned();
-    let lte = affinity_model[1].to_owned();
+    let gte: &Model = &affinity_model[0];
+    let lte: &Model = &affinity_model[1];
 
     for x in 0..gte.len() {
         for y in 0..gte[x].len() {
@@ -28,7 +30,6 @@ pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2], user: &String
                 if gte[x][y][z] == 4095 {
                     continue;
                 }
-
                 query = format!(
                     "{}
                     AND (model->{}->{}->{})::int >= {}
@@ -40,6 +41,8 @@ pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2], user: &String
             }
         }
     }
+
+    time.log("query built");
 
     let affinity_users = sql_query(query)
         .load::<DBUserNames>(&mut connection::POOL.get().unwrap());
