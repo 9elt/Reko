@@ -1,7 +1,7 @@
 use super::init;
 use std::ops::{Index, IndexMut};
 
-pub type Model = Vec<Vec<[i32; 9]>>;
+pub type Model = Vec<ModelSlice>;
 pub type ModelSlice = Vec<[i32; 9]>;
 
 #[derive(Debug, Clone)]

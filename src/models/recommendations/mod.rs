@@ -9,6 +9,7 @@ struct AffinityModel<'a> {
     values: &'a Model,
     avgs: &'a Model,
     is_score_relevant: bool,
+    accuracy: i32,
 }
 
 pub fn get_user_recommendations(
@@ -17,7 +18,7 @@ pub fn get_user_recommendations(
 ) -> Result<Vec<String>, u16> {
     let mut affinity_model: AffinityModel = AffinityModel::new(&model[0], &model[1]);
 
-    match helper::get_affinity_users(affinity_model.calc(1).to_array(), user) {
+    match helper::get_affinity_users(affinity_model.calc(10).to_array(), user) {
         Ok(v) => Ok(v),
         Err(_) => Err(500),
     }
@@ -31,6 +32,7 @@ impl<'a> AffinityModel<'a> {
             values,
             avgs,
             is_score_relevant: false,
+            accuracy: 10,
         }
     }
 
@@ -40,8 +42,65 @@ impl<'a> AffinityModel<'a> {
 
     fn calc(&'a mut self, accuracy: i32) -> &mut Self {
         self.calc_relevance()
-            .calc_general_stats(accuracy)
-            .calc_detailed_stats(accuracy)
+            .calc_accuracy(accuracy)
+            .calc_general_stats()
+            .calc_detailed_stats()
+    }
+
+    fn calc_accuracy(&'a mut self, accuracy: i32) -> &mut Self {
+        let mut tot_dev = 0;
+        let mut max_dev = 0;
+        let mut c_0 = 0;
+        for x in 0..self.gte.len(){
+            for y in 0..self.gte[x].len() {
+                for z in 0..self.gte[x][y].len() {
+                    tot_dev += self.avgs[x][y][z].abs();
+                    if self.avgs[x][y][z].abs() > max_dev {
+                        max_dev = self.avgs[x][y][z].abs();
+                    }
+                    if self.avgs[x][y][z] == 0 {
+                        c_0 += 1;
+                    }
+                }
+            }
+        }
+        //tot_dev = tot_dev / c;
+        println!("list length: {}", self.values[0][0][0]);
+        println!("TOT avg deviation: {tot_dev}");
+        tot_dev = tot_dev / 892;
+        println!("TOT avg deviation: {tot_dev}");
+        println!("MAX avg deviation: {max_dev}");
+        println!("avg 0s: {c_0}");
+
+        let le = self.values[0][0][0] * 2 / 100;
+        let lev = match le {
+                0 => 22,
+                1 => 22,
+
+                2 => 14,
+                3 => 9,
+
+                4 => 5,
+                5 => 3,
+
+                6 => 2,
+                7 => 2,
+
+                8 => 1,
+                9 => 1,
+
+                _ => 0,
+        };
+
+        let ov = tot_dev - 45;
+        let adj = ov / (2 + ov / 16);
+        // if adj > tot_dev / 4 {
+        //     adj = tot_dev / 4;
+        // }
+
+        self.accuracy = accuracy + adj + lev;
+        println!("accuracy: {}", self.accuracy);
+        self
     }
 
     fn calc_relevance(&'a mut self) -> &mut Self {
@@ -50,37 +109,37 @@ impl<'a> AffinityModel<'a> {
         self
     }
 
-    fn calc_general_stats(&'a mut self, accuracy: i32) -> &mut Self {
+    fn calc_general_stats(&'a mut self) -> &mut Self {
         // list size limits
         self.gte[0][0][0] = self.values[0][0][0] / 2;
         self.lte[0][0][0] = 300 + self.values[0][0][0] * 8;
         // average mal mean score +- 0.5
-        self.gte[0][0][1] = self.values[0][0][1] - (50 * accuracy);
-        self.lte[0][0][1] = self.values[0][0][1] + (50 * accuracy);
+        self.gte[0][0][1] = self.values[0][0][1] - (5 * self.accuracy);
+        self.lte[0][0][1] = self.values[0][0][1] + (5 * self.accuracy);
         if self.is_score_relevant {
             //  average score deviation +- 0.8
-            self.gte[0][0][2] = self.values[0][0][2] - (80 * accuracy);
-            self.lte[0][0][2] = self.values[0][0][2] + (80 * accuracy);
+            self.gte[0][0][2] = self.values[0][0][2] - (8 * self.accuracy);
+            self.lte[0][0][2] = self.values[0][0][2] + (8 * self.accuracy);
         }
         // completed += 35%
-        self.gte[0][1][0] = self.values[0][1][0] - (350 * accuracy);
-        self.lte[0][1][0] = self.values[0][1][0] + (350 * accuracy);
+        self.gte[0][1][0] = self.values[0][1][0] - (35 * self.accuracy);
+        self.lte[0][1][0] = self.values[0][1][0] + (35 * self.accuracy);
         // ptw += 35%
-        self.gte[0][2][0] = self.values[0][2][0] - (350 * accuracy);
-        self.lte[0][2][0] = self.values[0][2][0] + (350 * accuracy);
+        self.gte[0][2][0] = self.values[0][2][0] - (35 * self.accuracy);
+        self.lte[0][2][0] = self.values[0][2][0] + (35 * self.accuracy);
         // watching += 35%
-        self.gte[0][3][0] = self.values[0][3][0] - (350 * accuracy);
-        self.lte[0][3][0] = self.values[0][3][0] + (350 * accuracy);
+        self.gte[0][3][0] = self.values[0][3][0] - (35 * self.accuracy);
+        self.lte[0][3][0] = self.values[0][3][0] + (35 * self.accuracy);
         // onhold += 35%
-        self.gte[0][4][0] = self.values[0][4][0] - (350 * accuracy);
-        self.lte[0][4][0] = self.values[0][4][0] + (350 * accuracy);
+        self.gte[0][4][0] = self.values[0][4][0] - (35 * self.accuracy);
+        self.lte[0][4][0] = self.values[0][4][0] + (35 * self.accuracy);
         // dropped += 35%
-        self.gte[0][5][0] = self.values[0][5][0] - (350 * accuracy);
-        self.lte[0][5][0] = self.values[0][5][0] + (350 * accuracy);
+        self.gte[0][5][0] = self.values[0][5][0] - (35 * self.accuracy);
+        self.lte[0][5][0] = self.values[0][5][0] + (35 * self.accuracy);
         self
     }
 
-    fn calc_detailed_stats(&'a mut self, accuracy: i32) -> &mut Self {
+    fn calc_detailed_stats(&'a mut self) -> &mut Self {
         let mut count: i32 = 1;
         let mut tot_accuracy: i32 = 0;
         for x in 1..self.gte.len() {
@@ -101,17 +160,17 @@ impl<'a> AffinityModel<'a> {
                     self.values[x][y][0],
                     max_val,
                 ) {
-                    true => accuracy,
-                    false => accuracy * 5,
+                    true => self.accuracy,
+                    false => self.accuracy * 5,
                 };
 
                 let v = &self.values[x][y][0];
 
-                self.gte[x][y][0] = v - (10 * stat_accuracy + v);
-                self.lte[x][y][0] = v + (10 * stat_accuracy + v);
+                self.gte[x][y][0] = v - (stat_accuracy + v);
+                self.lte[x][y][0] = v + (stat_accuracy + v);
 
                 count += 1;
-                tot_accuracy += v + (10 * stat_accuracy + v);
+                tot_accuracy += v + (stat_accuracy + v);
             }
         }
         tot_accuracy = tot_accuracy / count;
