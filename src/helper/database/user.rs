@@ -42,6 +42,8 @@ pub fn get_affinity_users(affinity_model: [Model; 2], user: &String) -> Result<V
         }
     }
 
+    query = format!("{} LIMIT 20", query);
+
     time.log("query built");
 
     let affinity_users = sql_query(query)

@@ -66,39 +66,31 @@ impl<'a> AffinityModel<'a> {
         }
         //tot_dev = tot_dev / c;
         println!("list length: {}", self.values[0][0][0]);
+        println!("list length dev: {}", self.avgs[0][0][0]);
         println!("TOT avg deviation: {tot_dev}");
         tot_dev = tot_dev / 892;
         println!("TOT avg deviation: {tot_dev}");
         println!("MAX avg deviation: {max_dev}");
         println!("avg 0s: {c_0}");
 
-        let le = self.values[0][0][0] * 2 / 100;
-        let lev = match le {
-                0 => 22,
-                1 => 22,
+        const EXP_DEV: i32 = 45;
 
-                2 => 14,
-                3 => 9,
-
-                4 => 5,
-                5 => 3,
-
-                6 => 2,
-                7 => 2,
-
-                8 => 1,
-                9 => 1,
-
-                _ => 0,
+        let len = match self.avgs[0][0][0] > 0 {
+            true => self.avgs[0][0][0].abs() / -10,
+            false => self.avgs[0][0][0].abs() / 10
         };
+        let mut ov = tot_dev - EXP_DEV;
+        if ov < 0 {
+            ov = 0;
+        }
+        let adj = (ov + len) / (2 + ov / (EXP_DEV / 3));
+        // needs iterpolation for adj and lev
+        // adj sjo
 
-        let ov = tot_dev - 45;
-        let adj = ov / (2 + ov / 16);
-        // if adj > tot_dev / 4 {
-        //     adj = tot_dev / 4;
-        // }
+        println!("lev: {}", len);
+        println!("adj: {}", adj);
 
-        self.accuracy = accuracy + adj + lev;
+        self.accuracy = accuracy + adj + len;
         println!("accuracy: {}", self.accuracy);
         self
     }
