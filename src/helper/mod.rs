@@ -1,7 +1,7 @@
 mod database;
 mod mal_api;
 
-use crate::utils::time_elapsed;
+use time_elapsed;
 
 use std::collections::HashSet;
 use std::iter::FromIterator;

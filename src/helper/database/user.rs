@@ -1,5 +1,5 @@
 use super::DBUserNames;
-use crate::utils::time_elapsed;
+use time_elapsed;
 use crate::utils::conversion::common;
 use crate::utils::database::connection;
 use crate::utils::database::schema::users::dsl::*;
