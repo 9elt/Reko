@@ -20,17 +20,19 @@ src
 │   main.rs
 │   router.rs
 │   controller.rs
-└─> models
+└─> algorithm
 │   │   mod.rs
-│   └─> recommendations
-│   │       affinity.rs
-│   │       mod.rs
-│   └─> user_model
-│           gen.rs
-│           conversion.rs
-│           empty.rs
-│           avg.rs
+│   └─> model
 │           mod.rs
+│           affinity.rs
+│           average.rs
+│           stats.rs
+│           init.rs
+│           indexer.rs
+└─> models
+│       mod.rs
+│       recommendations.rs
+│       stats.rs
 └─> helper
 │   │   mod.rs
 │   └─> database
