@@ -1,4 +1,9 @@
-use super::init;
+pub mod affinity;
+pub mod average;
+pub mod stats;
+mod init;
+mod indexer;
+
 use std::ops::{Index, IndexMut};
 
 pub type Model = Vec<ModelSlice>;

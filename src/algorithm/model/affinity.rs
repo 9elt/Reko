@@ -1,9 +1,8 @@
-use crate::helper;
-use crate::models::user_model::init;
+use super::init;
 
 type Model = Vec<Vec<[i32; 9]>>;
 
-struct AffinityModel<'a> {
+pub struct AffinityModel<'a> {
     gte: Model,
     lte: Model,
     values: &'a Model,
@@ -12,20 +11,8 @@ struct AffinityModel<'a> {
     accuracy: i32,
 }
 
-pub fn get_user_recommendations(
-    model: [Vec<Vec<[i32; 9]>>; 2],
-    user: &String,
-) -> Result<Vec<String>, u16> {
-    let mut affinity_model: AffinityModel = AffinityModel::new(&model[0], &model[1]);
-
-    match helper::get_affinity_users(affinity_model.calc(10).to_array(), user) {
-        Ok(v) => Ok(v),
-        Err(_) => Err(500),
-    }
-}
-
 impl<'a> AffinityModel<'a> {
-    fn new(values: &'a Model, avgs: &'a Model) -> Self {
+    pub fn new(values: &'a Model, avgs: &'a Model) -> Self {
         Self {
             gte: init::empty_affinity(),
             lte: init::empty_affinity(),
@@ -36,11 +23,11 @@ impl<'a> AffinityModel<'a> {
         }
     }
 
-    fn to_array(&'a mut self) -> [Model; 2] {
+    pub fn to_array(&'a mut self) -> [Model; 2] {
         [self.gte.to_owned(), self.lte.to_owned()]
     }
 
-    fn calc(&'a mut self, accuracy: i32) -> &mut Self {
+    pub fn calc(&'a mut self, accuracy: i32) -> &mut Self {
         self.calc_relevance()
             .calc_accuracy(accuracy)
             .calc_general_stats()

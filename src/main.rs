@@ -1,7 +1,8 @@
-mod models;
+mod algorithm;
 mod controller;
-mod router;
 mod helper;
+mod models;
+mod router;
 mod utils;
 
 use axum::Router;

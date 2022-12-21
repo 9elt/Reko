@@ -1,13 +1,9 @@
 use time_elapsed;
-use crate::helper;
-use super::conversion::{
-    date_to_index,
-    genre_id_to_index,
-    n_episodes_to_index,
-    rating_to_index
-};
 
-use super::model_struct::UserModel;
+use crate::helper;
+use super::UserModel;
+
+use super::indexer::{ date_to_index, genre_id_to_index, n_episodes_to_index, rating_to_index };
 
 struct EntryInfo<'a> {
     model: &'a mut UserModel,
@@ -22,7 +18,6 @@ struct EntryInfo<'a> {
 pub async fn stats_model(user: String, reload: bool) -> Result<UserModel, u16> {
     let mut time = time_elapsed::start("model");
 
-    // retrieve list
     let list = match helper::get_detailed_list(&user, reload).await {
         Ok(l) => l,
         Err(e) => return Err(e),
@@ -127,30 +122,6 @@ pub async fn stats_model(user: String, reload: bool) -> Result<UserModel, u16> {
     Ok(model)
 }
 
-/// # User standard deviation model
-/// takes a user stats model and returns its standard deviation model
-pub fn std_dev_model(base_model: &UserModel) -> UserModel {
-    let mut avg_model = UserModel::average();
-    for x in 0..avg_model.len() {
-        for y in 0..avg_model[x].len() {
-            for z in 0..avg_model[x][y].len() {
-                let v = &base_model[x][y][z];
-                let a = &avg_model[x][y][z];
-                let interpolation = match v + a {
-                    -25 => 26,
-                    _ => 25
-                };
-                avg_model[x][y][z] = ((v - a) * 100) / (v + a + interpolation);
-            }
-        }
-    }
-    avg_model[0][6] = [0; 9];
-    avg_model
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Utilities
-////////////////////////////////////////////////////////////////////////////////
 fn average_stat(
     model: &mut UserModel,
     stat_type: usize,

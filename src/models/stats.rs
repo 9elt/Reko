@@ -1,10 +1,7 @@
-mod conversion;
-pub mod init;
-mod calculation;
-mod model_struct;
-
 use crate::helper;
-use model_struct::{UserModel, Model};
+
+use crate::algorithm::model;
+use crate::algorithm::model::{UserModel, Model};
 
 pub async fn get_user_model(user: &String, reload: bool) -> Result<[Model; 2], u16> {
     let mut base_model = UserModel::empty();
@@ -28,13 +25,13 @@ pub async fn get_user_model(user: &String, reload: bool) -> Result<[Model; 2], u
     }
 
     if update_required || reload {
-        base_model = match calculation::stats_model(user.to_owned(), reload).await {
+        base_model = match model::stats::stats_model(user.to_owned(), reload).await {
             Ok(m) => m,
             Err(e) => return Err(e),
         };
     }
 
-    let std_dev_model: UserModel = calculation::std_dev_model(&base_model);
+    let std_dev_model: UserModel = model::average::std_dev_model(&base_model);
 
     Ok([base_model.to_vec(), std_dev_model.to_vec()])
 }
