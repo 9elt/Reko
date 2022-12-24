@@ -2,6 +2,8 @@
 
 **Take an anime list** and returns anime **recommendations** from the lists of **similar users**.
 
+> works thanks to [*myanimelist.net* beta v2 API](https://myanimelist.net/apiconfig/references/api/v2)
+
 #### index
 * [statistics model](#statistics-model)
 * [recommendation](#recommendation)
