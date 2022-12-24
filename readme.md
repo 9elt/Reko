@@ -63,6 +63,8 @@ Each detailed statistic includes:
 
 ### [finding similar users](#finding-similar-users)
 
+> affinity model generation is done in *`src`* / `algorithm` / [**`affinity.rs`**](src/algorithm/model/affinity.rs)
+
 First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#general-statistics)** and the distirbution on **[detailed statistic](#detailed-statistics)** deviates by less than **`X`%**
 
 `X` value varies on the different types of statistics
