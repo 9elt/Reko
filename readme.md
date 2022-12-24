@@ -2,7 +2,7 @@
 
 **Take an anime list** and returns anime **recommendations** from the lists of **similar users**.
 
-> works thanks to [*myanimelist.net* beta v2 API](https://myanimelist.net/apiconfig/references/api/v2)
+> works thanks to [MyAnimeList API *beta v2*](https://MyAnimeList/apiconfig/references/api/v2)
 
 #### index
 * [statistics model](#statistics-model)
@@ -37,7 +37,7 @@ Detailed statistics are:
 * **minor themes**: The **30** other themes (`Detective` `Showbiz` `Otaku Culture`)
 * **demographics**: `Kids` `Shounen` `Seinen` `Josei` `Shoujo`
 
-<blockquote><details><summary>all <i>myanimelist.net</i> themes and genres</summary>
+<blockquote><details><summary>all <i>MyAnimeList</i> themes and genres</summary>
 
 #### MAJOR Genres
 [**`Action`**](/) `Fantasy` `Romance`
@@ -53,7 +53,7 @@ Detailed statistics are:
 
 <br>
 
-*buttons link to respective myanimelist.net genre/theme page*
+*buttons link to respective MyAnimeList genre/theme page*
 </details></blockquote>
 
 
