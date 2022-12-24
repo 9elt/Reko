@@ -6,8 +6,9 @@ index:
 * [project structure](#project-structure)
 
 # [statistics model](#statistics-model)
+> `src` / `algorithm` / [**`stats.rs`**](src/algorithm/model/stats.rs)
+
 A model of the user is **generated from his anime list**, the model includes:
-> model generation is done in *`src`* / `algorithm` / [**`stats.rs`**](src/algorithm/model/stats.rs)
 
 ### [general statistics](#general-statistics)
 
@@ -62,8 +63,7 @@ Each detailed statistic includes:
 # [recommendation](#recommendation)
 
 ### [finding similar users](#finding-similar-users)
-
-> affinity model generation is done in *`src`* / `algorithm` / [**`affinity.rs`**](src/algorithm/model/affinity.rs)
+> `src` / `algorithm` / [**`affinity.rs`**](src/algorithm/model/affinity.rs)
 
 First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#general-statistics)** and the distirbution on **[detailed statistic](#detailed-statistics)** deviates by less than **`X`%**
 
