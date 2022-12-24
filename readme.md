@@ -61,22 +61,23 @@ Each detailed statistic includes:
 
 # [recommendation](#recommendation)
 
-First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#general-statistics)** and where the **deviation is distributed equally** (on a **`X`%** range) for every **[detailed statistic](#detailed-statistics)**
+First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#general-statistics)** and the
+distirbution on **[detailed statistic](#detailed-statistics)** deviates by less than **`X`%**
 
 `X` value varies on the different types of statistics
 <details><summary>The values of <code>X</code> table</summary>
 
 | value of `X`   | perc | mean score | score dev | scored perc | completed | plan to watch | watching | on hold | dropped |
 |----------------|------|------------|-----------|-------------|-----------|---------------|----------|---------|---------|
-| general        |      | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
-| airing decades | 1c   | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
-| series length  | 1c   | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
-| ratings        | 1c   | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
-| major genres   | 1c   | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
-| minor genres   | 1c   | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
-| major themes   | 1c   | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
-| minor themes   | 1c   | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
-| demographics   | 1c   | 1c         | 2c        | 2c          | 5c        | 1c            | 5c       | 6c      | 2c      |
+| general        |      | 1c         | 2c        | 2c          | 2c        | 3c            | 3c       | 3c      | 3c      |
+| airing decades | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
+| series length  | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
+| ratings        | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
+| major genres   | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
+| minor genres   | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
+| major themes   | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
+| minor themes   | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
+| demographics   | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
 
 with **`c`** = **500,000** / **number of users** in the database
 </details>
