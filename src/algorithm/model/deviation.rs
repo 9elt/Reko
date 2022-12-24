@@ -1,13 +1,13 @@
-use super::UserModel;
+use super::Model;
 
-/// # User standard deviation model
-/// takes a user stats model and returns its standard deviation model
-pub fn std_dev_model(base_model: &UserModel) -> UserModel {
-    let mut avg_model = UserModel::average();
+/// # User deviation model
+/// Generates a deviation model from a statistics model
+pub fn deviation_model(stats_model: &Model) -> Model {
+    let mut avg_model = Model::average();
     for x in 0..avg_model.len() {
         for y in 0..avg_model[x].len() {
             for z in 0..avg_model[x][y].len() {
-                let v = &base_model[x][y][z];
+                let v = &stats_model[x][y][z];
                 let a = &avg_model[x][y][z];
                 let interpolation = match v + a {
                     -25 => 26,

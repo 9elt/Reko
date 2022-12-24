@@ -1,10 +1,10 @@
 use crate::helper;
 
 use crate::algorithm::model;
-use crate::algorithm::model::{UserModel, Model};
+use crate::algorithm::model::{Model, user::UserModel};
 
-pub async fn get_user_model(user: &String, reload: bool) -> Result<[Model; 2], u16> {
-    let mut base_model = UserModel::empty();
+pub async fn get_user_model(user: &String, reload: bool) -> Result<UserModel, u16> {
+    let mut stats_model = Model::empty();
 
     let mut update_required: bool = false;
 
@@ -15,7 +15,7 @@ pub async fn get_user_model(user: &String, reload: bool) -> Result<[Model; 2], u
                 update_required = model.requires_update();
                 match model.model() {
                     Some(m) => {
-                        base_model = UserModel::from(m);
+                        stats_model = Model::from_vec(m);
                     }
                     None => update_required = true,
                 }
@@ -25,15 +25,13 @@ pub async fn get_user_model(user: &String, reload: bool) -> Result<[Model; 2], u
     }
 
     if update_required || reload {
-        base_model = match model::stats::stats_model(user.to_owned(), reload).await {
+        stats_model = match model::stats::stats_model(user.to_owned(), reload).await {
             Ok(m) => m,
             Err(e) => return Err(e),
         };
     }
 
-    let std_dev_model: UserModel = model::average::std_dev_model(&base_model);
+    let deviation_model: Model = model::deviation::deviation_model(&stats_model);
 
-    Ok([base_model.to_vec(), std_dev_model.to_vec()])
+    Ok(UserModel::from(stats_model, deviation_model))
 }
-
-

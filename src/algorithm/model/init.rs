@@ -1,4 +1,6 @@
-pub fn empty() -> Vec<Vec<[i32; 9]>> {
+use super::ModelVec;
+
+pub fn empty() -> ModelVec {
     vec![
         vec![[0; 9]; 7],
         vec![[0; 9]; 5],
@@ -10,7 +12,7 @@ pub fn empty() -> Vec<Vec<[i32; 9]>> {
     ]
 }
 
-pub fn empty_affinity() -> Vec<Vec<[i32; 9]>> {
+pub fn compare() -> ModelVec {
     vec![
         vec![[4095; 9]; 7],
         vec![[4095; 9]; 5],
@@ -22,40 +24,40 @@ pub fn empty_affinity() -> Vec<Vec<[i32; 9]>> {
     ]
 }
 
-pub fn average() -> Vec<Vec<[i32; 9]>> {
+pub fn average() -> ModelVec {
     vec![
 
         //  0 => General Stats
         vec![
 
-                /*
-                    Score Stats [i32; 9]
+            /*
+                Score Stats [i32; 9]
 
-                    0 => List Length (anime watched)
+                0 => List Length (anime watched)
 
-                    1 => Overall Average Score,
-                    2 => Overall Score deviation,
-                    3 => Overall Scored %,
+                1 => Overall Average MAL Score,
+                2 => Overall Score deviation,
+                3 => Overall Scored %,
 
 
-                    4, 5, 6, 7, 8 => ! Empty
-                */
+                4, 5, 6, 7, 8 => ! Empty
+            */
 
             //  0 => Score
             [651, 755, -34, 632, 0, 0, 0, 0, 0],
 
-                /*
-                    Statuses Stats [i32; 9]
+            /*
+                Statuses Stats [i32; 9]
 
-                    0 => Status %,
+                0 => Status %,
 
-                    1 => Status Average Score,
-                    2 => Status Score deviation,
-                    3 => Status Scored %,
+                1 => Status Average MAL Score,
+                2 => Status Score deviation,
+                3 => Status Scored %,
 
 
-                    4, 5, 6, 7, 8 => ! Empty
-                */
+                4, 5, 6, 7, 8 => ! Empty
+            */
 
             //  1 => Completed (status id: 1)
             [642, 758, -25, 915, 0, 0, 0, 0, 0],
@@ -69,24 +71,24 @@ pub fn average() -> Vec<Vec<[i32; 9]>> {
             [40, 711, -279, 648, 0, 0, 0, 0, 0],
 
             //  6 => Errors (when not empty some error occurred)
-            [2, 2303, -105, 1, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
 
-            /*
-                Detailed Stats [i32; 9]
+        /*
+            Detailed Stats [i32; 9]
 
-                0 => Watched %,
+            0 => Watched %,
 
-                1 => Average Score,
-                2 => Score deviation,
-                3 => Scored %,
+            1 => Average MAL Score,
+            2 => Score deviation,
+            3 => Scored %,
 
-                4 => Completed %,
-                5 => Plan to Watch %,
-                6 => Watching %,
-                7 => On Hold %,
-                8 => Dropped %
-            */
+            4 => Completed %,
+            5 => Plan to Watch %,
+            6 => Watching %,
+            7 => On Hold %,
+            8 => Dropped %
+        */
 
         //  1 => Airing Decades
         vec![
