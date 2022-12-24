@@ -1,6 +1,6 @@
 # Anirekome APIs
 
-**Take an anime list** and returns anime **recommendations** from the lists of **similar users**.
+**Takes an anime list** and returns anime **recommendations** from the lists of **similar users**.
 
 > works thanks to [MyAnimeList API *beta v2*](https://MyAnimeList/apiconfig/references/api/v2)
 
