@@ -1,6 +1,8 @@
 # Anirekome APIs
 
-index:
+**Take an anime list** and returns anime **recommendations** from the lists of **similar users**.
+
+#### index
 * [statistics model](#statistics-model)
 * [recommendation](#recommendation)
 * [project structure](#project-structure)
