@@ -1,12 +1,13 @@
-# Anirekome APIs
+# Reko API
+Anime Recommendations
 
-**Takes an anime list** and returns anime **recommendations** from the lists of **similar users**.
+A rest api that **takes a MyAnimeList username** and returns anime **recommendations** from the anime lists of **similar users**.
 
-> works thanks to [MyAnimeList API *beta v2*](https://MyAnimeList/apiconfig/references/api/v2)
+> works thanks to [MyAnimeList API *beta v2*](https://myanimelist.net/apiconfig/references/api/v2)
 
 #### index
 * [statistics model](#statistics-model)
-* [recommendation](#recommendation)
+* [recommendations](#recommendations)
 * [project structure](#project-structure)
 
 # [statistics model](#statistics-model)
@@ -32,9 +33,9 @@ Detailed statistics are:
 * **series lengths**: `1 episode` `2-8 episodes` `9-18 episodes` `19-32 episodes` `33+ episodes`
 * **ratings**: `g` `pg` `pg-13` `r` `r+` `rx`
 * **major genres**: The **8** most common genres (`Action` `Fantasy` `Romance`)
-* **minor genres**: The **13** other genres (`Horror` `Slice of Life` `Sports`)
+* **minor genres**: The other **13** genres (`Horror` `Slice of Life` `Sports`)
 * **major themes**: The **20** most common themes (`Isekai` `Historical` `School`)
-* **minor themes**: The **30** other themes (`Detective` `Showbiz` `Otaku Culture`)
+* **minor themes**: The other **30** themes (`Detective` `Showbiz` `Otaku Culture`)
 * **demographics**: `Kids` `Shounen` `Seinen` `Josei` `Shoujo`
 
 <blockquote><details><summary>all <i>MyAnimeList</i> themes and genres</summary>
@@ -64,7 +65,7 @@ Each detailed statistic includes:
 * average **scored percentage**
 * average of every **status** percentage
 
-# [recommendation](#recommendation)
+# [recommendations](#recommendations)
 
 ### [finding similar users](#finding-similar-users)
 > `src` / `algorithm` / [**`affinity.rs`**](src/algorithm/model/affinity.rs)
