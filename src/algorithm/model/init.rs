@@ -70,7 +70,7 @@ pub fn average() -> ModelVec {
             //  5 => Dropped (status id: 5)
             [40, 711, -279, 648, 0, 0, 0, 0, 0],
 
-            //  6 => Errors (when not empty some error occurred)
+            //  6 => Errors (when not empty some indexing error occurred)
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
         ],
 
