@@ -1,7 +1,5 @@
 # Reko API
-Anime Recommendations
-
-A rest api that **takes a MyAnimeList username** and returns anime **recommendations** from the anime lists of **similar users**.
+A web API that takes a **MyAnimeList username** and returns anime **recommendations** from the anime lists of **similar users**.
 
 > works thanks to [MyAnimeList API *beta v2*](https://myanimelist.net/apiconfig/references/api/v2)
 
