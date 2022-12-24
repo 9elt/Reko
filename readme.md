@@ -61,8 +61,9 @@ Each detailed statistic includes:
 
 # [recommendation](#recommendation)
 
-First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#general-statistics)** and the
-distirbution on **[detailed statistic](#detailed-statistics)** deviates by less than **`X`%**
+### [finding similar users](#finding-similar-users)
+
+First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#general-statistics)** and the distirbution on **[detailed statistic](#detailed-statistics)** deviates by less than **`X`%**
 
 `X` value varies on the different types of statistics
 <details><summary>The values of <code>X</code> table</summary>
