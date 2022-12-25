@@ -138,7 +138,7 @@ pub fn update_list(user: &String, l: UserList) {
 *  USER MODEL
 */
 
-pub type UserModel = Vec<Vec<[i32; 9]>>; // to move somewhere else
+pub type UserModel = Vec<Vec<[i16; 9]>>; // to move somewhere else
 
 pub struct DBUserModel {
     model: Option<UserModel>,
@@ -193,10 +193,10 @@ pub fn set_model(user: &String, m: UserModel) {
         ))
         .execute(&mut connection::POOL.get().unwrap());
 
-    match updated {
-        Ok(_) => println!("(db) updated [{}] model", user),
-        Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed updating [{}] model", user),
-    };
+    // match updated {
+    //     Ok(_) => println!("(db) updated [{}] model", user),
+    //     Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed updating [{}] model", user),
+    // };
 }
 
 /*
@@ -209,4 +209,19 @@ pub fn delete(user: &String) {
         Ok(_) => println!("(db) deleted [{}] user", user),
         Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed deleting [{}] user", user),
     };
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// get all usernames
+////////////////////////////////////////////////////////////////////////////////
+
+pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
+    let usernames = users
+    .select(user_name)
+    .load::<String>(&mut connection::POOL.get().unwrap());
+
+    match usernames {
+        Ok(res) => Ok(res),
+        Err(e) => Err(e),
+    }
 }

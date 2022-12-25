@@ -10,11 +10,15 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
+pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
+    database::user::get_all_usernames()
+}
+
 pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2], user: &String) -> Result<Vec<String>, diesel::result::Error> {
     database::user::get_affinity_users(affinity_model, user)
 }
 
-pub fn save_user_model(user: &String, model: Vec<Vec<[i32; 9]>>) {
+pub fn save_user_model(user: &String, model: Vec<Vec<[i16; 9]>>) {
     database::user::set_model(user, model);
 }
 
@@ -90,32 +94,36 @@ impl DetailedListEntry {
     }
 }
 
-pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedListEntry>, u16> {
-    let mut time = time_elapsed::start("list");
+pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -> Result<Vec<DetailedListEntry>, u16> {
+    //let mut time = time_elapsed::start("list");
 
     let mut base_list: Vec<Vec<i32>> = vec![];
     let database_list = database::user::get_list(&u);
 
-    time.log(format!("[{}] database check", u)).timestamp();
+    //time.log(format!("[{}] database check", u)).timestamp();
 
     let mut list_is_missing: bool = false;
-    let mut _update_required: bool = false;
+    let update_required: bool;
 
     match database_list {
         Ok(l) => {
-            _update_required = l.requires_update() || reload;
+            update_required = l.requires_update() || reload;
             base_list = l.list();
         },
         Err(_) => {
             list_is_missing = true;
-            _update_required = true;
+            update_required = true;
         }
-    };
+    }
 
-    if _update_required {
+    if list_is_missing && prevent_update {
+        return Err(500)
+    }
+
+    if update_required && !prevent_update {
         let api_list = mal_api::list::get(&u).await;
 
-        time.log(format!("requested [{}] list", u)).timestamp();
+        //time.log(format!("requested [{}] list", u)).timestamp();
 
         let tmp: Vec<Vec<i32>>;
 
@@ -124,10 +132,10 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
                 tmp = l.to_vec();
             }
             Err(e) => {
-                if e == 403 && list_is_missing == false {
+                if (e == 403 || e == 404) && !list_is_missing {
                     database::user::delete(&u);
                 }
-                return Err(e);
+                return Err(e)
             }
         }
 
@@ -137,12 +145,12 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
         }
 
         base_list = tmp;
-    };
+    }
 
     let anime_ids: Vec<i32> = base_list.iter().map(|e| e[0]).collect();
     let mut anime_info = get_anime_details(anime_ids).await;
 
-    time.log(format!("[{}] anime details", u)).timestamp();
+    //time.log(format!("[{}] anime details", u)).timestamp();
 
     anime_info.sort_unstable_by(|x, y| y.id.cmp(&x.id));
     base_list.sort_unstable_by(|x, y| y[0].cmp(&x[0]));
@@ -171,9 +179,9 @@ pub async fn get_detailed_list(u: &String, reload: bool) -> Result<Vec<DetailedL
         }
     }
 
-    time.log(format!("[{}] extend list", u));
+    //time.log(format!("[{}] extend list", u));
 
-    time.end();
+    //time.end();
 
     Ok(full)
 }

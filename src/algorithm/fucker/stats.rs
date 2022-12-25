@@ -2,11 +2,13 @@ use time_elapsed;
 
 use crate::helper;
 
-use super::indexer::Idx;
-use super::Model;
+//use super::indexer::Idx;
+//use super::Model;
+
+use crate::algorithm::model::{helper::Midx, Model};
 
 struct EntryInfo<'a> {
-    model: &'a mut Model,
+    model: &'a mut Model<i32>,
     score: i32,
     deviation: i32,
     score_count: i32,
@@ -15,15 +17,19 @@ struct EntryInfo<'a> {
 
 /// # User statistics model
 /// Generates a statistics model from an anime list
-pub async fn stats_model(user: String, reload: bool) -> Result<Model, u16> {
-    let time = time_elapsed::start("stats");
+pub async fn stats_model(
+    user: String,
+    reload: bool,
+    prevent_update: bool,
+) -> Result<Model<i16>, u16> {
+    //let time = time_elapsed::start("stats");
 
-    let list = match helper::get_detailed_list(&user, reload).await {
+    let list = match helper::get_detailed_list(&user, reload, prevent_update).await {
         Ok(l) => l,
         Err(e) => return Err(e),
     };
 
-    let mut model = Model::empty();
+    let mut model = Model::<i32>::empty();
 
     for entry in list.iter() {
         let user_score: i32 = entry.score();
@@ -48,15 +54,12 @@ pub async fn stats_model(user: String, reload: bool) -> Result<Model, u16> {
         };
 
         // general
-        pupulate_stat(Idx::general(), &mut entry_info);
-
-        // status
-        pupulate_stat(Idx::from_status(entry_info.status), &mut entry_info);
+        pupulate_stat(Midx::general(), &mut entry_info);
 
         // airing decade
         match entry.airing_date() {
             Some(data) => {
-                pupulate_stat(Idx::from_date(data), &mut entry_info);
+                pupulate_stat(Midx::from_date(data), &mut entry_info);
             }
             None => (),
         }
@@ -64,7 +67,7 @@ pub async fn stats_model(user: String, reload: bool) -> Result<Model, u16> {
         // rating
         match entry.rating() {
             Some(data) => {
-                pupulate_stat(Idx::from_rating(data), &mut entry_info);
+                pupulate_stat(Midx::from_rating(data), &mut entry_info);
             }
             None => (),
         }
@@ -72,7 +75,7 @@ pub async fn stats_model(user: String, reload: bool) -> Result<Model, u16> {
         // series length
         match entry.num_episodes() {
             Some(data) => {
-                pupulate_stat(Idx::from_num_episodes(data), &mut entry_info);
+                pupulate_stat(Midx::from_num_episodes(data), &mut entry_info);
             }
             None => (),
         }
@@ -83,7 +86,7 @@ pub async fn stats_model(user: String, reload: bool) -> Result<Model, u16> {
                 for g in genres.iter() {
                     match g.to_owned() {
                         Some(data) => {
-                            pupulate_stat(Idx::from_genre(data), &mut entry_info);
+                            pupulate_stat(Midx::from_genre(data), &mut entry_info);
                         }
                         None => (),
                     }
@@ -91,13 +94,6 @@ pub async fn stats_model(user: String, reload: bool) -> Result<Model, u16> {
             }
             None => (),
         }
-    }
-
-    let list_length = model[0][0][0];
-
-    // completed | plan to watch | watching | on hold | dropped
-    for status in 1..6 {
-        average_stat(&mut model, 0, status, list_length);
     }
 
     // general stats
@@ -111,17 +107,14 @@ pub async fn stats_model(user: String, reload: bool) -> Result<Model, u16> {
         }
     }
 
-    // errors reset
-    model[0][6] = [0; 9];
+    helper::save_user_model(&user, model.copy_to_i16_vec());
 
-    helper::save_user_model(&user, model.copy_to_vec());
+    //time.end();
 
-    time.end();
-
-    Ok(model)
+    Ok(model.to_i16())
 }
 
-fn average_stat(model: &mut Model, stat_type: usize, stat: usize, stat_tot: i32) {
+fn average_stat(model: &mut Model<i32>, stat_type: usize, stat: usize, stat_tot: i32) {
     // mal score
     model[stat_type][stat][1] = div(model[stat_type][stat][1], model[stat_type][stat][0]);
 
@@ -132,13 +125,11 @@ fn average_stat(model: &mut Model, stat_type: usize, stat: usize, stat_tot: i32)
     model[stat_type][stat][3] = perc(model[stat_type][stat][3], model[stat_type][stat][0]);
 
     // completed | plan to watch | watching | on hold | dropped percentages
-    if stat_type > 0 {
-        model[stat_type][stat][4] = perc(model[stat_type][stat][4], model[stat_type][stat][0]);
-        model[stat_type][stat][5] = perc(model[stat_type][stat][5], model[stat_type][stat][0]);
-        model[stat_type][stat][6] = perc(model[stat_type][stat][6], model[stat_type][stat][0]);
-        model[stat_type][stat][7] = perc(model[stat_type][stat][7], model[stat_type][stat][0]);
-        model[stat_type][stat][8] = perc(model[stat_type][stat][8], model[stat_type][stat][0]);
-    }
+    model[stat_type][stat][4] = perc(model[stat_type][stat][4], model[stat_type][stat][0]);
+    model[stat_type][stat][5] = perc(model[stat_type][stat][5], model[stat_type][stat][0]);
+    model[stat_type][stat][6] = perc(model[stat_type][stat][6], model[stat_type][stat][0]);
+    model[stat_type][stat][7] = perc(model[stat_type][stat][7], model[stat_type][stat][0]);
+    model[stat_type][stat][8] = perc(model[stat_type][stat][8], model[stat_type][stat][0]);
 
     // stat percentage
     if stat_type > 0 && stat > 0 {
@@ -146,15 +137,16 @@ fn average_stat(model: &mut Model, stat_type: usize, stat: usize, stat_tot: i32)
     }
 }
 
-fn pupulate_stat(idx: Idx, e: &mut EntryInfo) {
+fn pupulate_stat(idx: Midx, e: &mut EntryInfo) {
+    if idx.has_errors() {
+        return ();
+    }
+
     e.model[idx.x][idx.y][0] += 1;
     e.model[idx.x][idx.y][1] += e.score;
     e.model[idx.x][idx.y][2] += e.deviation;
     e.model[idx.x][idx.y][3] += e.score_count;
-
-    if idx.x != 0 {
-        e.model[idx.x][idx.y][e.status + 3] += 1;
-    }
+    e.model[idx.x][idx.y][e.status + 3] += 1;
 }
 
 fn div(num: i32, den: i32) -> i32 {

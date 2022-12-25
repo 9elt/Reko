@@ -1,10 +1,11 @@
 use crate::helper;
 
-use crate::algorithm::model;
-use crate::algorithm::model::{Model, user::UserModel};
+use crate::algorithm::fucker;
+// use crate::algorithm::fucker::user::UserModel;
+use crate::algorithm::model::Model;
 
-pub async fn get_user_model(user: &String, reload: bool) -> Result<UserModel, u16> {
-    let mut stats_model = Model::empty();
+pub async fn get_user_model(user: &String, reload: bool) -> Result<Model<i16>, u16> {
+    let mut stats_model = Model::<i16>::empty();
 
     let mut update_required: bool = false;
 
@@ -25,13 +26,11 @@ pub async fn get_user_model(user: &String, reload: bool) -> Result<UserModel, u1
     }
 
     if update_required || reload {
-        stats_model = match model::stats::stats_model(user.to_owned(), reload).await {
+        stats_model = match fucker::stats::stats_model(user.to_owned(), reload, false).await {
             Ok(m) => m,
             Err(e) => return Err(e),
         };
     }
 
-    let deviation_model: Model = model::deviation::deviation_model(&stats_model);
-
-    Ok(UserModel::from(stats_model, deviation_model))
+    Ok(stats_model)
 }

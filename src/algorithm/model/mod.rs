@@ -1,56 +1,87 @@
-pub mod affinity;
-pub mod deviation;
-mod indexer;
-mod init;
-pub mod stats;
-pub mod user;
+pub mod helper;
 
+use helper::model_vec_from_value;
 use std::ops::{Index, IndexMut};
 
-pub type ModelVec = Vec<ModelSlice>;
-pub type ModelSlice = Vec<[i32; 9]>;
+pub type ModelVec<T> = Vec<ModelStatType<T>>;
+pub type ModelStatType<T> = Vec<ModelStat<T>>;
+pub type ModelStat<T> = [T; 9];
 
 #[derive(Debug, Clone)]
-pub struct Model {
-    model: ModelVec,
+pub struct Model<T> {
+    model: ModelVec<T>,
 }
 
 // index and index mut trait implementation
-impl Index<usize> for Model {
-    type Output = ModelSlice;
+impl<T> Index<usize> for Model<T> {
+    type Output = ModelStatType<T>;
 
     fn index(&self, i: usize) -> &Self::Output {
         &self.model[i]
     }
 }
 
-impl IndexMut<usize> for Model {
+impl<T> IndexMut<usize> for Model<T> {
     fn index_mut(&mut self, i: usize) -> &mut Self::Output {
         &mut self.model[i]
     }
 }
 
-impl Model {
+impl Model<i32> {
     // contructors
     pub fn empty() -> Self {
         Self {
-            model: init::empty(),
+            model: model_vec_from_value(0 as i32),
+        }
+    }
+
+    // methods
+    pub fn to_i16(self) -> Model<i16> {
+        let mut model_conversion = Model::<i16>::empty();
+
+        for x in 0..self.model.len() {
+            for y in 0..self.model[x].len() {
+                for z in 0..self.model[x][y].len() {
+                    let conversion = i16::try_from(self.model[x][y][z]);
+                    match conversion {
+                        Ok(converted) => model_conversion[x][y][z] = converted,
+                        Err(_) => model_conversion[x][y][z] = 1001,
+                    }
+                }
+            }
+        }
+
+        model_conversion
+    }
+
+    pub fn len(&self) -> usize {
+        self.model.len()
+    }
+
+    pub fn copy_to_i16_vec(&self) -> ModelVec<i16> {
+        self.to_owned().to_i16().to_vec()
+    }
+
+    pub fn to_i16_vec(self) -> ModelVec<i16> {
+        self.to_i16().to_vec()
+    }
+}
+
+impl Model<i16> {
+    // contructors
+    pub fn empty() -> Self {
+        Self {
+            model: model_vec_from_value(0 as i16),
         }
     }
 
     pub fn compare() -> Self {
         Self {
-            model: init::compare(),
+            model: model_vec_from_value(4095 as i16),
         }
     }
 
-    pub fn average() -> Self {
-        Self {
-            model: init::average(),
-        }
-    }
-
-    pub fn from_vec(model: ModelVec) -> Self {
+    pub fn from_vec(model: ModelVec<i16>) -> Self {
         Self { model }
     }
 
@@ -59,11 +90,11 @@ impl Model {
         self.model.len()
     }
 
-    pub fn copy_to_vec(&self) -> ModelVec {
+    pub fn copy_to_vec(&self) -> ModelVec<i16> {
         self.model.to_owned()
     }
 
-    pub fn to_vec(self) -> ModelVec {
+    pub fn to_vec(self) -> ModelVec<i16> {
         self.model
     }
 }

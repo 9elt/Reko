@@ -1,6 +1,6 @@
 use crate::helper;
-use crate::algorithm::model::affinity::AffinityModel;
-use crate::algorithm::model::user::UserModel;
+use crate::algorithm::fucker::affinity::AffinityModel;
+use crate::algorithm::fucker::user::UserModel;
 
 pub fn get_user_recommendations(
     model: UserModel,
