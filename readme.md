@@ -30,25 +30,25 @@ Detailed statistics are:
 * **airing decades**: `1980s` `1990s` `2000s` `2010s` `2020s`
 * **series lengths**: `1 episode` `2-8 episodes` `9-18 episodes` `19-32 episodes` `33+ episodes`
 * **ratings**: `g` `pg` `pg-13` `r` `r+` `rx`
-* **major genres**: The **8** most common genres (`Action` `Fantasy` `Romance`)
-* **minor genres**: The other **13** genres (`Horror` `Slice of Life` `Sports`)
-* **major themes**: The **20** most common themes (`Isekai` `Historical` `School`)
-* **minor themes**: The other **30** themes (`Detective` `Showbiz` `Otaku Culture`)
+* **major genres**: The **8** most common genres (e.g. `Action` `Fantasy` `Romance`)
+* **minor genres**: The other **13** genres (e.g. `Horror` `Slice of Life` `Sports`)
+* **major themes**: The **20** most common themes (e.g. `Isekai` `Historical` `School`)
+* **minor themes**: The other **30** themes (e.g. `Detective` `Showbiz` `Otaku Culture`)
 * **demographics**: `Kids` `Shounen` `Seinen` `Josei` `Shoujo`
 
 <blockquote><details><summary>all <i>MyAnimeList</i> themes and genres</summary>
 
 #### MAJOR Genres
-[**`Action`**](/) `Fantasy` `Romance`
+[**`Action`**](https://myanimelist.net/anime/genre/1) [**`Adventure`**](https://myanimelist.net/anime/genre/2) [**`Comedy`**](https://myanimelist.net/anime/genre/4) [**`Drama`**](https://myanimelist.net/anime/genre/8) [**`Fantasy`**](https://myanimelist.net/anime/genre/10) [**`Romance`**](https://myanimelist.net/anime/genre/22) [**`Sci_Fi`**](https://myanimelist.net/anime/genre/24) [**`Supernatural`**](https://myanimelist.net/anime/genre/37)
 
 #### minor Genres
-`Horror` `Slice of Life` `Sports`
+[**`Avant_Garde`**](https://myanimelist.net/anime/genre/5) [**`Award_Winning`**](https://myanimelist.net/anime/genre/46) [**`Boys_Love`**](https://myanimelist.net/anime/genre/28) [**`Girls_Love`**](https://myanimelist.net/anime/genre/26) [**`Gourmet`**](https://myanimelist.net/anime/genre/47) [**`Horror`**](https://myanimelist.net/anime/genre/14) [**`Mystery`**](https://myanimelist.net/anime/genre/7) [**`Slice_of_Life`**](https://myanimelist.net/anime/genre/36) [**`Sports`**](https://myanimelist.net/anime/genre/30) [**`Suspense`**](https://myanimelist.net/anime/genre/41) [**`Ecchi`**](https://myanimelist.net/anime/genre/9) [**`Erotica`**](https://myanimelist.net/anime/genre/49) [**`Hentai`**](https://myanimelist.net/anime/genre/12) 
 
 #### MAJOR Themes
-`Isekai` `Historical` `School`
+[**`Adult_Cast`**](https://myanimelist.net/anime/genre/50) [**`Gag_Humor`**](https://myanimelist.net/anime/genre/57) [**`Gore`**](https://myanimelist.net/anime/genre/58) [**`Harem`**](https://myanimelist.net/anime/genre/35) [**`Historical`**](https://myanimelist.net/anime/genre/13) [**`Isekai`**](https://myanimelist.net/anime/genre/62) [**`Iyashikei`**](https://myanimelist.net/anime/genre/63) [**`Love_Polygon`**](https://myanimelist.net/anime/genre/64) [**`Martial_Arts`**](https://myanimelist.net/anime/genre/17) [**`Mecha`**](https://myanimelist.net/anime/genre/18) [**`Military`**](https://myanimelist.net/anime/genre/38) [**`Music`**](https://myanimelist.net/anime/genre/19) [**`Mythology`**](https://myanimelist.net/anime/genre/6) [**`Parody`**](https://myanimelist.net/anime/genre/20) [**`Psychological`**](https://myanimelist.net/anime/genre/40) [**`School`**](https://myanimelist.net/anime/genre/23) [**`Super_Power`**](https://myanimelist.net/anime/genre/31) [**`Survival`**](https://myanimelist.net/anime/genre/76) [**`Time_Travel`**](https://myanimelist.net/anime/genre/78) [**`Vampire`**](https://myanimelist.net/anime/genre/32) 
 
 #### minor Themes
-`Detective` `Showbiz` `Otaku Culture`
+[**`Anthropomorphic`**](https://myanimelist.net/anime/genre/51) [**`CGDCT`**](https://myanimelist.net/anime/genre/52) [**`Childcare`**](https://myanimelist.net/anime/genre/53) [**`Combat_Sports`**](https://myanimelist.net/anime/genre/54) [**`Crossdressing`**](https://myanimelist.net/anime/genre/81) [**`Delinquents`**](https://myanimelist.net/anime/genre/55) [**`Detective`**](https://myanimelist.net/anime/genre/39) [**`Educational`**](https://myanimelist.net/anime/genre/56) [**`High_Stakes_Game`**](https://myanimelist.net/anime/genre/59) [**`Idols_Female`**](https://myanimelist.net/anime/genre/60) [**`Idols_Male`**](https://myanimelist.net/anime/genre/61) [**`Magical_Sex_Shift`**](https://myanimelist.net/anime/genre/65) [**`Mahou_Shoujo`**](https://myanimelist.net/anime/genre/66) [**`Medical`**](https://myanimelist.net/anime/genre/67) [**`Organized_Crime`**](https://myanimelist.net/anime/genre/68) [**`Otaku_Culture`**](https://myanimelist.net/anime/genre/69) [**`Performing_Arts`**](https://myanimelist.net/anime/genre/70) [**`Pets`**](https://myanimelist.net/anime/genre/71) [**`Racing`**](https://myanimelist.net/anime/genre/3) [**`Reincarnation`**](https://myanimelist.net/anime/genre/72) [**`Reverse_Harem`**](https://myanimelist.net/anime/genre/73) [**`Romantic_Subtext`**](https://myanimelist.net/anime/genre/74) [**`Samurai`**](https://myanimelist.net/anime/genre/21) [**`Showbiz`**](https://myanimelist.net/anime/genre/75) [**`Space`**](https://myanimelist.net/anime/genre/29) [**`Strategy_Game`**](https://myanimelist.net/anime/genre/11) [**`Team_Sports`**](https://myanimelist.net/anime/genre/77) [**`Video_Game`**](https://myanimelist.net/anime/genre/79) [**`Visual_Arts`**](https://myanimelist.net/anime/genre/80) [**`Workplace`**](https://myanimelist.net/anime/genre/48) main.js:522:13
 
 <br>
 
