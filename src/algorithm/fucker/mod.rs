@@ -2,7 +2,7 @@ pub mod affinity;
 pub mod deviation;
 mod indexer;
 mod init;
-pub mod stats;
+// pub mod stats;
 pub mod user;
 
 use std::ops::{Index, IndexMut};

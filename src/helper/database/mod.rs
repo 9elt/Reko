@@ -1,3 +1,4 @@
+pub mod analysis;
 pub mod anime;
 pub mod user;
 

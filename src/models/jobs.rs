@@ -1,27 +1,43 @@
+use crate::algorithm::{user, analysis};
 use crate::helper;
 
-use crate::algorithm::fucker;
-
+/// ## Compute models for every user in the database
+/// Returns an array `[successes, errors]`
 pub async fn compute_all_models() -> Result<[i32; 2], u16> {
-
     let usernames: Vec<String>;
-
     match helper::get_all_usernames() {
         Ok(res) => usernames = res,
+        Err(_) => return Err(500),
+    }
+
+    let mut status = [0, 0];
+    println!("compute all models started...");
+
+    for user in usernames.iter() {
+        match user::stats::stats_model(user.to_owned(), true, true).await {
+            Ok(_) => status[0] += 1,
+            Err(_) => status[1] += 1,
+        };
+
+        print!(
+            "\r\x1b[34m\x1b[1m{}\x1b[0m / {} -> \x1b[32m\x1b[1m{} OK \x1b[31m{} ERR\x1b[0m",
+            status[0] + status[1],
+            usernames.len(),
+            status[0],
+            status[1]
+        );
+    }
+
+    Ok(status)
+}
+
+pub async fn compute_normal_dist() -> Result<(), u16> {
+    let normal_dist: analysis::NormalDist;
+    match analysis::normal_distribution() {
+        Ok(d) => normal_dist = d,
         Err(_) => return Err(500)
     }
 
-    let mut ok_err = [0, 0];
-
-    println!("start...");
-
-    for user in usernames.iter() {
-        match fucker::stats::stats_model(user.to_owned(), true, true).await {
-            Ok(_) => ok_err[0] += 1,
-            Err(_) => ok_err[1] += 1,
-        };
-        print!("\r \x1b[34m\x1b[1m{}\x1b[0m / {} -> \x1b[32m\x1b[1m{} OK \x1b[31m{} ERR\x1b[0m", ok_err[0] + ok_err[1], usernames.len(), ok_err[0], ok_err[1]);
-    }
-
-    Ok(ok_err)
+    helper::save_normal_dist(normal_dist);
+    Ok(())
 }

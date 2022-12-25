@@ -1,6 +1,14 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    analysis (users_count) {
+        users_count -> Int4,
+        mean -> Jsonb,
+        std_dev -> Jsonb,
+    }
+}
+
+diesel::table! {
     anime (id) {
         id -> Int4,
         title -> Varchar,
@@ -25,6 +33,7 @@ diesel::table! {
 }
 
 diesel::allow_tables_to_appear_in_same_query!(
+    analysis,
     anime,
     users,
 );

@@ -1,6 +1,6 @@
 use crate::helper;
 
-use crate::algorithm::fucker;
+use crate::algorithm::user;
 // use crate::algorithm::fucker::user::UserModel;
 use crate::algorithm::model::Model;
 
@@ -26,7 +26,7 @@ pub async fn get_user_model(user: &String, reload: bool) -> Result<Model<i16>, u
     }
 
     if update_required || reload {
-        stats_model = match fucker::stats::stats_model(user.to_owned(), reload, false).await {
+        stats_model = match user::stats::stats_model(user.to_owned(), reload, false).await {
             Ok(m) => m,
             Err(e) => return Err(e),
         };

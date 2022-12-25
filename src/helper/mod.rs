@@ -7,8 +7,25 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::thread;
 use std::time::Duration;
+use crate::algorithm::analysis::NormalDist;
 
 use serde::{Deserialize, Serialize};
+
+////////////////////////////////////////////////////////////////////////////////
+// Analysis
+////////////////////////////////////////////////////////////////////////////////
+
+pub fn get_normal_dist() -> Result<NormalDist, diesel::result::Error> {
+    database::analysis::get()
+}
+
+pub fn save_normal_dist(normal_dist: NormalDist) {
+    database::analysis::insert(normal_dist)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// User
+////////////////////////////////////////////////////////////////////////////////
 
 pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
     database::user::get_all_usernames()
