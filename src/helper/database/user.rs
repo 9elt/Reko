@@ -1,4 +1,5 @@
-use super::DBUserNames;
+use super::{AffinityUsers, DBAffinityUsers};
+
 use time_elapsed;
 use crate::utils::conversion::common;
 use crate::utils::database::connection;
@@ -12,12 +13,12 @@ use crate::algorithm::user::affinity::AffinityModel;
 // affinity users
 ////////////////////////////////////////////////////////////////////////////////
 
-pub fn get_affinity_users(affinity: AffinityModel, user: &String) -> Result<Vec<String>, diesel::result::Error> {
+pub fn get_affinity_users(affinity: AffinityModel, user: &String) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
 
-    let mut time = time_elapsed::start("db affinity users");
+    let time = time_elapsed::start("db affinity users");
 
     let mut query = format!("
-        SELECT user_name FROM users
+        SELECT user_name, list FROM users
         WHERE user_name != '{}'
     ", user);
 
@@ -37,17 +38,16 @@ pub fn get_affinity_users(affinity: AffinityModel, user: &String) -> Result<Vec<
         }
     }
 
-    //query = format!("{} LIMIT 20", query);
-
-    time.log("query built");
+    //query = format!("{} LIMIT 8", query);
+    query = format!("{} ORDER BY (model->0->0->0)::int DESC", query);
 
     let affinity_users = sql_query(query)
-        .load::<DBUserNames>(&mut connection::POOL.get().unwrap());
+        .load::<DBAffinityUsers>(&mut connection::POOL.get().unwrap());
 
     time.end();
 
     match affinity_users {
-        Ok(u) => Ok(u.iter().map(|e| e.user_name.to_owned()).collect()),
+        Ok(u) => Ok(u.iter().map(|e| e.deserialize()).collect()),
         Err(e) => Err(e)
     }
 }

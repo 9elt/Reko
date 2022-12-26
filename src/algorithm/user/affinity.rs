@@ -8,7 +8,7 @@ pub struct AffinityModel {
     pub max: Model<i16>,
 }
 
-pub fn affinity_model(stats: Model<i16>) -> Result<AffinityModel, u16> {
+pub fn affinity_model(stats: &Model<i16>) -> Result<AffinityModel, u16> {
     let normal_dist;
     match helper::get_normal_dist() {
         Ok(d) => normal_dist = d,

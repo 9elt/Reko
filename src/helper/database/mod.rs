@@ -2,10 +2,25 @@ pub mod analysis;
 pub mod anime;
 pub mod user;
 
-use diesel::{prelude::*, sql_types::VarChar};
+use super::AffinityUsers;
 
-#[derive(QueryableByName)]
-pub struct DBUserNames {
+use crate::utils::conversion::common;
+use diesel::{prelude::*, sql_types::{VarChar, Jsonb},};
+
+#[derive(QueryableByName, Clone)]
+pub struct DBAffinityUsers {
     #[diesel(sql_type = VarChar)]
-    user_name: String
+    user_name: String,
+    #[diesel(sql_type = Jsonb)]
+    list: serde_json::Value,
 }
+
+impl DBAffinityUsers {
+    pub fn deserialize(&self) -> AffinityUsers {
+        AffinityUsers { 
+            user_name: self.user_name.to_owned(),
+            list: common::from_serde_value(self.list.to_owned()),
+        }
+    }
+}
+

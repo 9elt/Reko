@@ -11,8 +11,15 @@ use std::time::Duration;
 use crate::algorithm::analysis::NormalDist;
 use crate::algorithm::user::affinity::AffinityModel;
 
+use crate::helper::database::user::DBUserList;
+
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
+pub struct AffinityUsers {
+    pub user_name: String,
+    pub list: Vec<Vec<i32>>
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Analysis
@@ -30,11 +37,15 @@ pub fn save_normal_dist(normal_dist: NormalDist) {
 // User
 ////////////////////////////////////////////////////////////////////////////////
 
+pub fn get_user_list(user: &String) -> Result<DBUserList, diesel::result::Error> {
+    database::user::get_list(&user)
+}
+
 pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
     database::user::get_all_usernames()
 }
 
-pub fn get_affinity_users(affinity_model: AffinityModel, user: &String) -> Result<Vec<String>, diesel::result::Error> {
+pub fn get_affinity_users(affinity_model: AffinityModel, user: &String) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
     database::user::get_affinity_users(affinity_model, user)
 }
 
