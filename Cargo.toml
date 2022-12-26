@@ -27,6 +27,4 @@ dotenvy = "0.15"
 lazy_static = "1.4.0"
 chrono = { version = "0.4.23", features = ["serde"] }
 
-z_table = "0.1.5"
-
 time-elapsed = "0.1.0"

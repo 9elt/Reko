@@ -1,4 +1,4 @@
-use z_table;
+use crate::utils::z_table;
 
 use crate::algorithm::model::Model;
 use crate::helper;
@@ -15,8 +15,7 @@ pub fn affinity_model(stats: Model<i16>) -> Result<AffinityModel, u16> {
         Err(_) => return Err(500),
     }
 
-    let tolerance = 250_000 / normal_dist.users_count();
-    println!("tolerance: {tolerance}");
+    let costant_tolerance = 250_000 / normal_dist.users_count();
 
     let mut affinity = AffinityModel {
         min: Model::compare(),
@@ -26,18 +25,18 @@ pub fn affinity_model(stats: Model<i16>) -> Result<AffinityModel, u16> {
     for x in 0..stats.len() {
         for y in 0..stats[x].len() {
             for z in 0..stats[x][y].len() {
-                let tol = stat_tolerance(tolerance, x, y, z);
-                if tol > 0.5 {
+                let tolerance = stat_tolerance(costant_tolerance, x, z);
+                if tolerance > 0.5 {
                     continue;
                 }
-                let deviation = calc_deviation(
+                let range = deviation_range(
                     stats[x][y][z],
                     normal_dist.mean(x, y, z),
                     normal_dist.std_dev(x, y, z),
-                    tol,
+                    tolerance,
                 );
-                affinity.min[x][y][z] = deviation[0];
-                affinity.max[x][y][z] = deviation[1];
+                affinity.min[x][y][z] = range[0];
+                affinity.max[x][y][z] = range[1];
             }
         }
     }
@@ -47,36 +46,23 @@ pub fn affinity_model(stats: Model<i16>) -> Result<AffinityModel, u16> {
     Ok(affinity)
 }
 
-fn calc_deviation(value: i16, mean: i16, std_dev: i16, tolerance: f32) -> [i16; 2] {
+fn deviation_range(value: i16, mean: i16, std_dev: i16, tolerance: f32) -> [i16; 2] {
     let z_score = (value as f32 - mean as f32) / std_dev as f32;
-    let usr = z_table::lookup(z_score);
+    let cumulative_dist = z_table::lookup(z_score);
 
-    let mut bottom_dev = usr - tolerance;
-    if bottom_dev < 0.0 {
-        bottom_dev = 0.0;
-    }
-    if bottom_dev > 1.0 {
-        bottom_dev = 1.0;
-    }
+    let min_cd = unit_value(cumulative_dist - tolerance);
+    let max_cd = unit_value(cumulative_dist + tolerance);
 
-    let mut top_dev = usr + tolerance;
-    if top_dev < 0.0 {
-        top_dev = 0.0;
-    }
-    if top_dev > 1.0 {
-        top_dev = 1.0;
-    }
-
-    let bottom_z_score = z_table::reverse_lookup(bottom_dev);
-    let top_z_score = z_table::reverse_lookup(top_dev);
+    let min_z_score = z_table::reverse_lookup(min_cd);
+    let max_z_score = z_table::reverse_lookup(max_cd);
 
     [
-        mean + (bottom_z_score * std_dev as f32) as i16,
-        mean + (top_z_score * std_dev as f32) as i16,
+        mean + (min_z_score * std_dev as f32) as i16,
+        mean + (max_z_score * std_dev as f32) as i16,
     ]
 }
 
-fn stat_tolerance(tolerance: i32, x: usize, _y: usize, z: usize) -> f32 {
+fn stat_tolerance(tolerance: i32, x: usize, z: usize) -> f32 {
     let d: f32 = match z {
         0 => 1.0, // perc
 
@@ -104,4 +90,14 @@ fn stat_tolerance(tolerance: i32, x: usize, _y: usize, z: usize) -> f32 {
         _ => 10.0 * d, // none
     };
     (tolerance as f32) * c / 100.0
+}
+
+fn unit_value(value: f32) -> f32 {
+    if value < 0.0 {
+        0.0
+    } else if value > 1.0 {
+        1.0
+    } else {
+        value
+    }
 }
