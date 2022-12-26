@@ -14,20 +14,11 @@ A web API that takes a **MyAnimeList username** and returns anime **recommendati
 
 A model of the user is **generated from his anime list**, the model includes:
 
-### [general statistics](#general-statistics)
+### [statistics types](#statistics-types)
 
-General statistics include:
-* list length
-* average **MAL mean** score
-* average **score deviation**
-* average **scored percentage**
-* average of every **status** percentage
-
-> statuses are: `completed` `plan to watch` `watching` `on hold` `dropped`
-
-### [detailed statistics](#detailed-statistics)
-
-Detailed statistics are:
+Overall
+* **general** `general`
+Detailed
 * **airing decades**: `1980s` `1990s` `2000s` `2010s` `2020s`
 * **series lengths**: `1 episode` `2-8 episodes` `9-18 episodes` `19-32 episodes` `33+ episodes`
 * **ratings**: `g` `pg` `pg-13` `r` `r+` `rx`
@@ -56,13 +47,16 @@ Detailed statistics are:
 *buttons link to respective MyAnimeList genre/theme page*
 </details></blockquote>
 
+### [statistics](#statistics)
 
-Each detailed statistic includes:
-* statistic overall percentage
+Each statistic (e.g. `2010s`, `r+`, `Romance`) includes:
+* **percentage of entries** in list (or list length on `general`)
 * average **MAL mean** score
-* average **score deviation**
-* average **scored percentage**
+* average user **score deviation**
+* average user **scored percentage**
 * average of every **status** percentage
+
+> statuses are: `completed` `plan to watch` `watching` `on hold` `dropped`
 
 # [normal distribution](#normal-distribution)
 > `src` / [**`algorithm`**](src/algorithm) / [**`analysis.rs`**](src/algorithm/analysis.rs)
@@ -74,9 +68,9 @@ A job periodically calculates the **mean** and **standard deviation** of each st
 ### [finding similar users](#finding-similar-users)
 > `src` / [**`algorithm`**](src/algorithm) / [**`user`**](src/algorithm/user) / [**`affinity.rs`**](src/algorithm/user/affinity.rs)
 
-First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#general-statistics)** and the distirbution on **[detailed statistic](#detailed-statistics)** deviates by less than **`X`%**
+First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#statistics-types)** and the distirbution on **[detailed statistic](#statistics-types)** deviates by less than **`X`%**
 
-`X` value varies on the different types of statistics
+`X` value varies on the different types of statistics, and increments if no users are found.
 <details><summary>The values of <code>X</code> table</summary>
 
 | value of `X`   | perc | mean score | score dev | scored perc | completed | plan to watch | watching | on hold | dropped |
