@@ -85,7 +85,7 @@ First of all we query the database for users that **deviate by less than `X`%** 
 | minor themes   | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
 | demographics   | 2c   | 2c         | 4c        | 4c          | 6c        | 8c            | 8c       | 8c      | 6c      |
 
-with **`c`** = **500,000** / **number of users** in the database
+with **`c`** = **250,000** / **number of users** in the database
 </details>
 
 # [project structure](#project-structure)
