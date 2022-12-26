@@ -5,6 +5,7 @@ A web API that takes a **MyAnimeList username** and returns anime **recommendati
 
 #### index
 * [statistics model](#statistics-model)
+* [normal distribution](#normal-distribution)
 * [recommendations](#recommendations)
 * [project structure](#project-structure)
 

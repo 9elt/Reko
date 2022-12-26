@@ -3,32 +3,6 @@
 version = 3
 
 [[package]]
-name = "Reko"
-version = "0.1.0"
-dependencies = [
- "axum",
- "axum-macros",
- "bcrypt",
- "chrono",
- "colored",
- "diesel",
- "dotenvy",
- "futures",
- "hyper",
- "jsonwebtoken",
- "lazy_static",
- "once_cell",
- "reqwest",
- "serde",
- "serde_derive",
- "serde_json",
- "time-elapsed",
- "tokio",
- "tower",
- "tower-http 0.2.5",
-]
-
-[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1063,6 +1037,32 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fb5a58c1855b4b6819d59012155603f0b22ad30cad752600aadfcb695265519a"
 dependencies = [
  "bitflags",
+]
+
+[[package]]
+name = "reko"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "axum-macros",
+ "bcrypt",
+ "chrono",
+ "colored",
+ "diesel",
+ "dotenvy",
+ "futures",
+ "hyper",
+ "jsonwebtoken",
+ "lazy_static",
+ "once_cell",
+ "reqwest",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "time-elapsed",
+ "tokio",
+ "tower",
+ "tower-http 0.2.5",
 ]
 
 [[package]]

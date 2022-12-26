@@ -219,25 +219,25 @@ pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RelatedAnime {
-    id: u32,
-    relation: i16,
+    pub id: u32,
+    pub relation: i16,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AnimeDetails {
-    id: i32,
-    title: String,
-    picture: Option<String>,
-    airing_date: Option<chrono::NaiveDate>,
-    mean: Option<i16>,
-    airing_status: Option<i16>,
-    genres: Option<Vec<Option<i16>>>,
-    num_episodes: Option<i16>,
-    rating: Option<i16>,
-    related: Option<Vec<RelatedAnime>>,
+    pub id: i32,
+    pub title: String,
+    pub picture: Option<String>,
+    pub airing_date: Option<chrono::NaiveDate>,
+    pub mean: Option<i16>,
+    pub airing_status: Option<i16>,
+    pub genres: Option<Vec<Option<i16>>>,
+    pub num_episodes: Option<i16>,
+    pub rating: Option<i16>,
+    pub related: Option<Vec<RelatedAnime>>,
 }
 
-async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
+pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
     let mut complete_result: Vec<_> = vec![];
     let db_result = match database::anime::get(&ids) {
         Ok(r) => r,

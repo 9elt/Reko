@@ -38,8 +38,8 @@ pub fn get_affinity_users(affinity: AffinityModel, user: &String) -> Result<Vec<
         }
     }
 
-    //query = format!("{} LIMIT 8", query);
     query = format!("{} ORDER BY (model->0->0->0)::int DESC", query);
+    query = format!("{} LIMIT 8", query);
 
     let affinity_users = sql_query(query)
         .load::<DBAffinityUsers>(&mut connection::POOL.get().unwrap());

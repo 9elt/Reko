@@ -8,14 +8,14 @@ pub struct AffinityModel {
     pub max: Model<i16>,
 }
 
-pub fn affinity_model(stats: &Model<i16>) -> Result<AffinityModel, u16> {
+pub fn affinity_model(stats: &Model<i16>, accuracy: i32) -> Result<AffinityModel, u16> {
     let normal_dist;
     match helper::get_normal_dist() {
         Ok(d) => normal_dist = d,
         Err(_) => return Err(500),
     }
 
-    let costant_tolerance = 250_000 / normal_dist.users_count();
+    let costant_tolerance = (250_000 / normal_dist.users_count()) + (100 - accuracy);
 
     let mut affinity = AffinityModel {
         min: Model::compare(),
