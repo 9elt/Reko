@@ -18,6 +18,7 @@ A model of the user is **generated from his anime list**, the model includes:
 
 Overall
 * **general** `general`
+
 Detailed
 * **airing decades**: `1980s` `1990s` `2000s` `2010s` `2020s`
 * **series lengths**: `1 episode` `2-8 episodes` `9-18 episodes` `19-32 episodes` `33+ episodes`
