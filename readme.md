@@ -63,6 +63,11 @@ Each detailed statistic includes:
 * average **scored percentage**
 * average of every **status** percentage
 
+# [normal distribution](#normal-distribution)
+> `src` / [**`algorithm`**](src/algorithm) / [**`analysis.rs`**](src/algorithm/analysis.rs)
+
+A job calculates the **mean** and **standard deviation** of the [statistics model](#statistics-model) of all the users in the database
+
 # [recommendations](#recommendations)
 
 ### [finding similar users](#finding-similar-users)

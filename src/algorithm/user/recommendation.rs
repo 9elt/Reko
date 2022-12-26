@@ -22,11 +22,19 @@ pub fn extract(
 
     for i in 0..similar_users.len() {
         let mut user_unique = 0;
-        //let mut missing_entries = vec![];
-        for entry in similar_users[i].list.iter() {
+        let list_len = similar_users[i].list.len();
+        let limit = match list_len > 1000 {
+            true => 1000,
+            false => list_len
+        };
+
+        for j in 0..limit {
+            let entry = &similar_users[i].list[j];
+
             if user_unique > 32 - (i * 2) {
                 break;
             }
+
             // not completed
             if entry[1] > 1 {
                 continue;
