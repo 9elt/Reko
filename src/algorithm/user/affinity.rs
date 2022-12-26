@@ -15,7 +15,7 @@ pub fn affinity_model(stats: Model<i16>) -> Result<AffinityModel, u16> {
         Err(_) => return Err(500),
     }
 
-    let tolerance = 500_000 / normal_dist.users_count();
+    let tolerance = 250_000 / normal_dist.users_count();
     println!("tolerance: {tolerance}");
 
     let mut affinity = AffinityModel {
@@ -41,6 +41,8 @@ pub fn affinity_model(stats: Model<i16>) -> Result<AffinityModel, u16> {
             }
         }
     }
+
+    affinity.max[0][0][0] = 20_000;
 
     Ok(affinity)
 }
@@ -74,19 +76,32 @@ fn calc_deviation(value: i16, mean: i16, std_dev: i16, tolerance: f32) -> [i16; 
     ]
 }
 
-fn stat_tolerance(tolerance: i32, x: usize, y: usize, z: usize) -> f32 {
+fn stat_tolerance(tolerance: i32, x: usize, _y: usize, z: usize) -> f32 {
     let d: f32 = match z {
-        0 => 1.0,
-        1 => 2.0,
-        2 => 3.0,
-        3 => 2.0,
-        _ => 2.0,
+        0 => 1.0, // perc
+
+        1 => 2.5, // mal mean score
+        2 => 8.0, // score dev
+        3 => 8.0, // scored perc
+
+        _ => 8.0, // statuses
     };
     let c: f32 = match x {
-        0 => 1.0 * d,
-        5 => 6.0 * d,
-        7 => 6.0 * d,
-        _ => 2.0 * d,
+        0 => 1.0 * d, // general
+
+        1 => 3.0 * d, // airing decades
+        2 => 3.0 * d, // ratings
+        3 => 3.0 * d, // series length
+
+        4 => 4.0 * d, // MAJOR genres
+        5 => 8.0 * d, // minor genres
+
+        6 => 4.0 * d, // MAJOR themes
+        7 => 8.0 * d, // minor themes
+
+        8 => 4.0 * d, // demographics
+
+        _ => 10.0 * d, // none
     };
     (tolerance as f32) * c / 100.0
 }

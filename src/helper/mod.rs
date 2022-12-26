@@ -115,12 +115,12 @@ impl DetailedListEntry {
 }
 
 pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -> Result<Vec<DetailedListEntry>, u16> {
-    //let mut time = time_elapsed::start("list");
+    let mut time = time_elapsed::start("list");
 
     let mut base_list: Vec<Vec<i32>> = vec![];
     let database_list = database::user::get_list(&u);
 
-    //time.log(format!("[{}] database check", u)).timestamp();
+    time.log(format!("[{}] database check", u)).timestamp();
 
     let mut list_is_missing: bool = false;
     let update_required: bool;
@@ -143,7 +143,7 @@ pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -
     if update_required && !prevent_update {
         let api_list = mal_api::list::get(&u).await;
 
-        //time.log(format!("requested [{}] list", u)).timestamp();
+        time.log(format!("requested [{}] list", u)).timestamp();
 
         let tmp: Vec<Vec<i32>>;
 
@@ -170,7 +170,7 @@ pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -
     let anime_ids: Vec<i32> = base_list.iter().map(|e| e[0]).collect();
     let mut anime_info = get_anime_details(anime_ids).await;
 
-    //time.log(format!("[{}] anime details", u)).timestamp();
+    time.log(format!("[{}] anime details", u)).timestamp();
 
     anime_info.sort_unstable_by(|x, y| y.id.cmp(&x.id));
     base_list.sort_unstable_by(|x, y| y[0].cmp(&x[0]));
@@ -199,9 +199,9 @@ pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -
         }
     }
 
-    //time.log(format!("[{}] extend list", u));
+    time.log(format!("[{}] extend list", u));
 
-    //time.end();
+    time.end();
 
     Ok(full)
 }

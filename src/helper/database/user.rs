@@ -188,10 +188,10 @@ pub fn set_model(user: &String, m: UserModel) {
         ))
         .execute(&mut connection::POOL.get().unwrap());
 
-    // match updated {
-    //     Ok(_) => println!("(db) updated [{}] model", user),
-    //     Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed updating [{}] model", user),
-    // };
+    match updated {
+        Ok(_) => println!("(db) updated [{}] model", user),
+        Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed updating [{}] model", user),
+    };
 }
 
 /*
