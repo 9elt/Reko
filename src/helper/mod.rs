@@ -7,9 +7,12 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use std::thread;
 use std::time::Duration;
+
 use crate::algorithm::analysis::NormalDist;
+use crate::algorithm::user::affinity::AffinityModel;
 
 use serde::{Deserialize, Serialize};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Analysis
@@ -31,7 +34,7 @@ pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
     database::user::get_all_usernames()
 }
 
-pub fn get_affinity_users(affinity_model: [Vec<Vec<[i32; 9]>>; 2], user: &String) -> Result<Vec<String>, diesel::result::Error> {
+pub fn get_affinity_users(affinity_model: AffinityModel, user: &String) -> Result<Vec<String>, diesel::result::Error> {
     database::user::get_affinity_users(affinity_model, user)
 }
 

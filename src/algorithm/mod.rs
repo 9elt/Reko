@@ -1,4 +1,3 @@
-pub mod fucker;
+pub mod analysis;
 pub mod model;
 pub mod user;
-pub mod analysis;

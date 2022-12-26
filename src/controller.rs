@@ -62,7 +62,7 @@ pub async fn get_user_recommendations(
 
     println!("\n(\x1b[34m\x1b[1mGET\x1b[0m: recommendations) user: \x1b[33m\x1b[1m{}\x1b[0m, reload: \x1b[33m\x1b[1m{}\x1b[0m", user, reload);
 
-    match models::recommendations::get_user_recommendations(&user, reload) {
+    match models::recommendations::get_user_recommendations(&user, reload).await {
         Ok(users) => Ok(Json(json!(users))),
         Err(error) => Err(StatusCode::from_u16(error).unwrap()),
     }

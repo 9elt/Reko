@@ -6,13 +6,13 @@ use crate::utils::database::schema::users::dsl::*;
 use diesel::{prelude::*, sql_query};
 use chrono::Utc;
 
-type Model = Vec<Vec<[i32; 9]>>;
+use crate::algorithm::user::affinity::AffinityModel;
 
 ////////////////////////////////////////////////////////////////////////////////
 // affinity users
 ////////////////////////////////////////////////////////////////////////////////
 
-pub fn get_affinity_users(affinity_model: [Model; 2], user: &String) -> Result<Vec<String>, diesel::result::Error> {
+pub fn get_affinity_users(affinity: AffinityModel, user: &String) -> Result<Vec<String>, diesel::result::Error> {
 
     let mut time = time_elapsed::start("db affinity users");
 
@@ -21,28 +21,23 @@ pub fn get_affinity_users(affinity_model: [Model; 2], user: &String) -> Result<V
         WHERE user_name != '{}'
     ", user);
 
-    let gte: &Model = &affinity_model[0];
-    let lte: &Model = &affinity_model[1];
-
-    for x in 0..gte.len() {
-        for y in 0..gte[x].len() {
-            for z in 0..gte[x][y].len() {
-                if gte[x][y][z] == 4095 {
+    for x in 0..affinity.min.len() {
+        for y in 0..affinity.min[x].len() {
+            for z in 0..affinity.min[x][y].len() {
+                if affinity.min[x][y][z] == 4095 {
                     continue;
                 }
                 query = format!(
-                    "{}
-                    AND (model->{}->{}->{})::int >= {}
-                    AND (model->{}->{}->{})::int <= {}",
+                    "{} AND (model->{}->{}->{})::int >= {} AND (model->{}->{}->{})::int <= {}",
                     query,
-                    x, y, z, gte[x][y][z],
-                    x, y, z, lte[x][y][z]
+                    x, y, z, affinity.min[x][y][z],
+                    x, y, z, affinity.max[x][y][z]
                 );
             }
         }
     }
 
-    query = format!("{} LIMIT 20", query);
+    //query = format!("{} LIMIT 20", query);
 
     time.log("query built");
 
