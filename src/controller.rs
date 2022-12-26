@@ -62,16 +62,10 @@ pub async fn get_user_recommendations(
 
     println!("\n(\x1b[34m\x1b[1mGET\x1b[0m: recommendations) user: \x1b[33m\x1b[1m{}\x1b[0m, reload: \x1b[33m\x1b[1m{}\x1b[0m", user, reload);
 
-    let _model = match models::stats::get_user_model(&user, reload).await {
-        Ok(model) => model,
-        Err(error) => return Err(StatusCode::from_u16(error).unwrap()),
-    };
-
-    Ok(Json(json!(vec![1])))
-//    match recommendations::get_user_recommendations(model, &user) {
-//        Ok(users) => Ok(Json(json!(users))),
-//        Err(error) => Err(StatusCode::from_u16(error).unwrap()),
-//    }
+    match models::recommendations::get_user_recommendations(&user, reload) {
+        Ok(users) => Ok(Json(json!(users))),
+        Err(error) => Err(StatusCode::from_u16(error).unwrap()),
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

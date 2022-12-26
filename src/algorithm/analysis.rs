@@ -19,12 +19,20 @@ impl NormalDist {
         self.users_count
     }
 
-    pub fn mean(&self) -> Model<i16> {
-        self.mean.to_owned()
+    pub fn mean_model(&self) -> &Model<i16> {
+        &self.mean
     }
 
-    pub fn std_dev(&self) -> Model<i16> {
-        self.std_dev.to_owned()
+    pub fn std_dev_model(&self) -> &Model<i16> {
+        &self.std_dev
+    }
+
+    pub fn mean(&self, x: usize, y: usize, z: usize) -> i16 {
+        self.mean[x][y][z]
+    }
+
+    pub fn std_dev(&self, x: usize, y: usize, z: usize) -> i16 {
+        self.std_dev[x][y][z]
     }
 }
 

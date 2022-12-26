@@ -1,13 +1,20 @@
 use crate::helper;
 use crate::algorithm::fucker::affinity::AffinityModel;
-use crate::algorithm::fucker::user::UserModel;
 
-pub fn get_user_recommendations(
-    model: UserModel,
-    user: &String,
-) -> Result<Vec<String>, u16> {
+use crate::algorithm::{user, model::Model};
 
-    let mut affinity_model = AffinityModel::new(model);
+use super::stats;
+
+type devResult = Vec<String>;
+
+pub async fn get_user_recommendations(user: &String, reload: bool) -> Result<devResult, u16> {
+    let stats_model = match stats::get_user_model(&user, reload).await {
+        Ok(model) => model,
+        Err(error) => return Err(error),
+    };
+
+    let mut affinity_model = user::AffinityModel::new(stats_model);
+
     affinity_model.calc(10);
 
     match helper::get_affinity_users(affinity_model.to_array(), user) {

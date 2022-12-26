@@ -19,8 +19,8 @@ impl RawNormalDist {
     fn from(normal_dist: NormalDist) -> Self {
         Self {
             users_count: normal_dist.users_count(),
-            mean: common::to_serde_value(&normal_dist.mean().to_vec()),
-            std_dev: common::to_serde_value(&normal_dist.std_dev().to_vec()),
+            mean: common::to_serde_value(&normal_dist.mean_model().to_vec()),
+            std_dev: common::to_serde_value(&normal_dist.std_dev_model().to_vec()),
         }
     }
 

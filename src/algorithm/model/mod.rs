@@ -46,7 +46,7 @@ impl Model<i64> {
                     let conversion = i16::try_from(self.model[x][y][z]);
                     match conversion {
                         Ok(converted) => model_conversion[x][y][z] = converted,
-                        Err(_) => model_conversion[x][y][z] = 1001,
+                        Err(_) => model_conversion[x][y][z] = 32_767,
                     }
                 }
             }
@@ -86,7 +86,7 @@ impl Model<i32> {
                     let conversion = i16::try_from(self.model[x][y][z]);
                     match conversion {
                         Ok(converted) => model_conversion[x][y][z] = converted,
-                        Err(_) => model_conversion[x][y][z] = 1001,
+                        Err(_) => model_conversion[x][y][z] = 32_767,
                     }
                 }
             }

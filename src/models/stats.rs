@@ -6,7 +6,6 @@ use crate::algorithm::model::Model;
 
 pub async fn get_user_model(user: &String, reload: bool) -> Result<Model<i16>, u16> {
     let mut stats_model = Model::<i16>::empty();
-
     let mut update_required: bool = false;
 
     if !reload {
