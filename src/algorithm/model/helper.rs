@@ -1,65 +1,26 @@
-use super::ModelVec;
-
-////////////////////////////////////////////////////////////////////////////////
-// Model Vector Generator
-////////////////////////////////////////////////////////////////////////////////
-
-/// ## Uniform ModelVec from value
-/// takes `value` and
-/// returns `Vec<Vec<[value; 9]>>`
-pub fn model_vec_from_value<T: Copy+std::ops::Neg>(v: T) -> ModelVec<T> {
-    vec![
-        // general
-        vec![[v; 9]],
-        // airing decades
-        vec![[v; 9]; 5],
-        // ratings
-        vec![[v; 9]; 6],
-        // series lengths
-        vec![[v; 9]; 5],
-        // major genres
-        vec![[v; 9]; 8],
-        // minor genres
-        vec![[v; 9]; 13],
-        // major themes
-        vec![[v; 9]; 20],
-        // minor themes
-        vec![[v; 9]; 30],
-        // demographics
-        vec![[v; 9]; 5],
-    ]
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // Model index helper
 ////////////////////////////////////////////////////////////////////////////////
 
 use chrono::Datelike;
 
-/// ## Model index helper
-pub struct Midx {
+/// ## Model indexer
+/// Provides useful methods to index `Model`
+pub struct Idxr {
     pub x: usize,
     pub y: usize,
     errors: bool,
 }
 
-fn ok(x: usize, y: usize) -> Midx {
-    Midx {
-        x,
-        y,
-        errors: false,
-    }
+fn ok(x: usize, y: usize) -> Idxr {
+    Idxr { x, y, errors: false, }
 }
 
-fn err() -> Midx {
-    Midx {
-        x: 0,
-        y: 0,
-        errors: true,
-    }
+fn err() -> Idxr {
+    Idxr { x: 0, y: 0, errors: true, }
 }
 
-impl Midx {
+impl Idxr {
     pub fn has_errors(&self) -> bool {
         self.errors
     }
@@ -70,7 +31,7 @@ impl Midx {
 
     /// ### Model `Airing Decades` index from `airing date`
     /// `Airing Decades` has index `1` in the model
-    pub fn from_date(date: chrono::NaiveDate) -> Self {
+    pub fn date(date: &chrono::NaiveDate) -> Self {
         let year: i32 = date.year();
         // 1980s
         if year < 1991 {
@@ -94,11 +55,11 @@ impl Midx {
     /// `Rating` has index `2` in the model
     /// 
     /// `rating id` is generated internally from the rating name 
-    pub fn from_rating(rating: i16) -> Self {
-        if rating == 0 {
+    pub fn rating(rating: &i16) -> Self {
+        if rating == &0 {
             err()
         } else {
-            ok(2, rating as usize - 1)
+            ok(2, (rating - 1) as usize)
         }
     }
 
@@ -106,21 +67,21 @@ impl Midx {
     /// `Series Length` has index `3` in the model
     /// 
     /// `number of episodes` is provided by **MyAnimeList api**
-    pub fn from_num_episodes(num_episodes: i16) -> Self {
+    pub fn num_episodes(num_episodes: &i16) -> Self {
         // Errors
-        if num_episodes == 0 {
+        if num_episodes == &0 {
             err()
         // 1 Episode
-        } else if num_episodes == 1 {
+        } else if num_episodes == &1 {
             ok(3, 0)
         // 2-8 Episodes
-        } else if num_episodes < 9 {
+        } else if num_episodes < &9 {
             ok(3, 1)
         // 9-18 Episodes
-        } else if num_episodes < 19 {
+        } else if num_episodes < &19 {
             ok(3, 2)
         // 19-32 Episodes
-        } else if num_episodes < 33 {
+        } else if num_episodes < &33 {
             ok(3, 3)
         // 33+ Episodes
         } else {
@@ -141,7 +102,7 @@ impl Midx {
     /// 
     /// `genre id` is provided by **MyAnimeList api** and represents all
     /// genres, themes and demographics
-    pub fn from_genre(genre: i16) -> Self {
+    pub fn genre(genre: &i16) -> Self {
         match genre {
             //MAJOR Genres
             1 => ok(4, 0),
@@ -229,7 +190,6 @@ impl Midx {
             25 => ok(8, 3),
             27 => ok(8, 4),
 
-            // Errors
             _ => err(),
         }
     }
