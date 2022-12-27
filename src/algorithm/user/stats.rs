@@ -1,154 +1,144 @@
-// use time_elapsed;
+use crate::algorithm::model::{helper::Idxr, Model};
+use crate::helper::DetailedListEntry;
 
-use crate::helper;
-
-//use super::indexer::Idx;
-//use super::Model;
-
-use crate::algorithm::model::{helper::Midx, Model};
-
-struct EntryInfo<'a> {
-    model: &'a mut Model<i32>,
-    score: i32,
-    deviation: i32,
-    score_count: i32,
-    status: usize,
-}
-
-/// # User statistics model
+/// ### User statistics model
 /// Generates a statistics model from an anime list
-pub async fn stats_model(
-    user: String,
-    reload: bool,
-    prevent_update: bool,
-) -> Result<Model<i16>, u16> {
-    //let time = time_elapsed::start("stats");
-
-    let list = match helper::get_detailed_list(&user, reload, prevent_update).await {
-        Ok(l) => l,
-        Err(e) => return Err(e),
-    };
-
+pub fn stats_model(list: Vec<DetailedListEntry>) -> Model<i16> {
     let mut model = Model::<i32>::empty();
 
     for entry in list.iter() {
-        let user_score: i32 = entry.score();
-
-        let score: i32 = match entry.mean() {
-            Some(mean) => mean as i32,
-            None => continue,
+        let info = match EntryData::new(entry) {
+            Ok(val) => val,
+            Err(_) => continue,
         };
 
-        let mut entry_info = EntryInfo {
-            model: &mut model,
+        // increment model with entry data
+        model
+            // general
+            .incr_stat(Idxr::general(), &info)
+            // airing decade
+            .incr_optional(&entry.airing_date(), Idxr::date, &info)
+            // rating
+            .incr_optional(&entry.rating(), Idxr::rating, &info)
+            // series length
+            .incr_optional(&entry.num_episodes(), Idxr::num_episodes, &info)
+            // genres | themes | demographics
+            .incr_optional_seq(entry.genres(), Idxr::genre, &info);
+    }
+
+    // average model statistics
+    for x in 0..model.len() {
+        let total: i32 = model[x].iter().map(|i| i[0]).sum();
+        for y in 0..model[x].len() {
+            model.average_stat(x, y, total);
+        }
+    }
+
+    model.to_i16()
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Private Model implementation
+////////////////////////////////////////////////////////////////////////////////
+
+impl Model<i32> {
+    /// ### calls `incr_optional` sequentially
+    fn incr_optional_seq<T>(
+        &mut self,
+        stats: &Option<Vec<Option<T>>>,
+        idxr: fn(value: &T) -> Idxr,
+        info: &EntryData,
+    ) -> &mut Self {
+        match stats {
+            Some(vector) => {
+                for stat in vector.iter() {
+                    self.incr_optional(&stat, idxr, &info);
+                }
+            }
+            None => (),
+        };
+        self
+    }
+
+    /// ### Optionally increment `Model` statistic at `index` with `EntryData`
+    fn incr_optional<T>(
+        &mut self,
+        stat: &Option<T>,
+        idxr: fn(value: &T) -> Idxr,
+        info: &EntryData,
+    ) -> &mut Self {
+        match stat {
+            Some(value) => self.incr_stat(idxr(value), info),
+            None => self,
+        }
+    }
+
+    /// ### Increment `Model` statistic at `index` with `EntryData`
+    fn incr_stat(&mut self, index: Idxr, info: &EntryData) -> &mut Self {
+        if !index.has_errors() {
+            self[index.x][index.y][0] += 1;
+            self[index.x][index.y][1] += info.score;
+            self[index.x][index.y][2] += info.deviation;
+            self[index.x][index.y][3] += info.score_counter;
+            self[index.x][index.y][info.status + 3] += 1;
+        }
+        self
+    }
+
+    /// ### average `Model` statistic at index `[x][y]`
+    fn average_stat(&mut self, x: usize, y: usize, total: i32) -> &mut Self {
+        self[x][y][1] = div(self[x][y][1], self[x][y][0]);
+        self[x][y][2] = div(self[x][y][2], self[x][y][3]);
+        for z in 3..9 {
+            self[x][y][z] = perc(self[x][y][z], self[x][y][0]);
+        }
+        if x > 0 {
+            self[x][y][0] = perc(self[x][y][0], total);
+        }
+        self
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Entry data
+////////////////////////////////////////////////////////////////////////////////
+
+struct EntryData {
+    score: i32,
+    deviation: i32,
+    score_counter: i32,
+    status: usize,
+}
+
+impl EntryData {
+    fn new(entry: &DetailedListEntry) -> Result<Self, ()> {
+        let score: i32 = match entry.mean() {
+            Some(mean) => mean as i32,
+            None => return Err(()),
+        };
+
+        let user_score: i32 = entry.score();
+
+        Ok(Self {
             score,
             deviation: match user_score {
                 0 => 0,
                 _ => user_score - score as i32,
             },
-            score_count: match user_score {
+            score_counter: match user_score {
                 0 => 0,
                 _ => 1,
             },
             status: entry.status() as usize,
-        };
-
-        // general
-        pupulate_stat(Midx::general(), &mut entry_info);
-
-        // airing decade
-        match entry.airing_date() {
-            Some(data) => {
-                pupulate_stat(Midx::from_date(data), &mut entry_info);
-            }
-            None => (),
-        }
-
-        // rating
-        match entry.rating() {
-            Some(data) => {
-                pupulate_stat(Midx::from_rating(data), &mut entry_info);
-            }
-            None => (),
-        }
-
-        // series length
-        match entry.num_episodes() {
-            Some(data) => {
-                pupulate_stat(Midx::from_num_episodes(data), &mut entry_info);
-            }
-            None => (),
-        }
-
-        // genres | themes | demographics
-        match entry.genres().to_owned() {
-            Some(genres) => {
-                for g in genres.iter() {
-                    match g.to_owned() {
-                        Some(data) => {
-                            pupulate_stat(Midx::from_genre(data), &mut entry_info);
-                        }
-                        None => (),
-                    }
-                }
-            }
-            None => (),
-        }
-    }
-
-    // general stats
-    average_stat(&mut model, 0, 0, -1);
-
-    // detailed stats
-    for x in 1..model.len() {
-        let stat_tot: i32 = model[x].iter().map(|i| i[0]).sum();
-        for y in 0..model[x].len() {
-            average_stat(&mut model, x, y, stat_tot);
-        }
-    }
-
-    helper::save_user_model(&user, model.copy_to_i16_vec());
-
-    //time.end();
-
-    Ok(model.to_i16())
-}
-
-fn average_stat(model: &mut Model<i32>, stat_type: usize, stat: usize, stat_tot: i32) {
-    // mal score
-    model[stat_type][stat][1] = div(model[stat_type][stat][1], model[stat_type][stat][0]);
-
-    // average score deviation
-    model[stat_type][stat][2] = div(model[stat_type][stat][2], model[stat_type][stat][3]);
-
-    // scored percentage
-    model[stat_type][stat][3] = perc(model[stat_type][stat][3], model[stat_type][stat][0]);
-
-    // completed | plan to watch | watching | on hold | dropped percentages
-    model[stat_type][stat][4] = perc(model[stat_type][stat][4], model[stat_type][stat][0]);
-    model[stat_type][stat][5] = perc(model[stat_type][stat][5], model[stat_type][stat][0]);
-    model[stat_type][stat][6] = perc(model[stat_type][stat][6], model[stat_type][stat][0]);
-    model[stat_type][stat][7] = perc(model[stat_type][stat][7], model[stat_type][stat][0]);
-    model[stat_type][stat][8] = perc(model[stat_type][stat][8], model[stat_type][stat][0]);
-
-    // stat percentage
-    if stat_type > 0 && stat > 0 {
-        model[stat_type][stat][0] = perc(model[stat_type][stat][0], stat_tot);
+        })
     }
 }
 
-fn pupulate_stat(idx: Midx, e: &mut EntryInfo) {
-    if idx.has_errors() {
-        return ();
-    }
+////////////////////////////////////////////////////////////////////////////////
+// Utility
+////////////////////////////////////////////////////////////////////////////////
 
-    e.model[idx.x][idx.y][0] += 1;
-    e.model[idx.x][idx.y][1] += e.score;
-    e.model[idx.x][idx.y][2] += e.deviation;
-    e.model[idx.x][idx.y][3] += e.score_count;
-    e.model[idx.x][idx.y][e.status + 3] += 1;
-}
-
+/// ### divides `num` by `den`
 fn div(num: i32, den: i32) -> i32 {
     match den {
         0 => 0,
@@ -156,6 +146,7 @@ fn div(num: i32, den: i32) -> i32 {
     }
 }
 
+/// ### percentage of `num` on `den`
 fn perc(num: i32, den: i32) -> i32 {
     div(num * 1000, den)
 }

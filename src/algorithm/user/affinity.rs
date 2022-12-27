@@ -48,13 +48,13 @@ pub fn affinity_model(stats: &Model<i16>, accuracy: i32) -> Result<AffinityModel
 
 fn deviation_range(value: i16, mean: i16, std_dev: i16, tolerance: f32) -> [i16; 2] {
     let z_score = (value as f32 - mean as f32) / std_dev as f32;
-    let cumulative_dist = z_table::lookup(z_score);
+    let cumulative_dist = z_table::cumulative_dist(z_score);
 
     let min_cd = unit_value(cumulative_dist - tolerance);
     let max_cd = unit_value(cumulative_dist + tolerance);
 
-    let min_z_score = z_table::reverse_lookup(min_cd);
-    let max_z_score = z_table::reverse_lookup(max_cd);
+    let min_z_score = z_table::z_score(min_cd);
+    let max_z_score = z_table::z_score(max_cd);
 
     [
         mean + (min_z_score * std_dev as f32) as i16,
