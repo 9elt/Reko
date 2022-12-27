@@ -1,5 +1,5 @@
 use crate::helper::AnimeDetails;
-use crate::utils::conversion::common;
+use crate::utils::conversion;
 use crate::utils::database::connection;
 use crate::utils::database::schema::anime;
 use crate::utils::database::schema::anime::dsl::*;
@@ -73,7 +73,7 @@ impl RawAnime {
             self.num_episodes,
             self.rating,
             match &self.related {
-                Some(r) => common::from_serde_value(r.to_owned()),
+                Some(r) => conversion::from_serde_value(r.to_owned()),
                 None => None,
             },
         )

@@ -2,7 +2,7 @@ pub mod helper;
 
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use std::ops::{Index, IndexMut};
-use crate::utils::conversion::common;
+use crate::utils::conversion;
 
 pub type ModelVec<T> = Vec<ModelStatType<T>>;
 pub type ModelStatType<T> = Vec<ModelStat<T>>;
@@ -127,7 +127,7 @@ impl Model<i16> {
 
     pub fn from_json(value: serde_json::Value) -> Self {
         Self {
-            model: common::from_serde_value(value)
+            model: conversion::from_serde_value(value)
         }
     }
 }

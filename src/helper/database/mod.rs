@@ -4,7 +4,7 @@ pub mod user;
 
 use super::AffinityUsers;
 
-use crate::utils::conversion::common;
+use crate::utils::conversion;
 use diesel::{prelude::*, sql_types::{VarChar, Jsonb},};
 
 #[derive(QueryableByName, Clone)]
@@ -19,7 +19,7 @@ impl DBAffinityUsers {
     pub fn deserialize(&self) -> AffinityUsers {
         AffinityUsers { 
             user_name: self.user_name.to_owned(),
-            list: common::from_serde_value(self.list.to_owned()),
+            list: conversion::from_serde_value(self.list.to_owned()),
         }
     }
 }

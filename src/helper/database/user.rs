@@ -1,11 +1,13 @@
+use time_elapsed;
+
 use super::{AffinityUsers, DBAffinityUsers};
 
-use serde_json::json;
-use time_elapsed;
-use crate::{utils::conversion::common, algorithm::model::Model};
+use crate::{utils::conversion, algorithm::model::Model};
 use crate::utils::database::connection;
 use crate::utils::database::schema::users::dsl::*;
+
 use diesel::{prelude::*, sql_query};
+use serde_json::json;
 use chrono::Utc;
 
 use crate::algorithm::user::affinity::AffinityModel;
@@ -83,7 +85,7 @@ struct RawList {
 impl RawList {
     fn deserialize(self) -> DBUserList {
         DBUserList {
-            list: common::from_serde_value(self.data),
+            list: conversion::from_serde_value(self.data),
             updated_at: self.updated_at,
         }
     }
@@ -105,7 +107,7 @@ pub fn insert_list(user: &String, l: UserList) {
     let inserted = diesel::insert_into(users)
         .values((
             user_name.eq(&user),
-            list.eq(common::to_serde_value(&l)),
+            list.eq(json!(&l)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
         .execute(&mut connection::POOL.get().unwrap());
@@ -119,7 +121,7 @@ pub fn insert_list(user: &String, l: UserList) {
 pub fn update_list(user: &String, l: UserList) {
     let updated = diesel::update(users.find(&user))
         .set((
-            list.eq(common::to_serde_value(&l)),
+            list.eq(json!(&l)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
         .execute(&mut connection::POOL.get().unwrap());
@@ -161,7 +163,7 @@ impl RawModel {
     fn deserialize(self) -> DBUserModel {
         DBUserModel {
             model: match self.data {
-                Some(data) => common::from_serde_value(data),
+                Some(data) => conversion::from_serde_value(data),
                 None => None
             },
             updated_at: self.updated_at,
