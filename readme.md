@@ -94,17 +94,18 @@ with **`c`** = **250,000** / **number of users** in the database
 <pre>
 <a href="src/">src</a>
 │   main.rs
-│   router.rs <i>...api router</i>
-│   controller.rs <i>...api controller</i>
+│   <a href="src/router.rs">router.rs</a> <i>...api router</i>
+│   <a href="src/controller.rs">controller.rs</a> <i>...api controller</i>
 │
 └─> <a href="src/models">models</a>
 │     <i>...api models</i>
 │
 └─> <a href="src/algorithm">algorithm</a>
-│   └─> <a href="src/algorithm/mean">mean</a>
-│   │     <i>...mean models calculation and storage</i>
+|   │   <a href="src/algorithm/analysis.rs">analysis.rs</a> <i>...normal distribution calculation</i>
+│   └─> <a href="src/algorithm/model">model</a>
+│   │     <i>...statistics model struct and helpers</i>
 │   └─> <a href="src/algorithm/user">user</a>
-│         <i>...user recommendations</i>
+│         <i>...user statistics, recommendations etc..</i>
 │
 └─> <a href="src/helper">helper</a>
 │   └─> <a href="src/helper/database">database</a>
