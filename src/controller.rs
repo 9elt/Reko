@@ -31,7 +31,7 @@ pub async fn get_user_model(
     println!("\n(\x1b[34m\x1b[1mGET\x1b[0m: model) user: \x1b[33m\x1b[1m{}\x1b[0m, reload: \x1b[33m\x1b[1m{}\x1b[0m", user, reload);
 
     match models::stats::get_user_model(&user, reload).await {
-        Ok(model) => Ok(Json(json!(model.to_vec()))),
+        Ok(model) => Ok(Json(json!(model))),
         Err(error) => Err(StatusCode::from_u16(error).unwrap()),
     }
 }

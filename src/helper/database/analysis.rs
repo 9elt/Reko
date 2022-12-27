@@ -6,36 +6,37 @@ use crate::utils::database::connection;
 use crate::utils::database::schema::analysis;
 use crate::utils::database::schema::analysis::dsl::*;
 use diesel::prelude::*;
+use serde_json::json;
 
 #[derive(Queryable, Insertable)]
 #[diesel(table_name = analysis)]
-struct RawNormalDist {
+struct RawDist {
     users_count: i32,
     mean: serde_json::Value,
     std_dev: serde_json::Value,
 }
 
-impl RawNormalDist {
+impl RawDist {
     fn from(normal_dist: NormalDist) -> Self {
         Self {
             users_count: normal_dist.users_count(),
-            mean: common::to_serde_value(&normal_dist.mean_model().copy_to_vec()),
-            std_dev: common::to_serde_value(&normal_dist.std_dev_model().copy_to_vec()),
+            mean: json!(&normal_dist.mean_model()),
+            std_dev: json!(&normal_dist.std_dev_model()),
         }
     }
 
     fn deserialize(self) -> NormalDist {
         NormalDist::new(
             self.users_count, 
-            Model::<i16>::from_vec(common::from_serde_value(self.mean)), 
-            Model::<i16>::from_vec(common::from_serde_value(self.std_dev))
+            Model::<i16>::from_json(self.mean), 
+            Model::<i16>::from_json(self.std_dev)
         )
     }
 }
 
 pub fn insert(normal_dist: NormalDist) {
     let inserted = diesel::insert_into(analysis)
-        .values(RawNormalDist::from(normal_dist))
+        .values(RawDist::from(normal_dist))
         .execute(&mut connection::POOL.get().unwrap());
 
     match inserted {
@@ -47,7 +48,7 @@ pub fn insert(normal_dist: NormalDist) {
 pub fn get() -> Result<NormalDist, diesel::result::Error> {
     let normal_dist = analysis
         .order_by(users_count.desc())
-        .first::<RawNormalDist>(&mut connection::POOL.get().unwrap());
+        .first::<RawDist>(&mut connection::POOL.get().unwrap());
 
     match normal_dist {
         Ok(d) => Ok(d.deserialize()),

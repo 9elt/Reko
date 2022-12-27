@@ -9,7 +9,7 @@ use std::thread;
 use std::time::Duration;
 
 use crate::algorithm::analysis::NormalDist;
-use crate::algorithm::user::affinity::AffinityModel;
+use crate::algorithm::{model::Model, user::affinity::AffinityModel};
 
 use crate::helper::database::user::DBUserList;
 
@@ -49,7 +49,7 @@ pub fn get_affinity_users(affinity_model: AffinityModel, user: &String) -> Resul
     database::user::get_affinity_users(affinity_model, user)
 }
 
-pub fn save_user_model(user: &String, model: Vec<Vec<[i16; 9]>>) {
+pub fn save_user_model(user: &String, model: &Model<i16>) {
     database::user::set_model(user, model);
 }
 

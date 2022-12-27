@@ -1,7 +1,8 @@
 use super::{AffinityUsers, DBAffinityUsers};
 
+use serde_json::json;
 use time_elapsed;
-use crate::utils::conversion::common;
+use crate::{utils::conversion::common, algorithm::model::Model};
 use crate::utils::database::connection;
 use crate::utils::database::schema::users::dsl::*;
 use diesel::{prelude::*, sql_query};
@@ -180,10 +181,10 @@ pub fn get_model(user: &String) -> Result<DBUserModel, diesel::result::Error> {
     }
 }
 
-pub fn set_model(user: &String, m: UserModel) {
+pub fn set_model(user: &String, m: &Model<i16>) {
     let updated = diesel::update(users.find(&user))
         .set((
-            model.eq(common::to_serde_value(&m)),
+            model.eq(json!(m)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
         .execute(&mut connection::POOL.get().unwrap());

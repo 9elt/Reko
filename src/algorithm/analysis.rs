@@ -45,8 +45,11 @@ pub fn normal_distribution() -> Result<NormalDist, i16> {
 
     let mut user_counter: i32 = 0;
     let users_count: i32 = match i32::try_from(usernames.len()) {
-        Ok(n) => n,
-        Err(_) => 0,
+        Ok(n) => match n {
+            0 => return Err(500),
+            _ => n
+        },
+        Err(_) => return Err(500),
     };
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -59,7 +62,6 @@ pub fn normal_distribution() -> Result<NormalDist, i16> {
         print!("\r\x1b[1m(values sum)\x1b[34m {}\x1b[0m/{}", user_counter, users_count);
 
         let user_stats: Model<i16>;
-
         match helper::get_user_model(user) {
             Ok(db_model) => match db_model.model() {
                 Some(m) => user_stats = Model::<i16>::from_vec(m),
@@ -103,7 +105,6 @@ pub fn normal_distribution() -> Result<NormalDist, i16> {
         print!("\r\x1b[1m(squared deviation sum)\x1b[34m {}\x1b[0m/{}", user_counter, users_count);
 
         let user_stats: Model<i16>;
-
         match helper::get_user_model(user) {
             Ok(db_model) => match db_model.model() {
                 Some(m) => user_stats = Model::<i16>::from_vec(m),
@@ -115,7 +116,7 @@ pub fn normal_distribution() -> Result<NormalDist, i16> {
         for x in 0..sum.len() {
             for y in 0..sum[x].len() {
                 for z in 0..sum[x][y].len() {
-                    dev_sum[x][y][z] += squared_dev(user_stats[x][y][z], &mean[x][y][z]);
+                    dev_sum[x][y][z] += calc_sqr_dev(user_stats[x][y][z], &mean[x][y][z]);
                 }
             }
         }
@@ -131,7 +132,7 @@ pub fn normal_distribution() -> Result<NormalDist, i16> {
     for x in 0..sum.len() {
         for y in 0..sum[x].len() {
             for z in 0..sum[x][y].len() {
-                std_dev[x][y][z] += calc_std_dev(dev_sum[x][y][z], &users_count);
+                std_dev[x][y][z] += calc_std_dev(dev_sum[x][y][z], users_count);
             }
         }
     }
@@ -144,22 +145,16 @@ pub fn normal_distribution() -> Result<NormalDist, i16> {
 ////////////////////////////////////////////////////////////////////////////////
 
 fn calc_mean(sum: i32, count: &i32) -> i16 {
-    if count == &0 {
-        return 0;
-    }
     match i16::try_from(sum / count) {
         Ok(c) => c,
         Err(_) => 0,
     }
 }
 
-fn squared_dev(value: i16, mean: &i16) -> i64 {
-    (value as i64 - mean.to_owned() as i64).pow(2)
+fn calc_sqr_dev(value: i16, mean: &i16) -> i64 {
+    ((value - mean) as i64).pow(2)
 }
 
-fn calc_std_dev(dev_sum: i64, count: &i32) -> i16 {
-    if count == &0 {
-        return 0;
-    }
-    ((dev_sum / count.to_owned() as i64) as f32).sqrt() as i16
+fn calc_std_dev(dev_sum: i64, count: i32) -> i16 {
+    ((dev_sum / count as i64) as f32).sqrt() as i16
 }

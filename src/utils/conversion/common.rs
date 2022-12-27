@@ -1,9 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 /** converts a generic type to serde_json Value */
-pub fn to_serde_value<'a, T: Serialize + Deserialize<'a>>(v: &T) -> serde_json::Value {
-    let s = serde_json::to_string(&v).unwrap();
-    serde_json::from_str(&s).unwrap()
+pub fn to_serde_value<T: Serialize>(v: &T) -> serde_json::Value {
+    serde_json::from_str(&serde_json::to_string(&v).unwrap()).unwrap()
 }
 
 /** Converts serde_json Value into the desired type
