@@ -1,10 +1,10 @@
-use crate::helper::database::anime::DBAnime;
+use crate::helper::database::anime::RawAnime;
 use crate::helper::{AnimeDetails, RelatedAnime};
-use crate::utils::conversion::common;
 use crate::utils::mal_api::mal_headers;
 
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Genre {
@@ -66,8 +66,8 @@ pub async fn get(id: &i32) -> Result<APIAnime, u16> {
 }
 
 impl APIAnime {
-    pub fn to_db_anime(&self) -> DBAnime {
-        DBAnime::new(
+    pub fn serialize(&self) -> RawAnime {
+        RawAnime::new(
             self.id,
             self.title.to_owned(),
             self.main_picture(),
@@ -78,30 +78,34 @@ impl APIAnime {
             self.rating(),
             self.genres(),
             match self.related() {
-                Some(r) => Some(common::to_serde_value(&r)),
+                Some(r) => Some(json!(&r)),
                 None => None,
-            }
+            },
         )
     }
 
-    pub fn to_anime_details(&self) -> AnimeDetails {
-        AnimeDetails {
-            id: self.id,
-            title: self.title.to_owned(),
-            picture: self.main_picture(),
-            airing_date: self.airing_date(),
-            mean: self.mean(),
-            airing_status: self.status(),
-            genres: self.genres(),
-            num_episodes: self.num_episodes,
-            rating: self.rating(),
-            related: self.related(),
-        }
+    pub fn deserialize(&self) -> AnimeDetails {
+        AnimeDetails::new(
+            self.id,
+            self.title.to_owned(),
+            self.main_picture(),
+            self.airing_date(),
+            self.mean(),
+            self.status(),
+            self.genres(),
+            self.num_episodes,
+            self.rating(),
+            self.related(),
+        )
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // Getters
+    ////////////////////////////////////////////////////////////////////////////////
+
     fn main_picture(&self) -> Option<String> {
-        match self.main_picture.to_owned() {
-            Some(pic) => Some(pic.large),
+        match &self.main_picture {
+            Some(pic) => Some(pic.large.to_owned()),
             None => None,
         }
     }
@@ -114,8 +118,8 @@ impl APIAnime {
     }
 
     fn airing_date(&self) -> Option<NaiveDate> {
-        match self.start_date.to_owned() {
-            Some(d) => match NaiveDate::parse_from_str(&d, "%Y-%m-%d") {
+        match &self.start_date {
+            Some(d) => match NaiveDate::parse_from_str(d, "%Y-%m-%d") {
                 Ok(date) => Some(date),
                 Err(_) => None,
             },
@@ -124,38 +128,33 @@ impl APIAnime {
     }
 
     fn related(&self) -> Option<Vec<RelatedAnime>> {
-        match self.related_anime.to_owned() {
-            Some(r) => {
-                let mut related: Vec<RelatedAnime> = vec![];
-                for rel in r.iter() {
-                    related.push(RelatedAnime {
-                        id: match rel.node.id {
-                            Some(id) => id,
-                            None => 0,
-                        },
-                        relation: relation_to_i16(&rel.relation_type),
-                    });
-                }
-                Some(related)
-            }
+        match &self.related_anime {
+            Some(r) => Some(
+                r.iter()
+                    .map(|e| {
+                        RelatedAnime::new(
+                            match e.node.id {
+                                Some(id) => id,
+                                None => 0,
+                            },
+                            relation_to_i16(&e.relation_type),
+                        )
+                    })
+                    .collect(),
+            ),
             None => None,
         }
     }
 
     fn genres(&self) -> Option<Vec<Option<i16>>> {
-        let mut genres: Vec<Option<i16>> = vec![];
-        if let Some(r) = self.genres.to_owned() {
-            for genre in r.iter() {
-                genres.push(Some(genre.id));
-            }
-            Some(genres)
-        } else {
-            None
+        match &self.genres {
+            Some(genres) => Some(genres.iter().map(|g| Some(g.id)).collect()),
+            None => None
         }
     }
 
     fn rating(&self) -> Option<i16> {
-        match self.rating.to_owned() {
+        match &self.rating {
             Some(r) => match r.as_str() {
                 "g" => Some(1),
                 "pg" => Some(2),
@@ -170,12 +169,12 @@ impl APIAnime {
     }
 
     fn status(&self) -> Option<i16> {
-        match self.status.to_owned() {
+        match &self.status {
             Some(s) => match s.as_str() {
                 "finished_airing" => Some(1),
                 "currently_airing" => Some(2),
                 "not_yet_aired" => Some(3),
-                _ => None
+                _ => None,
             },
             None => None,
         }

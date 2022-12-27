@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize)]
 pub struct AffinityUsers {
     pub user_name: String,
-    pub list: Vec<Vec<i32>>
+    pub list: Vec<Vec<i32>>,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +45,10 @@ pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
     database::user::get_all_usernames()
 }
 
-pub fn get_affinity_users(affinity_model: AffinityModel, user: &String) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
+pub fn get_affinity_users(
+    affinity_model: AffinityModel,
+    user: &String,
+) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
     database::user::get_affinity_users(affinity_model, user)
 }
 
@@ -125,7 +128,11 @@ impl DetailedListEntry {
     }
 }
 
-pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -> Result<Vec<DetailedListEntry>, u16> {
+pub async fn get_detailed_list(
+    u: &String,
+    reload: bool,
+    prevent_update: bool,
+) -> Result<Vec<DetailedListEntry>, u16> {
     let mut time = time_elapsed::start("list");
 
     let mut base_list: Vec<Vec<i32>> = vec![];
@@ -140,7 +147,7 @@ pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -
         Ok(l) => {
             update_required = l.requires_update() || reload;
             base_list = l.list();
-        },
+        }
         Err(_) => {
             list_is_missing = true;
             update_required = true;
@@ -148,7 +155,7 @@ pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -
     }
 
     if list_is_missing && prevent_update {
-        return Err(500)
+        return Err(500);
     }
 
     if update_required && !prevent_update {
@@ -166,7 +173,7 @@ pub async fn get_detailed_list(u: &String, reload: bool, prevent_update: bool) -
                 if (e == 403 || e == 404) && !list_is_missing {
                     database::user::delete(&u);
                 }
-                return Err(e)
+                return Err(e);
             }
         }
 
@@ -223,6 +230,15 @@ pub struct RelatedAnime {
     pub relation: i16,
 }
 
+impl RelatedAnime {
+    pub fn new(id: u32, relation: i16) -> Self {
+        Self {
+            id,
+            relation,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AnimeDetails {
     pub id: i32,
@@ -237,44 +253,62 @@ pub struct AnimeDetails {
     pub related: Option<Vec<RelatedAnime>>,
 }
 
+impl AnimeDetails {
+    pub fn new(
+        id: i32,
+        title: String,
+        picture: Option<String>,
+        airing_date: Option<chrono::NaiveDate>,
+        mean: Option<i16>,
+        airing_status: Option<i16>,
+        genres: Option<Vec<Option<i16>>>,
+        num_episodes: Option<i16>,
+        rating: Option<i16>,
+        related: Option<Vec<RelatedAnime>>,
+    ) -> Self {
+        Self {
+            id,
+            title,
+            picture,
+            airing_date,
+            mean,
+            airing_status,
+            genres,
+            num_episodes,
+            rating,
+            related,
+        }
+    }
+}
+
 pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
-    let mut complete_result: Vec<_> = vec![];
-    let db_result = match database::anime::get(&ids) {
-        Ok(r) => r,
+    let mut result = match database::anime::get(&ids) {
+        Ok(val) => val,
         Err(_) => vec![],
     };
 
-    if (ids.len() - db_result.len()) > 0 {
-        let n_missing = ids.len() - db_result.len();
-        print!("(anime details) missing {} / {} anime", n_missing, ids.len());
+    if ids.len() - result.len() > 0 {
+        let missing: Vec<i32> = match result.len() == 0 {
+            true => ids,
+            false => {
+                let database_ids: Vec<i32> = result.iter().map(|e| e.id).collect();
+                let database_ids_hashset: HashSet<i32> = HashSet::from_iter(database_ids);
+                let missing_hashset: HashSet<i32> = HashSet::from_iter(ids)
+                    .difference(&database_ids_hashset).cloned().collect();
 
-        let missing: Vec<i32>;
-
-        if db_result.len() == 0 {
-            missing = ids;
-        } else {
-            let db_ids: Vec<i32> = db_result.iter().map(|r| r.id()).collect();
-            let ids_hs: HashSet<i32> = HashSet::from_iter(ids);
-            let db_ids_hs: HashSet<i32> = HashSet::from_iter(db_ids);
-            let missing_hs: HashSet<_> = ids_hs.difference(&db_ids_hs).cloned().collect();
-
-            missing = Vec::from_iter(missing_hs);
+                Vec::from_iter(missing_hashset)
+            }
         };
 
         let mut to_insert = vec![];
 
-        for i in 0..missing.len() {
-            let id = missing[i];
-            match mal_api::anime::get(&id).await {
+        for id in missing.iter() {
+            match mal_api::anime::get(id).await {
                 Ok(res) => {
-                    println!("(mal api) OK {} / {} anime [id: {}]", i, n_missing, id);
-                    to_insert.push(res.to_db_anime());
-                    complete_result.push(res.to_anime_details());
+                    to_insert.push(res.serialize());
+                    result.push(res.deserialize());
                 }
-                Err(e) => {
-                    println!("\x1b[31m(mal api) \x1b[1mERROR {} \x1b[0m {} / {} anime [id: {}]", e, i, n_missing, id);
-                    continue;
-                }
+                Err(_) => continue
             };
             thread::sleep(Duration::from_millis(300));
         }
@@ -284,10 +318,5 @@ pub async fn get_anime_details(ids: Vec<i32>) -> Vec<AnimeDetails> {
         };
     };
 
-    complete_result
-        .append(&mut db_result.iter()
-            .map(|entry| entry.to_anime_details()).collect()
-        );
-
-    complete_result
+    result
 }

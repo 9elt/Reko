@@ -5,9 +5,49 @@ use crate::utils::database::schema::anime;
 use crate::utils::database::schema::anime::dsl::*;
 use diesel::prelude::*;
 
+const MAX_QUERY_SIZE: usize = 300;
+
+pub fn get(ids: &Vec<i32>) -> Result<Vec<AnimeDetails>, diesel::result::Error> {
+    let mut full_res: Vec<AnimeDetails> = vec![];
+    let num_queries = ids.len() / MAX_QUERY_SIZE + 1;
+    for i in 0..num_queries {
+        let offset = i * MAX_QUERY_SIZE;
+        if offset == ids.len() {
+            break;
+        }
+        let target = match offset + MAX_QUERY_SIZE < ids.len() {
+            true => offset + MAX_QUERY_SIZE + 1,
+            false => ids.len(),
+        };
+
+        let mut query = anime.into_boxed().filter(id.eq(ids[offset]));
+        for j in offset..target {
+            query = query.or_filter(id.eq(ids[j]));
+        }
+
+        match query.load::<RawAnime>(&mut connection::POOL.get().unwrap()) {
+            Ok(val) => full_res.append(&mut val.iter().map(|e| e.deserialize()).collect()),
+            Err(err) => return Err(err),
+        };
+    }
+
+    Ok(full_res)
+}
+
+pub fn insert(entries: Vec<RawAnime>) {
+    let res = diesel::insert_into(anime)
+        .values(&entries)
+        .execute(&mut connection::POOL.get().unwrap());
+
+    match res {
+        Ok(num) => println!("(database) \x1b[34m\x1b[1mINFO!\x1b[0m inserted {} anime", num),
+        Err(err) => println!("(database) \x1b[31m\x1b[1mERROR!\x1b[0m failed inserting anime (details: {:?})", err),
+    };
+}
+
 #[derive(Queryable, Insertable)]
 #[diesel(table_name = anime)]
-pub struct DBAnime {
+pub struct RawAnime {
     id: i32,
     title: String,
     picture: Option<String>,
@@ -20,72 +60,23 @@ pub struct DBAnime {
     related: Option<serde_json::Value>,
 }
 
-pub fn get(ids: &Vec<i32>) -> Result<Vec<DBAnime>, diesel::result::Error> {
-    let mut complete_result: Vec<DBAnime> = vec![];
-    let query_max_size = (ids.len() / 300) + 1;
-
-    // A single query may stack overflow
-    // this is a quick fix
-    for i in 0..query_max_size {
-        let mut query = anime.into_boxed();
-        let paging = i * 300;
-
-        if paging == ids.len() {
-            break;
-        }
-
-        query = query.filter(id.eq(ids[paging]));
-        for i in paging..ids.len() {
-            if i == paging + 300 {
-                break;
-            }
-            query = query.or_filter(id.eq(ids[i]));
-        }
-
-        let result: Result<Vec<DBAnime>, diesel::result::Error> =
-            query.load::<DBAnime>(&mut connection::POOL.get().unwrap());
-
-        match result {
-            Ok(mut r) => complete_result.append(&mut r),
-            Err(e) => return Err(e),
-        };
-    }
-
-    Ok(complete_result)
-}
-
-pub fn insert(entries: Vec<DBAnime>) {
-    let inserted = diesel::insert_into(anime)
-        .values(&entries)
-        .execute(&mut connection::POOL.get().unwrap());
-
-    match inserted {
-        Ok(n) => println!("(db) inserted {} anime", n),
-        Err(e) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed inserting anime (details: {:?})", e),
-    };
-}
-
-impl DBAnime {
-    pub fn id(&self) -> i32 {
-        self.id
-    }
-
-    pub fn to_anime_details(&self) -> AnimeDetails {
-        AnimeDetails {
-            id: self.id,
-            title: self.title.to_owned(),
-            picture: self.picture.to_owned(),
-            airing_date: self.airing_date,
-            mean: self.mean,
-            airing_status: self.airing_status,
-            genres: self.genres.to_owned(),
-            num_episodes: self.num_episodes,
-            rating: self.rating,
-            related: match self.related.to_owned() {
-                Some(r) => common::from_serde_value(r),
-                None => None
-            }
-        }
+impl RawAnime {
+    pub fn deserialize(&self) -> AnimeDetails {
+        AnimeDetails::new(
+            self.id,
+            self.title.to_owned(),
+            self.picture.to_owned(),
+            self.airing_date,
+            self.mean,
+            self.airing_status,
+            self.genres.to_owned(),
+            self.num_episodes,
+            self.rating,
+            match &self.related {
+                Some(r) => common::from_serde_value(r.to_owned()),
+                None => None,
+            },
+        )
     }
 
     pub fn new(
