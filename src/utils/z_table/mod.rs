@@ -1,83 +1,66 @@
-//! made by **[Fabian Bösiger](https://github.com/fabianboesiger/z-table/)**
-//! wouldn't complile so I copied here with some tweaks 
+//! the original library is **[z-table](https://github.com/fabianboesiger/z-table/)**
+//! made by **Fabian Bösiger**
+//! 
+//! The library wouldn't complile so I copied it here with some tweaks, such as,
+//! removing the infinite loop, and adding non blocking value restriction for cumulative
+//! distribution values
 
 mod table;
-use table::{TABLE, MAX_Z};
+use table::{TABLE, TABLE_LEN, MAX_Z_SCORE};
 
-// Maps some z value to the corresponding table index.
-fn z_to_index(z: f32) -> usize {
-    (z / MAX_Z * TABLE.len() as f32) as usize
-}
+////////////////////////////////////////////////////////////////////////////////
+// public functions
+////////////////////////////////////////////////////////////////////////////////
 
-// Maps some table index to the corresponding z value.
-fn index_to_z(i: usize) -> f32 {
-    i as f32 * MAX_Z / TABLE.len() as f32
-}
-
-/// Lookup function for the Z table.
-/// Given a z value, returns the corresponding value of
-/// the cumulative distribution function of the standard
-/// normal distribution.
-/// The input values may be negative.
-pub fn lookup(z: f32) -> f32 {
-    if z >= 0.0 {
-        lookup_index(z_to_index(z))
-    } else {
-        1.0 - lookup_index(z_to_index(-z))
+pub fn cumulative_dist(z_score: f32) -> f32 {
+    match z_score >= 0.0 {
+        true => TABLE[index_from_z_score(z_score)],
+        false => 1.0 - TABLE[index_from_z_score(- z_score)]
     }
 }
 
-/// Reverse lookup function for the Z table.
-/// Given a value of the cumulative distribution function
-/// of the standard normal distribution, returns
-/// the corresponding z value.
-/// Only inputs between and including 0 and 1 are allowed.
-pub fn reverse_lookup(p: f32) -> f32 {
-    assert!(0.0 <= p && p <= 1.0);
-    if p >= 0.5 {
-        index_to_z(reverse_lookup_index(p))
-    } else {
-        -index_to_z(reverse_lookup_index(1.0 - p))
+pub fn z_score(cumulative_dist: f32) -> f32 {
+    let cd = restrict(cumulative_dist, 0.0, 1.0);
+    match cd >= 0.5 {
+        true => z_score_from_index(index_from_cumulative_dist(cd)),
+        false => - z_score_from_index(index_from_cumulative_dist(1.0 - cd))
     }
 }
 
-// Provides a compile time reverse lookup for the lookup table.
-fn reverse_lookup_index(p: f32) -> usize {
-    assert!(0.5 <= p && p <= 1.0);
-    let mut prev_abs = std::f32::MAX;
-    let mut i = 0;
-    loop {
-        let curr_abs = abs(p - lookup_index(i));
-        if prev_abs < curr_abs {
-            if prev_abs < curr_abs {
-                return i - 1;
-            } else {
-                return i;
-            }
-        }
-        prev_abs = curr_abs;
-        i += 1;
-        if i == TABLE.len() {
-            return i;
-        }
+////////////////////////////////////////////////////////////////////////////////
+// private functions
+////////////////////////////////////////////////////////////////////////////////
+
+fn index_from_z_score(z_score: f32) -> usize {
+    let index = (z_score / MAX_Z_SCORE * TABLE_LEN as f32) as usize;
+    match index < TABLE_LEN {
+        true => index,
+        false => TABLE_LEN - 1
     }
 }
 
-// Computes the absolute value.
-fn abs(x: f32) -> f32 {
-    if x >= 0.0 {
-        x
-    } else {
-        -x
-    }
+fn z_score_from_index(index: usize) -> f32 {
+    index as f32 * MAX_Z_SCORE / TABLE_LEN as f32
 }
 
-// Lookup and index in internal lookup table
-// without panicking at invalid indices.
-fn lookup_index(i: usize) -> f32 {
-    if i >= TABLE.len() {
-        1.0
+fn index_from_cumulative_dist(cumulative_dist: f32) -> usize {
+    let mut previous = 1.0;
+    for index in 0..TABLE_LEN {
+        let current = (cumulative_dist - TABLE[index]).abs();
+        match previous < current {
+            true => return index - 1,
+            false => previous = current
+        };
+    }
+    TABLE_LEN - 1
+}
+
+fn restrict<T: std::cmp::PartialOrd>(value: T, min: T, max: T) -> T {
+    if value < min {
+        min
+    } else if value > max {
+        max
     } else {
-        TABLE[i]
+        value
     }
 }

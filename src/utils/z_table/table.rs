@@ -1,5 +1,6 @@
-pub const MAX_Z: f32 = 4.0;
-pub const TABLE: [f32; 400] = [
+pub const MAX_Z_SCORE: f32 = 4.0;
+pub const TABLE_LEN: usize = 400;
+pub const TABLE: [f32; TABLE_LEN] = [
     0.5,
     0.50398934,
     0.5079783,
