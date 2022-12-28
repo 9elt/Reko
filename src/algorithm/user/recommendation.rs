@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::algorithm::model::Model;
+use crate::algorithm::model::{Model, Indexer};
 use crate::helper::{self, AnimeDetails};
 use crate::helper::AffinityUsers;
 
@@ -9,6 +9,7 @@ pub struct Reko {
     id: i32,
     users: Vec<u8>,
     details: AnimeDetails,
+    expected: Expected,
 }
 
 pub async fn extract(
@@ -50,13 +51,115 @@ pub async fn extract(
             Reko {
                 id: e.id,
                 users,
-                details: e.to_owned()
+                details: e.to_owned(),
+                expected: Expected::from_entry(e, &user_model)
             }
         );
     }
 
-    Ok(recommendations)
+    recommendations.sort_unstable_by_key(|x| 1000 - x.expected.enjoyment);
+
+    let mut parsed_reko: Vec<Reko> = vec![];
+    let min_exp = recommendations[0].expected.enjoyment * 12 / 20;
+
+    for reko in recommendations {
+        if reko.expected.enjoyment < min_exp {
+            break;
+        }
+        parsed_reko.push(reko);
+    }
+
+    Ok(parsed_reko)
 }
+
+#[derive(Serialize)]
+pub struct Expected {
+    score: i16,
+    enjoyment: i16
+}
+
+impl Expected {
+    fn from_entry(entry: &AnimeDetails, model: &Model<i16>) -> Self {
+
+        let mut score_devs = 0;
+        let mut score_devs_counter = 0;
+
+        let mut percs = 0;
+        let mut percs_counter = 0;
+
+        match &entry.airing_date {
+            Some(date) => {
+                let i = Indexer::date(date);
+                score_devs += model[i.x][i.y][2];
+                score_devs_counter += 1;
+                percs += model[i.x][i.y][0];
+                percs_counter += 1;
+            },
+            None => (),
+        };
+
+        match &entry.rating {
+            Some(rating) => {
+                let i = Indexer::rating(rating);
+                score_devs += model[i.x][i.y][2];
+                score_devs_counter += 1;
+                percs += model[i.x][i.y][0];
+                percs_counter += 1;
+            },
+            None => (),
+        };
+
+        match &entry.num_episodes {
+            Some(num_episodes) => {
+                let i = Indexer::num_episodes(num_episodes);
+                score_devs += model[i.x][i.y][2];
+                score_devs_counter += 1;
+                percs += model[i.x][i.y][0];
+                percs_counter += 1;
+            },
+            None => (),
+        };
+
+        match &entry.genres {
+            Some(genres) => {
+                for genre in genres.iter() {
+                    match genre {
+                        Some(g) => {
+                            let i = Indexer::genre(g);
+                            score_devs += model[i.x][i.y][2];
+                            score_devs_counter += 1;
+                            percs += model[i.x][i.y][0];
+                            percs_counter += 1;
+                        },
+                        None => ()
+                    }
+                }
+            },
+            None => (),
+        };
+
+        let score = match score_devs_counter {
+            0 => 0,
+            _ => {
+                match entry.mean {
+                    Some(mean) => {
+                        mean + (score_devs / score_devs_counter)
+                    },
+
+                    None => 0
+                }
+            }
+        };
+
+        let enjoyment = match percs_counter {
+            0 => 0,
+            _ => percs / percs_counter
+        }; 
+
+        Self { score, enjoyment }
+    }
+}
+
 
 #[derive(Serialize, Deserialize)]
 pub struct EntryData {

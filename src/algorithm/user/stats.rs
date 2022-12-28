@@ -1,4 +1,4 @@
-use crate::algorithm::model::{helper::Idxr, Model};
+use crate::algorithm::model::{Model, Indexer};
 use crate::helper::DetailedListEntry;
 
 /// ### User statistics model
@@ -15,15 +15,15 @@ pub fn stats_model(list: Vec<DetailedListEntry>) -> Model<i16> {
         // increment model with entry data
         model
             // general
-            .incr_stat(Idxr::general(), &info)
+            .incr_stat(Indexer::general(), &info)
             // airing decade
-            .incr_optional(&entry.airing_date(), Idxr::date, &info)
+            .incr_optional(&entry.airing_date(), Indexer::date, &info)
             // rating
-            .incr_optional(&entry.rating(), Idxr::rating, &info)
+            .incr_optional(&entry.rating(), Indexer::rating, &info)
             // series length
-            .incr_optional(&entry.num_episodes(), Idxr::num_episodes, &info)
+            .incr_optional(&entry.num_episodes(), Indexer::num_episodes, &info)
             // genres | themes | demographics
-            .incr_optional_seq(entry.genres(), Idxr::genre, &info);
+            .incr_optional_seq(entry.genres(), Indexer::genre, &info);
     }
 
     // average model statistics
@@ -46,7 +46,7 @@ impl Model<i32> {
     fn incr_optional_seq<T>(
         &mut self,
         stats: &Option<Vec<Option<T>>>,
-        idxr: fn(value: &T) -> Idxr,
+        idxr: fn(value: &T) -> Indexer,
         info: &EntryData,
     ) -> &mut Self {
         match stats {
@@ -64,7 +64,7 @@ impl Model<i32> {
     fn incr_optional<T>(
         &mut self,
         stat: &Option<T>,
-        idxr: fn(value: &T) -> Idxr,
+        idxr: fn(value: &T) -> Indexer,
         info: &EntryData,
     ) -> &mut Self {
         match stat {
@@ -74,7 +74,7 @@ impl Model<i32> {
     }
 
     /// ### Increment `Model` statistic at `index` with `EntryData`
-    fn incr_stat(&mut self, index: Idxr, info: &EntryData) -> &mut Self {
+    fn incr_stat(&mut self, index: Indexer, info: &EntryData) -> &mut Self {
         if !index.has_errors() {
             self[index.x][index.y][0] += 1;
             self[index.x][index.y][1] += info.score;

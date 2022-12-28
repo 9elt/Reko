@@ -3,24 +3,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 use chrono::Datelike;
+use super::Indexer;
 
-/// ## Model indexer
-/// Provides useful methods to index `Model`
-pub struct Idxr {
-    pub x: usize,
-    pub y: usize,
-    errors: bool,
+fn ok(x: usize, y: usize) -> Indexer {
+    Indexer { x, y, errors: false, }
 }
 
-fn ok(x: usize, y: usize) -> Idxr {
-    Idxr { x, y, errors: false, }
+fn err() -> Indexer {
+    Indexer { x: 0, y: 0, errors: true, }
 }
 
-fn err() -> Idxr {
-    Idxr { x: 0, y: 0, errors: true, }
-}
-
-impl Idxr {
+impl Indexer {
     pub fn has_errors(&self) -> bool {
         self.errors
     }

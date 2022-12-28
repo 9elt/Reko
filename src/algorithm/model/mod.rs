@@ -13,6 +13,15 @@ pub struct Model<T> {
     model: ModelVec<T>,
 }
 
+/// ## Model indexer
+/// Provides useful methods to index `Model`
+pub struct Indexer {
+    pub x: usize,
+    pub y: usize,
+    errors: bool,
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Serialize implementation
 ////////////////////////////////////////////////////////////////////////////////
