@@ -6,19 +6,19 @@
 
 ## body
 
-###  user_name [`string`](./)  
+##  user_name `string`  
 *(**required**)* | The MyAnimeList user you want recommendations for
 
-### accuracy [`number`](./)  
+## accuracy `number`  
 *(optional)* | The algorithm accuracy
 
-### banned_ids [`number[]`](./)  
+## banned_ids `number[]`  
 *(optional)* | An array of anime ids that will be excluded from recommendations
 
-### banned_users [`string[]`](./)  
+## banned_users `string[]`  
 *(optional)* | An array of user hashes that will be excluded from recommendations
 
-### force_list_update [`boolean`](./)  
+## force_list_update `boolean`  
 *(optional)* | Syncs the user's anime list, lists older than 7 days are reloaded by default
 > :warning: list update impacts significantly on response time
 
