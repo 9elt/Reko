@@ -127,7 +127,7 @@ impl Model<i16> {
 
     pub fn from_json(value: serde_json::Value) -> Self {
         Self {
-            model: conversion::from_serde_value(value)
+            model: conversion::from_json(value)
         }
     }
 }

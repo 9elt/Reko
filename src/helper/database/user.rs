@@ -17,7 +17,6 @@ use crate::algorithm::user::affinity::AffinityModel;
 ////////////////////////////////////////////////////////////////////////////////
 
 pub fn get_affinity_users(affinity: AffinityModel, user: &String) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
-
     let time = time_elapsed::start("db affinity users");
 
     let mut query = format!("
@@ -85,7 +84,7 @@ struct RawList {
 impl RawList {
     fn deserialize(self) -> DBUserList {
         DBUserList {
-            list: conversion::from_serde_value(self.data),
+            list: conversion::from_json(self.data),
             updated_at: self.updated_at,
         }
     }
@@ -163,7 +162,7 @@ impl RawModel {
     fn deserialize(self) -> DBUserModel {
         DBUserModel {
             model: match self.data {
-                Some(data) => conversion::from_serde_value(data),
+                Some(data) => conversion::from_json(data),
                 None => None
             },
             updated_at: self.updated_at,

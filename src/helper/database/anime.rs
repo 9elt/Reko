@@ -73,7 +73,7 @@ impl RawAnime {
             self.num_episodes,
             self.rating,
             match &self.related {
-                Some(r) => conversion::from_serde_value(r.to_owned()),
+                Some(r) => conversion::from_json(r.to_owned()),
                 None => None,
             },
         )

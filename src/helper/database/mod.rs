@@ -19,7 +19,7 @@ impl DBAffinityUsers {
     pub fn deserialize(&self) -> AffinityUsers {
         AffinityUsers { 
             user_name: self.user_name.to_owned(),
-            list: conversion::from_serde_value(self.list.to_owned()),
+            list: conversion::from_json(self.list.to_owned()),
         }
     }
 }

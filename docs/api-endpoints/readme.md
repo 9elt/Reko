@@ -17,10 +17,6 @@ Sync the user's anime list, lists older than 7 days are reloaded by default
 
 > :warning: list reloading impacts significantly on response time
 
-### *(optional)* **show_names**: [boolean](./)  
-Show recommending users' usernames
-> :lock: requires an [**authentication key**](./)
-
 ### *(optional)* **banned_ids**: [number](./)[ ] 
 An array of anime ids that will be excluded from recommendations
 
@@ -32,15 +28,17 @@ An array of anime ids that will be excluded from recommendations
 
 ### request - *javascript*
 ```javascript
+
 fetch(
-    "https://api.reko.moe/recommendations/_nelt",
+    "https://api.reko.moe/recommendations",
     {
         method: 'POST',
-        body: JSON.stringify({
+        body: {
+            user_name: "_nelt",
             reload_list: false,
-            show_names: false,
-            anime_to_ignore: [65432, 23441, 45041]
-        })
+            banned_ids: [65432, 23441, 45041]
+            banned_users: ["85136c79cbf9fakl2j5d0639c70c265c18d37"]
+        }
     }
 )
 ```
@@ -48,70 +46,50 @@ fetch(
 ### response - *json*
 ```json
 {
-    "user": {
-        "user_name": "_nelt",
-        "list_last_update": "2022-12-31T12:00:00.000Z",
-        "recommendation_accuracy": 100,
-        "recommending_users_found": 3,
+    "metadata": {
+        "user_last_analyzed": "2022-12-31T12:00:00.000Z",
+        "users_found": 8,
+        "rekos": {
+            "sent": 24,
+            "found": 107
+        },
+        "algorithm": {
+            "passages": 1,
+            "accuracy": 100,
+        },
     },
-    "recommending_users": [
+    "users": [
         {
-            "user_name": "85136c79cbf9fe36bb9d05d0639c70c265c18d37",
-            "affinity": {
-                "value": 88,
-                "std_deviation": 4.03
-            }
-        },
-        {
-            "user_name": "b5cc17d3a35877ca8b76f0b2e07497039c250696",
-            "affinity": {
-                "value": 67,
-                "std_deviation": 3.39
-            }
-        },
-        {
-            "user_name": "d5089e60f7bdc4ef2ac71ca06ee5d79c3fd3f328",
-            "affinity": {
-                "value": 98,
-                "std_deviation": 12.54
-            }
+            "hash": "85136c79cbf9fe36bb9d05d0639c70c265c18d37",
+            "affinity":  88,
+            "rekos": {
+                "sent": 13,
+                "found": 43,
+            },
         },
     ],
-    "recommendations": [
+    "rekos": [
         {
             "id": 33337,
-            "title": "ACCA: 13-ku Kansatsu-ka",
-            "image": "https://api.myanimelist.net/images/anime/3/83776.jpg",
-            "mean": 7.67,
-            "stats": {
-                "expected_score": {
-                    "value": 8.23,
-                    "std_deviation": 1.25,
-                },
-                "affinity": {
-                    "value": 88,
-                    "std_deviation": 6.03,
-                },
+            "info": {
+                "id": 33337,
+                "mean": 7.67,
+                "title": "ACCA: 13-ku Kansatsu-ka",
+                "airing_date": "2017-04-12",
+                "main_image": "https://api.myanimelist.net/images/anime/3/83776.jpg",
+                "rating": "r+",
+                "num_episodes": 12,
+                "genres": ["Police", "Seinen", "Action"],
+                "related": [
+                    {"id": 44403, "relation": "sequel"}
+                ]
             },
-            "recommending_users": [0, 2]
+            "expected": {
+                "score":  8.23,
+                "enjoyment": 95,
+            },
+            "users": [0, 2, 3]
         },
-        {
-            "id": 33337,
-            "title": "ACCA: 13-ku Kansatsu-ka",
-            "image": "https://api.myanimelist.net/images/anime/3/83776.jpg",
-            "mean": 7.67,
-            "stats": {
-                "expected_score": {
-                    "value": 8.23,
-                    "std_deviation": 1.25,
-                },
-                "affinity": {
-                    "value": 88,
-                    "std_deviation": 6.03,
-                },
-            },
-            "recommending_users": [0, 2]
-        }
     ]
 }
 ```
