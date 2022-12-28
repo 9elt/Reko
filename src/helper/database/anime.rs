@@ -8,30 +8,37 @@ use diesel::prelude::*;
 const MAX_QUERY_SIZE: usize = 300;
 
 pub fn get(ids: &Vec<i32>) -> Result<Vec<AnimeDetails>, diesel::result::Error> {
-    let mut full_res: Vec<AnimeDetails> = vec![];
-    let num_queries = ids.len() / MAX_QUERY_SIZE + 1;
-    for i in 0..num_queries {
-        let offset = i * MAX_QUERY_SIZE;
-        if offset == ids.len() {
+    let mut complete_result: Vec<RawAnime> = vec![];
+    let query_max_size = (ids.len() / MAX_QUERY_SIZE) + 1;
+
+    // A single query may stack overflow
+    // this is a quick fix
+    for i in 0..query_max_size {
+        let mut query = anime.into_boxed();
+        let paging = i * MAX_QUERY_SIZE;
+
+        if paging == ids.len() {
             break;
         }
-        let target = match offset + MAX_QUERY_SIZE < ids.len() {
-            true => offset + MAX_QUERY_SIZE + 1,
-            false => ids.len(),
-        };
 
-        let mut query = anime.into_boxed().filter(id.eq(ids[offset]));
-        for j in offset..target {
-            query = query.or_filter(id.eq(ids[j]));
+        query = query.filter(id.eq(ids[paging]));
+        for i in paging..ids.len() {
+            if i == paging + MAX_QUERY_SIZE {
+                break;
+            }
+            query = query.or_filter(id.eq(ids[i]));
         }
 
-        match query.load::<RawAnime>(&mut connection::POOL.get().unwrap()) {
-            Ok(val) => full_res.append(&mut val.iter().map(|e| e.deserialize()).collect()),
-            Err(err) => return Err(err),
+        let result: Result<Vec<RawAnime>, diesel::result::Error> =
+            query.load::<RawAnime>(&mut connection::POOL.get().unwrap());
+
+        match result {
+            Ok(mut r) => complete_result.append(&mut r),
+            Err(e) => return Err(e),
         };
     }
 
-    Ok(full_res)
+    Ok(complete_result.iter().map(|e| e.deserialize()).collect())
 }
 
 pub fn insert(entries: Vec<RawAnime>) {

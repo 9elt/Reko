@@ -60,7 +60,7 @@ pub async fn extract(
     recommendations.sort_unstable_by_key(|x| 1000 - x.expected.enjoyment);
 
     let mut parsed_reko: Vec<Reko> = vec![];
-    let min_exp = recommendations[0].expected.enjoyment * 12 / 20;
+    let min_exp = recommendations[0].expected.enjoyment / 2;
 
     for reko in recommendations {
         if reko.expected.enjoyment < min_exp {
@@ -75,7 +75,7 @@ pub async fn extract(
 #[derive(Serialize)]
 pub struct Expected {
     score: i16,
-    enjoyment: i16
+    enjoyment: i16,
 }
 
 impl Expected {
@@ -87,6 +87,9 @@ impl Expected {
         let mut percs = 0;
         let mut percs_counter = 0;
 
+        let mut smean = 0;
+        let mut smean_counter = 0;
+
         match &entry.airing_date {
             Some(date) => {
                 let i = Indexer::date(date);
@@ -94,6 +97,13 @@ impl Expected {
                 score_devs_counter += 1;
                 percs += model[i.x][i.y][0];
                 percs_counter += 1;
+                match entry.mean {
+                    Some(mean) => {
+                        smean += mean - model[i.x][i.y][1];
+                        smean_counter += 1;
+                    },
+                    None => ()
+                }
             },
             None => (),
         };
@@ -105,6 +115,13 @@ impl Expected {
                 score_devs_counter += 1;
                 percs += model[i.x][i.y][0];
                 percs_counter += 1;
+                match entry.mean {
+                    Some(mean) => {
+                        smean += mean - model[i.x][i.y][1];
+                        smean_counter += 1;
+                    },
+                    None => ()
+                }
             },
             None => (),
         };
@@ -116,6 +133,13 @@ impl Expected {
                 score_devs_counter += 1;
                 percs += model[i.x][i.y][0];
                 percs_counter += 1;
+                match entry.mean {
+                    Some(mean) => {
+                        smean += mean - model[i.x][i.y][1];
+                        smean_counter += 1;
+                    },
+                    None => ()
+                }
             },
             None => (),
         };
@@ -130,6 +154,13 @@ impl Expected {
                             score_devs_counter += 1;
                             percs += model[i.x][i.y][0];
                             percs_counter += 1;
+                            match entry.mean {
+                                Some(mean) => {
+                                    smean += mean - model[i.x][i.y][1];
+                                    smean_counter += 1;
+                                },
+                                None => ()
+                            }
                         },
                         None => ()
                     }
@@ -151,10 +182,17 @@ impl Expected {
             }
         };
 
-        let enjoyment = match percs_counter {
+        let percentages = match percs_counter {
             0 => 0,
             _ => percs / percs_counter
         }; 
+
+        let meansdev = match smean_counter {
+            0 => 0,
+            _ => smean / smean_counter,
+        };
+
+        let enjoyment = percentages + meansdev;
 
         Self { score, enjoyment }
     }
