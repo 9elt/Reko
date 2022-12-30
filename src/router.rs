@@ -12,4 +12,6 @@ pub fn router() -> axum::Router {
         .route("/jobs/compute_all_models", get(controller::compute_all_models)) 
         .route("/jobs/compute_normal_dist", get(controller::compute_normal_dist))
         .route("/jobs/update_old_users", get(controller::update_old_users))
+
+        .route("/:user/statistics.svg", get(controller::svg))
 }

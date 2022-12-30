@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = "0.5.17"
+axum = { version = "0.5.17", features = ["headers", "http1", "http2", "json", "query"] }
 axum-macros = "0.2.3"
 
 hyper = { version = "0.14.23", features = ["full"] }
