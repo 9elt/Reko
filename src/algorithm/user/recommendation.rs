@@ -9,7 +9,7 @@ pub struct Reko {
     id: i32,
     users: Vec<u8>,
     details: AnimeDetails,
-    expected: Expected,
+    predictions: Predictions,
 }
 
 pub async fn extract(
@@ -52,18 +52,18 @@ pub async fn extract(
                 id: e.id,
                 users,
                 details: e.to_owned(),
-                expected: Expected::from_entry(e, &user_model)
+                predictions: Predictions::from_entry(e, &user_model)
             }
         );
     }
 
-    recommendations.sort_unstable_by_key(|x| 1000 - x.expected.enjoyment);
+    recommendations.sort_unstable_by_key(|x| 1000 - x.predictions.enjoyment);
 
     let mut parsed_reko: Vec<Reko> = vec![];
-    let min_exp = recommendations[0].expected.enjoyment / 2;
+    let min_exp = recommendations[0].predictions.enjoyment / 2;
 
     for reko in recommendations {
-        if reko.expected.enjoyment < min_exp {
+        if reko.predictions.enjoyment < min_exp {
             break;
         }
         parsed_reko.push(reko);
@@ -73,12 +73,12 @@ pub async fn extract(
 }
 
 #[derive(Serialize)]
-pub struct Expected {
+pub struct Predictions {
     score: i16,
     enjoyment: i16,
 }
 
-impl Expected {
+impl Predictions {
     fn from_entry(entry: &AnimeDetails, model: &Model<i16>) -> Self {
 
         let mut score_devs = 0;

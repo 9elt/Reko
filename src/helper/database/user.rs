@@ -68,7 +68,7 @@ pub struct DBUserList {
 impl DBUserList {
     pub fn requires_update(&self) -> bool {
         let life = Utc::now().naive_local() - self.updated_at;
-        life.num_days() > 2
+        life.num_days() > 0
     }
     pub fn list(self) -> UserList {
         self.list
