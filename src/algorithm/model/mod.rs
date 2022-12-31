@@ -2,11 +2,14 @@ pub mod helper;
 
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use std::ops::{Index, IndexMut};
+use std::slice::Iter;
+
 use crate::utils::conversion;
 
 pub type ModelVec<T> = Vec<ModelStatType<T>>;
 pub type ModelStatType<T> = Vec<ModelStat<T>>;
 pub type ModelStat<T> = [T; 9];
+pub type PartialModel<'a, T> = Vec<&'a ModelStatType<T>>;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Model<T> {
@@ -71,6 +74,23 @@ where
 {
     pub fn len(&self) -> usize {
         self.model.len()
+    }
+
+    pub fn details(&self) -> PartialModel<T> {
+        vec![
+            &self.model[1],
+            &self.model[2],
+            &self.model[3],
+            &self.model[4],
+            &self.model[5],
+            &self.model[6],
+            &self.model[7],
+            &self.model[8],
+        ]
+    }
+
+    pub fn _iter(&self) -> Iter<'_, ModelStatType<T>>{
+        self.model.iter()
     }
 
     pub fn to_i16(self) -> Model<i16> {

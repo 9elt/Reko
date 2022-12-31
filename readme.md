@@ -69,9 +69,9 @@ A job periodically calculates the **mean** and **standard deviation** of each st
 ### [finding similar users](#finding-similar-users)
 > `src` / [**`algorithm`**](src/algorithm) / [**`user`**](src/algorithm/user) / [**`affinity.rs`**](src/algorithm/user/affinity.rs)
 
-First of all we query the database for users that **deviate by less than `X`%** on **[general statistics](#statistics-types)** and the distirbution on **[detailed statistic](#statistics-types)** deviates by less than **`X`%**
+Similar users are found by querying the database for users that **deviate by less than `X`%** on each statistic in the **[statistics model](#statistics-model)** 
 
-`X` value varies on the different types of statistics, and increments if no users are found.
+`X` value varies on the different types of statistics, and increments when no users are found.
 <details><summary>The values of <code>X</code> table</summary>
 
 | value of `X`   | perc | mean score | score dev | scored perc | completed | plan to watch | watching | on hold | dropped |

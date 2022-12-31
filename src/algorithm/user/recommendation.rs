@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::algorithm::model::{Model, Indexer};
-use crate::helper::{self, AnimeDetails};
+use crate::algorithm::model::{Indexer, Model};
 use crate::helper::AffinityUsers;
+use crate::helper::{self, AnimeDetails};
 
 #[derive(Serialize)]
 pub struct Reko {
@@ -23,10 +23,17 @@ pub async fn extract(
 
     let mut recommendations = vec![];
 
+    let prediction_max: i16 = user_model
+        .details()
+        .iter()
+        .flat_map(|x| x.iter().map(|y| y[0] + y[1]).max())
+        .sum::<i16>()
+        / 8;
+
     for e in detailed.iter() {
         let related = match &e.related {
             Some(r) => r.to_owned(),
-            None => vec![]
+            None => vec![],
         };
         let mut skip = false;
         for rel in related.iter() {
@@ -47,14 +54,12 @@ pub async fn extract(
             }
         }
 
-        recommendations.push(
-            Reko {
-                id: e.id,
-                users,
-                details: e.to_owned(),
-                predictions: Predictions::from_entry(e, &user_model)
-            }
-        );
+        recommendations.push(Reko {
+            id: e.id,
+            users,
+            details: e.to_owned(),
+            predictions: Predictions::from_entry(e, &user_model, prediction_max),
+        });
     }
 
     recommendations.sort_unstable_by_key(|x| 1000 - x.predictions.enjoyment);
@@ -79,8 +84,7 @@ pub struct Predictions {
 }
 
 impl Predictions {
-    fn from_entry(entry: &AnimeDetails, model: &Model<i16>) -> Self {
-
+    fn from_entry(entry: &AnimeDetails, model: &Model<i16>, prediction_max: i16) -> Self {
         let mut score_devs = 0;
         let mut score_devs_counter = 0;
 
@@ -101,10 +105,10 @@ impl Predictions {
                     Some(mean) => {
                         smean += mean - model[i.x][i.y][1];
                         smean_counter += 1;
-                    },
-                    None => ()
+                    }
+                    None => (),
                 }
-            },
+            }
             None => (),
         };
 
@@ -119,10 +123,10 @@ impl Predictions {
                     Some(mean) => {
                         smean += mean - model[i.x][i.y][1];
                         smean_counter += 1;
-                    },
-                    None => ()
+                    }
+                    None => (),
                 }
-            },
+            }
             None => (),
         };
 
@@ -137,10 +141,10 @@ impl Predictions {
                     Some(mean) => {
                         smean += mean - model[i.x][i.y][1];
                         smean_counter += 1;
-                    },
-                    None => ()
+                    }
+                    None => (),
                 }
-            },
+            }
             None => (),
         };
 
@@ -158,46 +162,41 @@ impl Predictions {
                                 Some(mean) => {
                                     smean += mean - model[i.x][i.y][1];
                                     smean_counter += 1;
-                                },
-                                None => ()
+                                }
+                                None => (),
                             }
-                        },
-                        None => ()
+                        }
+                        None => (),
                     }
                 }
-            },
+            }
             None => (),
         };
 
         let score = match score_devs_counter {
             0 => 0,
-            _ => {
-                match entry.mean {
-                    Some(mean) => {
-                        mean + (score_devs / score_devs_counter)
-                    },
+            _ => match entry.mean {
+                Some(mean) => mean + (score_devs / score_devs_counter),
 
-                    None => 0
-                }
-            }
+                None => 0,
+            },
         };
 
         let percentages = match percs_counter {
             0 => 0,
-            _ => percs / percs_counter
-        }; 
+            _ => percs / percs_counter,
+        };
 
         let meansdev = match smean_counter {
             0 => 0,
             _ => smean / smean_counter,
         };
 
+        //let enjoyment = (((percentages + meansdev) as i32 * 100) / prediction_max as i32) as i16;
         let enjoyment = percentages + meansdev;
-
         Self { score, enjoyment }
     }
 }
-
 
 #[derive(Serialize, Deserialize)]
 pub struct EntryData {
