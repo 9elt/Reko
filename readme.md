@@ -69,7 +69,7 @@ A job periodically calculates the **mean** and **standard deviation** of each st
 ### [finding similar users](#finding-similar-users)
 > `src` / [**`algorithm`**](src/algorithm) / [**`user`**](src/algorithm/user) / [**`affinity.rs`**](src/algorithm/user/affinity.rs)
 
-Similar users are found by querying the database for users that **deviate by less than `X`%** on each statistic in the **[statistics model](#statistics-model)** 
+Similar users are found by querying the database for users that **deviate by less than `X`%** on each statistic of the **[statistics model](#statistics-model)** 
 
 `X` value varies on the different types of statistics, and increments when no users are found.
 <details><summary>The values of <code>X</code> table</summary>
