@@ -3,6 +3,16 @@ A web API that takes a **MyAnimeList username** and returns anime **recommendati
 
 > works thanks to [MyAnimeList API *beta v2*](https://myanimelist.net/apiconfig/references/api/v2)
 
+# to do
+- [ ] helper refactory (optimize conversions etc)  
+- [ ] make user affinity calculation (get user model)
+- [ ] improve entry expected enjoyment calculation
+- [ ] format response (next request, users etc)
+- [ ] jobs (update old users, update airing anime)
+- [ ] split routers (jobs need api key)  
+- [ ] implement logger
+- [ ] implement rate limiter
+
 #### index
 * [statistics model](#statistics-model)
 * [normal distribution](#normal-distribution)
