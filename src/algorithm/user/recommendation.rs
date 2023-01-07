@@ -282,7 +282,7 @@ fn missing_unique_entries(
             if
                 // entry is dropped or on hold
                 entry[1] > 3
-                // user hash no episodes watched
+                // user has no episodes watched
                 || entry[3] == 0
                 // entry is banned
                 || banned.contains(&entry[0])

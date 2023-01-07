@@ -7,7 +7,7 @@ A web API that takes a **MyAnimeList username** and returns anime **recommendati
 - [ ] helper refactory (optimize conversions etc)  
 - [X] user affinity calculation (get user model)
 - [ ] improve entry expected enjoyment calculation
-- [ ] format response (next request, users etc)
+- [X] format response (next request, users etc)
 - [ ] jobs (update old users, update airing anime)
 - [X] split routers (jobs need api key)  
 - [ ] implement logger

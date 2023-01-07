@@ -11,8 +11,16 @@ use crate::controllers::public::RecommendationsSettings;
 use crate::helper::AffinityUsers;
 
 #[derive(Serialize)]
+pub struct NextRequest {
+    banned_ids: Vec<i32>,
+    banned_users: Vec<String>,
+    accuracy: i32,
+    force_list_update: bool,
+}
+
+#[derive(Serialize)]
 pub struct DevResult {
-    passages: u8,
+    next_request: NextRequest,
     users: Vec<UsersInfo>,
     recommendations: Vec<Reko>,
 }
@@ -21,26 +29,24 @@ pub async fn get_user_recommendations(
     user: &String,
     settings: &RecommendationsSettings,
 ) -> Result<DevResult, u16> {
-    let stats_model =
-        match stats::get_user_model(user, &settings.force_update()).await {
-            Ok(model) => model,
-            Err(error) => return Err(error),
-        };
+    let stats_model = match stats::get_user_model(user, &settings.force_update()).await {
+        Ok(model) => model,
+        Err(error) => return Err(error),
+    };
 
     let user_list = match helper::get_user_list(user) {
         Ok(list) => list.list(),
         Err(_) => return Err(500),
     };
 
-    let mut passages = 0;
-    let init_accuracy = settings.accuracy();
+    let init_accuracy: i32 = settings.accuracy();
+    let mut final_accuracy: i32 = 100;
+
     let mut similar_users: Vec<AffinityUsers> = vec![];
 
     for a in 0..10 {
-        passages += 1;
-        let accuracy = init_accuracy - (a * 2);
-
-        let affinity_model = match user::affinity::affinity_model(&stats_model, accuracy) {
+        final_accuracy = init_accuracy - (a * 2);
+        let affinity_model = match user::affinity::affinity_model(&stats_model, final_accuracy) {
             Ok(model) => model,
             Err(error) => return Err(error),
         };
@@ -50,7 +56,7 @@ pub async fn get_user_recommendations(
             Err(_) => return Err(500),
         };
 
-        if similar_users.len() > 2 {
+        if similar_users.len() > 4 {
             break;
         }
     }
@@ -60,9 +66,16 @@ pub async fn get_user_recommendations(
         Err(_) => return Err(500),
     };
 
+    let next_request = NextRequest {
+        banned_ids: settings.banned_ids().to_owned(),
+        banned_users: settings.banned_users().to_owned(),
+        accuracy: final_accuracy,
+        force_list_update: settings.force_update(),
+    };
+
     match user::recommendation::extract(stats_model, user_list, &similar_users, &settings.banned_ids()).await {
         Ok(v) => Ok(DevResult {
-            passages,
+            next_request,
             users: users_info,
             recommendations: v,
         }),
