@@ -3,11 +3,11 @@ use crate::helper;
 use crate::algorithm::model::Model;
 use crate::algorithm::user;
 
-pub async fn get_user_model(user: &String, reload: bool) -> Result<Model<i16>, u16> {
+pub async fn get_user_model(user: &String, force_update: &bool) -> Result<Model<i16>, u16> {
     let mut stats_model = Model::<i16>::empty();
     let mut update_required: bool = false;
 
-    if !reload {
+    if !force_update {
         let check_db = helper::get_user_model(&user);
         match check_db {
             Ok(model) => {
@@ -23,7 +23,7 @@ pub async fn get_user_model(user: &String, reload: bool) -> Result<Model<i16>, u
         }
     }
 
-    if update_required || reload {
+    if update_required || *force_update {
         let list = match helper::get_detailed_list(user, true, false).await {
             Ok(val) => val,
             Err(e) => return Err(e),

@@ -1,12 +1,11 @@
 mod algorithm;
-mod controller;
+mod controllers;
 mod helper;
 mod models;
 mod router;
 mod utils;
 
 use axum::Router;
-use tower_http::cors::{Any, CorsLayer};
 
 #[macro_use]
 extern crate lazy_static;
@@ -19,7 +18,9 @@ async fn main() {
         .unwrap();
 }
 
-fn router() -> axum::Router {
-    let cors = CorsLayer::new().allow_origin(Any);
-    Router::new().nest("/", router::router()).layer(cors)
+fn router() -> Router {
+    Router::new()
+        .nest("/", router::public_router())
+        .nest("/jobs", router::jobs_router())
+        .nest("/test", router::test_router())
 }

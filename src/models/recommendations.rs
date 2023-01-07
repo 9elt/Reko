@@ -1,12 +1,13 @@
 use serde::Serialize;
 
-use crate::helper;
 use crate::algorithm::user;
+use crate::helper;
 
 use super::stats;
 
-use crate::helper::AffinityUsers;
 use crate::algorithm::user::recommendation::Reko;
+use crate::controllers::public::RecommendationsSettings;
+use crate::helper::AffinityUsers;
 
 #[derive(Serialize)]
 pub struct DevResult {
@@ -15,11 +16,16 @@ pub struct DevResult {
     recommendations: Vec<Reko>,
 }
 
-pub async fn get_user_recommendations(user: &String, reload: bool) -> Result<DevResult, u16> {
-    let stats_model = match stats::get_user_model(&user, reload).await {
-        Ok(model) => model,
-        Err(error) => return Err(error),
-    };
+pub async fn get_user_recommendations(
+    settings: &RecommendationsSettings,
+) -> Result<DevResult, u16> {
+    let user = &settings.user_name();
+
+    let stats_model =
+        match stats::get_user_model(user, &settings.force_update()).await {
+            Ok(model) => model,
+            Err(error) => return Err(error),
+        };
 
     let user_list = match helper::get_user_list(user) {
         Ok(list) => list.list(),
@@ -27,10 +33,12 @@ pub async fn get_user_recommendations(user: &String, reload: bool) -> Result<Dev
     };
 
     let mut passages = 0;
+    let init_accuracy = settings.accuracy();
     let mut similar_users: Vec<AffinityUsers> = vec![];
+
     for a in 0..10 {
         passages += 1;
-        let accuracy = 100 - (a * 2);
+        let accuracy = init_accuracy - (a * 2);
 
         let affinity_model = match user::affinity::affinity_model(&stats_model, accuracy) {
             Ok(model) => model,
@@ -48,13 +56,14 @@ pub async fn get_user_recommendations(user: &String, reload: bool) -> Result<Dev
     }
 
     match user::recommendation::extract(stats_model, user_list, &similar_users).await {
-        Ok(v) => {
-            Ok(DevResult {
-                passages,
-                users: similar_users.iter().map(|u| u.user_name.to_owned()).collect(),
-                recommendations: v
-            })
-        },
-        Err(error) => Err(error) 
+        Ok(v) => Ok(DevResult {
+            passages,
+            users: similar_users
+                .iter()
+                .map(|u| u.user_name.to_owned())
+                .collect(),
+            recommendations: v,
+        }),
+        Err(error) => Err(error),
     }
 }
