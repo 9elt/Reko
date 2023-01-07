@@ -1,4 +1,4 @@
-use axum::Json;
+use axum::{extract::Path, Json,};
 use hyper::StatusCode;
 
 use serde::Deserialize;
@@ -8,7 +8,6 @@ use crate::models;
 
 #[derive(Deserialize)]
 pub struct RecommendationsSettings {
-    user_name: String,
     banned_ids: Option<Vec<i32>>,
     banned_users: Option<Vec<String>>,
     accuracy: Option<i32>,
@@ -16,10 +15,6 @@ pub struct RecommendationsSettings {
 }
 
 impl RecommendationsSettings {
-    pub fn user_name(&self) -> String {
-        self.user_name.to_lowercase()
-    }
-
     pub fn banned_ids(&self) -> Vec<i32> {
         match &self.banned_ids {
             Some(ids) => ids.to_owned(),
@@ -53,9 +48,10 @@ impl RecommendationsSettings {
 }
 
 pub async fn get_user_recommendations(
+    Path(user): Path<String>,
     Json(settings): Json<RecommendationsSettings>,
 ) -> Result<Json<Value>, StatusCode> {
-    match models::recommendations::get_user_recommendations(&settings).await {
+    match models::recommendations::get_user_recommendations(&user.to_lowercase(), &settings).await {
         Ok(users) => Ok(Json(json!(users))),
         Err(error) => Err(StatusCode::from_u16(error).unwrap()),
     }

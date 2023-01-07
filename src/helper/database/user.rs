@@ -16,13 +16,17 @@ use crate::algorithm::user::affinity::AffinityModel;
 // affinity users
 ////////////////////////////////////////////////////////////////////////////////
 
-pub fn get_affinity_users(affinity: AffinityModel, user: &String) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
+pub fn get_affinity_users(affinity: AffinityModel, user: &String, banned: &Vec<String>) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
     let time = time_elapsed::start("db affinity users");
 
     let mut query = format!("
-        SELECT user_name, list FROM users
+        SELECT user_name, list, model FROM users
         WHERE user_name != '{}'
     ", user);
+
+    for banned_user in banned.iter() {
+        query = format!("{} AND user_name != '{}'", query, banned_user);
+    }
 
     for x in 0..affinity.min.len() {
         for y in 0..affinity.min[x].len() {

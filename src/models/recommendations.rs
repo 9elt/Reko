@@ -6,21 +6,21 @@ use crate::helper;
 use super::stats;
 
 use crate::algorithm::user::recommendation::Reko;
+use crate::algorithm::user::recommendation::UsersInfo;
 use crate::controllers::public::RecommendationsSettings;
 use crate::helper::AffinityUsers;
 
 #[derive(Serialize)]
 pub struct DevResult {
     passages: u8,
-    users: Vec<String>,
+    users: Vec<UsersInfo>,
     recommendations: Vec<Reko>,
 }
 
 pub async fn get_user_recommendations(
+    user: &String,
     settings: &RecommendationsSettings,
 ) -> Result<DevResult, u16> {
-    let user = &settings.user_name();
-
     let stats_model =
         match stats::get_user_model(user, &settings.force_update()).await {
             Ok(model) => model,
@@ -45,7 +45,7 @@ pub async fn get_user_recommendations(
             Err(error) => return Err(error),
         };
 
-        similar_users = match helper::get_affinity_users(affinity_model, user) {
+        similar_users = match helper::get_affinity_users(affinity_model, user, &settings.banned_users()) {
             Ok(v) => v,
             Err(_) => return Err(500),
         };
@@ -55,13 +55,15 @@ pub async fn get_user_recommendations(
         }
     }
 
-    match user::recommendation::extract(stats_model, user_list, &similar_users).await {
+    let users_info = match user::recommendation::user_info(&similar_users, &stats_model) {
+        Ok(v) => v,
+        Err(_) => return Err(500),
+    };
+
+    match user::recommendation::extract(stats_model, user_list, &similar_users, &settings.banned_ids()).await {
         Ok(v) => Ok(DevResult {
             passages,
-            users: similar_users
-                .iter()
-                .map(|u| u.user_name.to_owned())
-                .collect(),
+            users: users_info,
             recommendations: v,
         }),
         Err(error) => Err(error),

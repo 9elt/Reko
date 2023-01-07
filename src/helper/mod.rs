@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 pub struct AffinityUsers {
     pub user_name: String,
     pub list: Vec<Vec<i32>>,
+    pub model: Model<i16>,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -48,8 +49,9 @@ pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
 pub fn get_affinity_users(
     affinity_model: AffinityModel,
     user: &String,
+    banned: &Vec<String>
 ) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
-    database::user::get_affinity_users(affinity_model, user)
+    database::user::get_affinity_users(affinity_model, user, banned)
 }
 
 pub fn save_user_model(user: &String, model: &Model<i16>) {

@@ -1,64 +1,46 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::algorithm::model::{Indexer, Model};
 use crate::helper::AffinityUsers;
 use crate::helper::{self, AnimeDetails};
+use crate::utils::z_table;
 
 #[derive(Serialize)]
 pub struct Reko {
     id: i32,
     users: Vec<u8>,
     details: AnimeDetails,
-    predictions: Predictions,
+    predictions: EntryPredictions,
 }
 
 pub async fn extract(
     user_model: Model<i16>,
     user_list: Vec<Vec<i32>>,
     similar_users: &Vec<AffinityUsers>,
+    banned: &Vec<i32>,
 ) -> Result<Vec<Reko>, u16> {
-    let entries = get_entries(&user_list, similar_users);
+    let entries = missing_unique_entries(&user_list, similar_users, banned);
     let entries_ids: Vec<i32> = entries.iter().map(|x| x.id).collect();
     let detailed = helper::get_anime_details(entries_ids.to_owned()).await;
 
     let mut recommendations = vec![];
 
-    let prediction_max: i16 = user_model
-        .details()
-        .iter()
-        .flat_map(|x| x.iter().map(|y| y[0] + y[1]).max())
-        .sum::<i16>()
-        / 8;
+    for entry_details in detailed.iter() {
 
-    for e in detailed.iter() {
-        let related = match &e.related {
-            Some(r) => r.to_owned(),
-            None => vec![],
-        };
-        let mut skip = false;
-        for rel in related.iter() {
-            if rel.relation > 6 || entries_ids.contains(&(rel.id as i32)) {
-                skip = true;
-                break;
-            }
-        }
-        if skip {
+        if is_sequel(entry_details) {
             continue;
         }
 
-        let mut users: Vec<u8> = vec![];
-        for ent in entries.iter() {
-            if ent.id == e.id {
-                users = ent.users.to_owned();
-                break;
-            }
-        }
+        let users = match entries.iter().find(|missing_e| missing_e.id == entry_details.id) {
+            Some(entry) => entry.users.to_owned(),
+            None => vec![]
+        };
 
         recommendations.push(Reko {
-            id: e.id,
+            id: entry_details.id,
             users,
-            details: e.to_owned(),
-            predictions: Predictions::from_entry(e, &user_model, prediction_max),
+            details: entry_details.to_owned(),
+            predictions: EntryPredictions::from_entry(entry_details, &user_model),
         });
     }
 
@@ -77,14 +59,80 @@ pub async fn extract(
     Ok(parsed_reko)
 }
 
+fn is_sequel(entry: &AnimeDetails) -> bool {
+    match &entry.related {
+        // `relation > 6` means the entry has a prequel
+        Some(related) => related.iter().any(|r| r.relation > 6),
+        None => false,
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Users affinity
+////////////////////////////////////////////////////////////////////////////////
 #[derive(Serialize)]
-pub struct Predictions {
+pub struct UsersInfo {
+    user_name: String,
+    affinity: i16,
+}
+
+pub fn user_info(similar_users: &Vec<AffinityUsers>, user_model: &Model<i16>) -> Result<Vec<UsersInfo>, u16> {
+    let normal_dist = match helper::get_normal_dist() {
+        Ok(v) => v,
+        Err(_) => return Err(500) 
+    };
+
+    let mut users_info = vec![];
+
+    for similar in similar_users.iter() {
+        let mut tot_dev: i32 = 0;
+        let mut counter: i32 = 0;
+
+        for x in 0..user_model.len() {
+            for y in 0..user_model[x].len() {
+                for z in 0..user_model[x][y].len() {
+                    tot_dev += user_deviation(
+                        user_model[x][y][z],
+                        similar.model[x][y][z],
+                        normal_dist.mean(x, y, z),
+                        normal_dist.std_dev(x, y, z)
+                    ) as i32;
+                    counter += 1;
+                }
+            }
+        };
+
+        users_info.push(UsersInfo {
+            user_name: similar.user_name.to_owned(),
+            affinity: 1000 - (tot_dev / counter) as i16
+        })
+    }
+
+    Ok(users_info)
+}
+
+fn user_deviation(user_value: i16, other_value: i16, mean: i16, std_dev: i16) -> i16 {
+    let user_z_score = (user_value as f32 - mean as f32) / std_dev as f32;
+    let other_z_score = (other_value as f32 - mean as f32) / std_dev as f32;
+
+    let user_cumulative_dist = z_table::cumulative_dist(user_z_score);
+    let other_cumulative_dist = z_table::cumulative_dist(other_z_score);
+
+    (user_cumulative_dist * 1000.0 - other_cumulative_dist * 1000.0).abs() as i16
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Entry predictions
+////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Serialize)]
+pub struct EntryPredictions {
     score: i16,
     enjoyment: i16,
 }
 
-impl Predictions {
-    fn from_entry(entry: &AnimeDetails, model: &Model<i16>, prediction_max: i16) -> Self {
+impl EntryPredictions {
+    fn from_entry(entry: &AnimeDetails, model: &Model<i16>) -> Self {
         let mut score_devs = 0;
         let mut score_devs_counter = 0;
 
@@ -198,65 +246,72 @@ impl Predictions {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct EntryData {
+////////////////////////////////////////////////////////////////////////////////
+// Missing unique entries
+////////////////////////////////////////////////////////////////////////////////
+
+const MAX_ENTRIES_PER_USER: u8 = 32;
+
+pub struct UniqueEntry {
     id: i32,
     users: Vec<u8>,
 }
 
-fn get_entries(user_list: &Vec<Vec<i32>>, similar_users: &Vec<AffinityUsers>) -> Vec<EntryData> {
+/// ### get unique entries with associated users
+fn missing_unique_entries(
+    user_list: &Vec<Vec<i32>>,
+    similar_users: &Vec<AffinityUsers>,
+    banned: &Vec<i32>,
+) -> Vec<UniqueEntry> {
     let user_entries: Vec<i32> = user_list.iter().map(|x| x[0]).collect();
 
-    let mut missing_entries: Vec<i32> = vec![];
-    let mut missing_entries_with_data: Vec<EntryData> = vec![];
+    let mut missing_entries_ids: Vec<i32> = vec![];
+    let mut missing_entries: Vec<UniqueEntry> = vec![];
 
-    for i in 0..similar_users.len() {
-        let mut user_unique = 0;
-        let list_len = similar_users[i].list.len();
-        let limit = match list_len > 1000 {
-            true => 1000,
-            false => list_len,
-        };
+    for user_i in 0..similar_users.len() {
+        let mut user_unique_entries = 0;
+        let list_len = similar_users[user_i].list.len();
 
-        for j in 0..limit {
-            let entry = &similar_users[i].list[j];
+        for j in 0..list_len {
+            let entry = &similar_users[user_i].list[j];
 
-            if user_unique > 32 - (i * 2) {
+            if user_unique_entries > MAX_ENTRIES_PER_USER {
                 break;
             }
 
-            // not completed
-            if entry[1] > 1 {
+            if
+                // entry is dropped or on hold
+                entry[1] > 3
+                // user hash no episodes watched
+                || entry[3] == 0
+                // entry is banned
+                || banned.contains(&entry[0])
+                // entry is already in user's list
+                || user_entries.contains(&entry[0])
+            {
                 continue;
             }
 
-            // no episodes watched
-            if entry[3] == 0 {
-                continue;
-            }
-
-            // already in user's list
-            if user_entries.contains(&entry[0]) {
-                continue;
-            }
-
-            if missing_entries.contains(&entry[0]) {
-                for e in missing_entries_with_data.iter_mut() {
-                    if e.id == entry[0] {
-                        e.users.push(i as u8);
-                        break;
-                    }
-                }
+            // entry already recommended by another user
+            if missing_entries_ids.contains(&entry[0]) {
+                match missing_entries
+                    .iter_mut()
+                    .find(|e| e.id == entry[0])
+                {
+                    Some(entry) => entry.users.push(user_i as u8),
+                    None => (),
+                };
+            // entry is first recommended by current user
             } else {
-                missing_entries_with_data.push(EntryData {
+                missing_entries.push(UniqueEntry {
                     id: entry[0],
-                    users: vec![i as u8],
+                    users: vec![user_i as u8],
                 });
-                missing_entries.push(entry[0]);
-                user_unique += 1;
+                missing_entries_ids.push(entry[0]);
+                user_unique_entries += 1;
             }
         }
     }
 
-    missing_entries_with_data
+    missing_entries
 }
