@@ -192,6 +192,7 @@ fn relation_to_i16(relation: &Option<String>) -> i16 {
             "alternative_version" => 6,
             "prequel" => 7,
             "parent_story" => 8,
+            "full_story" => 9,
             _ => 0,
         },
         None => 0,

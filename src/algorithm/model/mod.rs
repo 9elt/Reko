@@ -9,7 +9,7 @@ use crate::utils::conversion;
 pub type ModelVec<T> = Vec<ModelStatType<T>>;
 pub type ModelStatType<T> = Vec<ModelStat<T>>;
 pub type ModelStat<T> = [T; 9];
-pub type PartialModel<'a, T> = Vec<&'a ModelStatType<T>>;
+pub type _PartialModel<'a, T> = Vec<&'a ModelStatType<T>>;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Model<T> {
@@ -76,7 +76,7 @@ where
         self.model.len()
     }
 
-    pub fn details(&self) -> PartialModel<T> {
+    pub fn _details(&self) -> _PartialModel<T> {
         vec![
             &self.model[1],
             &self.model[2],

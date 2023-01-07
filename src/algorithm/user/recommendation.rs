@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+use crate::algorithm::analysis::NormalDist;
 use crate::algorithm::model::{Indexer, Model};
 use crate::helper::AffinityUsers;
 use crate::helper::{self, AnimeDetails};
@@ -25,6 +26,21 @@ pub async fn extract(
 
     let mut recommendations = vec![];
 
+    let normal_dist = match helper::get_normal_dist() {
+        Ok(v) => v,
+        Err(_) => return Err(500) 
+    };
+
+    let mut score_distribution = [0; 11];
+    // let score_mean = user_model[0][0][1] + user_model[0][0][2];
+    for list_entry in user_list.iter() {
+        let score_i = match list_entry[2] > 0 {
+            true => (list_entry[2] / 100 - 1) as usize,
+            false => 10
+        };
+        score_distribution[score_i] += 1;
+    }
+
     for entry_details in detailed.iter() {
 
         if is_sequel(entry_details) {
@@ -40,14 +56,14 @@ pub async fn extract(
             id: entry_details.id,
             users,
             details: entry_details.to_owned(),
-            predictions: EntryPredictions::from_entry(entry_details, &user_model),
+            predictions: EntryPredictions::new(entry_details, &user_model,  &normal_dist, &score_distribution),
         });
     }
 
     recommendations.sort_unstable_by_key(|x| 1000 - x.predictions.enjoyment);
 
     let mut parsed_reko: Vec<Reko> = vec![];
-    let min_exp = recommendations[0].predictions.enjoyment / 2;
+    let min_exp = recommendations[0].predictions.enjoyment / 5;
 
     for reko in recommendations {
         if reko.predictions.enjoyment < min_exp {
@@ -70,6 +86,7 @@ fn is_sequel(entry: &AnimeDetails) -> bool {
 ////////////////////////////////////////////////////////////////////////////////
 // Users affinity
 ////////////////////////////////////////////////////////////////////////////////
+
 #[derive(Serialize)]
 pub struct UsersInfo {
     user_name: String,
@@ -132,118 +149,130 @@ pub struct EntryPredictions {
 }
 
 impl EntryPredictions {
-    fn from_entry(entry: &AnimeDetails, model: &Model<i16>) -> Self {
-        let mut score_devs = 0;
-        let mut score_devs_counter = 0;
+    fn new(entry: &AnimeDetails, model: &Model<i16>, normal_dist: &NormalDist, score_distribution: &[i32; 11]) -> Self {
 
-        let mut percs = 0;
-        let mut percs_counter = 0;
+        let mut enjoyment = 0;
+        let mut score_dev = 0;
+        let mut counter = 0;
 
-        let mut smean = 0;
-        let mut smean_counter = 0;
+        counter += stat_enj(
+            &entry.airing_date,
+            Indexer::date,
+            &mut enjoyment,
+            &mut score_dev,
+            entry,
+            model,
+            normal_dist,
+        );
 
-        match &entry.airing_date {
-            Some(date) => {
-                let i = Indexer::date(date);
-                score_devs += model[i.x][i.y][2];
-                score_devs_counter += 1;
-                percs += model[i.x][i.y][0];
-                percs_counter += 1;
-                match entry.mean {
-                    Some(mean) => {
-                        smean += mean - model[i.x][i.y][1];
-                        smean_counter += 1;
-                    }
-                    None => (),
-                }
+        counter += stat_enj(
+            &entry.rating,
+            Indexer::rating,
+            &mut enjoyment,
+            &mut score_dev,
+            entry,
+            model,
+            normal_dist,
+        );
+
+        counter += stat_enj(
+            &entry.num_episodes,
+            Indexer::num_episodes,
+            &mut enjoyment,
+            &mut score_dev,
+            entry,
+            model,
+            normal_dist,
+        );
+
+        if let Some(genres) = &entry.genres {
+            let mut genres_enj = 0;
+            let mut genres_score_dev = 0;
+            let mut genres_counter = 0;
+            for genre in genres.iter() {
+                genres_counter += stat_enj(
+                    genre,
+                    Indexer::genre,
+                    &mut genres_enj,
+                    &mut genres_score_dev,
+                    entry,
+                    model,
+                    normal_dist,
+                );
             }
-            None => (),
+            if genres_counter != 0 {
+                enjoyment += genres_enj / genres_counter;
+                score_dev += genres_score_dev / genres_counter;
+                counter += 1;
+            };
+        }
+
+        enjoyment = enjoyment / counter;
+        score_dev = match entry.mean {
+            Some(mean) => mean as i32 + (score_dev / counter),
+            None => -1
         };
 
-        match &entry.rating {
-            Some(rating) => {
-                let i = Indexer::rating(rating);
-                score_devs += model[i.x][i.y][2];
-                score_devs_counter += 1;
-                percs += model[i.x][i.y][0];
-                percs_counter += 1;
-                match entry.mean {
-                    Some(mean) => {
-                        smean += mean - model[i.x][i.y][1];
-                        smean_counter += 1;
-                    }
-                    None => (),
-                }
-            }
-            None => (),
+        let r_score = (score_dev / 100) as usize - 1;
+        let remainder = (score_dev - (r_score as i32 * 100)) / 10;
+
+        let r_ratio = score_distribution[r_score + 1] + score_distribution[r_score];
+        let max_rem = score_distribution[r_score] * 100 / match r_ratio > 0 {
+            true => r_ratio,
+            false => 1,
         };
 
-        match &entry.num_episodes {
-            Some(num_episodes) => {
-                let i = Indexer::num_episodes(num_episodes);
-                score_devs += model[i.x][i.y][2];
-                score_devs_counter += 1;
-                percs += model[i.x][i.y][0];
-                percs_counter += 1;
-                match entry.mean {
-                    Some(mean) => {
-                        smean += mean - model[i.x][i.y][1];
-                        smean_counter += 1;
-                    }
-                    None => (),
-                }
-            }
-            None => (),
+        let score = match remainder > max_rem {
+            true => r_score + 2,
+            false => r_score + 1
         };
 
-        match &entry.genres {
-            Some(genres) => {
-                for genre in genres.iter() {
-                    match genre {
-                        Some(g) => {
-                            let i = Indexer::genre(g);
-                            score_devs += model[i.x][i.y][2];
-                            score_devs_counter += 1;
-                            percs += model[i.x][i.y][0];
-                            percs_counter += 1;
-                            match entry.mean {
-                                Some(mean) => {
-                                    smean += mean - model[i.x][i.y][1];
-                                    smean_counter += 1;
-                                }
-                                None => (),
-                            }
-                        }
-                        None => (),
-                    }
-                }
-            }
-            None => (),
-        };
-
-        let score = match score_devs_counter {
-            0 => 0,
-            _ => match entry.mean {
-                Some(mean) => mean + (score_devs / score_devs_counter),
-
-                None => 0,
-            },
-        };
-
-        let percentages = match percs_counter {
-            0 => 0,
-            _ => percs / percs_counter,
-        };
-
-        let meansdev = match smean_counter {
-            0 => 0,
-            _ => smean / smean_counter,
-        };
-
-        //let enjoyment = (((percentages + meansdev) as i32 * 100) / prediction_max as i32) as i16;
-        let enjoyment = percentages + meansdev;
-        Self { score, enjoyment }
+        Self { score: score as i16, enjoyment: enjoyment as i16 }
     }
+}
+
+fn stat_enj<T>(
+    value: &Option<T>,
+    indexer: fn(value: &T) -> Indexer,
+    enjoyment: &mut i32,
+    score: &mut i32,
+    entry: &AnimeDetails,
+    model: &Model<i16>,
+    normal_dist: &NormalDist,
+) -> i32 {
+    let counter: i32;
+
+    match value {
+        Some(date) => {
+            let i = indexer(date);
+
+            *enjoyment += value_probability(
+                model[i.x][i.y][0],
+                normal_dist.mean(i.x, i.y, 0),
+                normal_dist.std_dev(i.x, i.y, 0)
+            );
+
+            if let Some(mean) = &entry.mean {
+                let score_adj = mean - model[i.x][i.y][1];
+                *enjoyment += match score_adj > 0 {
+                    true => 0,
+                    false => score_adj as i32
+                };
+            }
+
+            *score +=  model[i.x][i.y][2] as i32;
+
+            counter = 1;
+        }
+        None => counter = 0,
+    };
+
+    counter
+}
+
+fn value_probability(value: i16, mean: i16, std_dev: i16) -> i32 {
+    let z_score = (value as f32 - mean as f32) / std_dev as f32;
+    ((z_table::cumulative_dist(z_score) - 0.5) * 1000.0) as i32
 }
 
 ////////////////////////////////////////////////////////////////////////////////
