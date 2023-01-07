@@ -10,11 +10,11 @@ use tower_http::auth::RequireAuthorizationLayer;
 ////////////////////////////////////////////////////////////////////////////////
 pub fn public_router() -> axum::Router {
     let middleware = ServiceBuilder::new()
-        //.rate_limit(50, std::time::Duration::from_secs(1))
-        .layer(CorsLayer::new().allow_origin(Any));
+    //.layer(RequireAuthorizationLayer::bearer("token"))
+    .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any));
 
     Router::new()
-        .route("/recommendations", post(controllers::public::get_user_recommendations))
+        .route("/recommendations/:user", post(controllers::public::get_user_recommendations))
         .layer(middleware)
 }
 

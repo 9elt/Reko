@@ -20,7 +20,7 @@ async fn main() {
 
 fn router() -> Router {
     Router::new()
-        .nest("/", router::public_router())
         .nest("/jobs", router::jobs_router())
         .nest("/test", router::test_router())
+        .nest("/", router::public_router())
 }
