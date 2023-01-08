@@ -39,7 +39,7 @@ pub fn jobs_router() -> axum::Router {
 ////////////////////////////////////////////////////////////////////////////////
 pub fn test_router() -> axum::Router {
     let middleware = ServiceBuilder::new()
-        .layer(CorsLayer::new().allow_origin(Any))
+        .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any))
         .layer(RequireAuthorizationLayer::bearer(bearer::test_auth_token().as_str()));
 
     Router::new()
