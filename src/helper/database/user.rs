@@ -4,6 +4,7 @@ use crate::algorithm::model::Model;
 use crate::utils::database::connection;
 use crate::utils::database::schema::users::dsl::*;
 
+use diesel::dsl::*;
 use diesel::{prelude::*, sql_query};
 use serde_json::json;
 
@@ -117,12 +118,25 @@ pub fn delete(user: &String) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// get all usernames
+// get usernames
 ////////////////////////////////////////////////////////////////////////////////
 
 pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
     let usernames = users
         .select(user_name)
+        .load::<String>(&mut connection::POOL.get().unwrap());
+
+    match usernames {
+        Ok(res) => Ok(res),
+        Err(e) => Err(e),
+    }
+}
+
+pub fn get_old_usernames() -> Result<Vec<String>, diesel::result::Error> {
+    let usernames = users
+        .select(user_name)
+        .filter(updated_at.lt(now - 5.days()))
+        .limit(100)
         .load::<String>(&mut connection::POOL.get().unwrap());
 
     match usernames {

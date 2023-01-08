@@ -50,7 +50,25 @@ pub fn insert(entries: Vec<RawAnime>) {
     };
 }
 
-#[derive(Queryable, Insertable)]
+pub fn update(entry: RawAnime) -> Result<(), ()> {
+    let res = diesel::update(anime.find(&entry.id))
+        .set(&entry)
+        .execute(&mut connection::POOL.get().unwrap());
+
+    match res {
+        Ok(_) => Ok(()),
+        Err(_) => Err(()),
+    }
+}
+
+pub fn get_airing_anime() -> Result<Vec<i32>, diesel::result::Error> {
+    anime
+        .select(id)
+        .filter(airing_status.gt(1))
+        .load::<i32>(&mut connection::POOL.get().unwrap())
+}
+
+#[derive(Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = anime)]
 pub struct RawAnime {
     id: i32,

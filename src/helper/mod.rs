@@ -1,5 +1,5 @@
 mod database;
-mod mal_api;
+pub mod mal_api;
 
 use time_elapsed;
 
@@ -14,6 +14,8 @@ use crate::algorithm::{model::Model, user::affinity::AffinityModel};
 use crate::helper::database::DBUserList;
 
 use serde::{Deserialize, Serialize};
+
+use self::database::anime::RawAnime;
 
 #[derive(Serialize, Deserialize)]
 pub struct AffinityUsers {
@@ -46,6 +48,10 @@ pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
     database::user::get_all_usernames()
 }
 
+pub fn get_old_usernames() -> Result<Vec<String>, diesel::result::Error> {
+    database::user::get_old_usernames()
+}
+
 pub fn get_affinity_users(
     affinity_model: AffinityModel,
     user: &String,
@@ -61,6 +67,22 @@ pub fn save_user_model(user: &String, model: &Model<i16>) {
 pub fn get_user_model(user: &String) -> Result<database::DBUserModel, diesel::result::Error> {
     database::user::get_model(user)
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Anime
+////////////////////////////////////////////////////////////////////////////////
+
+pub fn get_airing_anime() -> Result<Vec<i32>, diesel::result::Error> {
+    database::anime::get_airing_anime()
+}
+
+pub fn update_anime(anime: RawAnime) -> Result<(), ()> {
+    database::anime::update(anime)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Custom
+////////////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ListEntry {

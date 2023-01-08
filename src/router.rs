@@ -4,14 +4,14 @@ use axum::routing::{get, post};
 use tower_http::cors::{Any, CorsLayer};
 use tower::builder::ServiceBuilder;
 use tower_http::auth::RequireAuthorizationLayer;
+use crate::utils::bearer;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Public
 ////////////////////////////////////////////////////////////////////////////////
 pub fn public_router() -> axum::Router {
     let middleware = ServiceBuilder::new()
-    //.layer(RequireAuthorizationLayer::bearer("token"))
-    .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any));
+        .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any));
 
     Router::new()
         .route("/recommendations/:user", post(controllers::public::get_user_recommendations))
@@ -23,13 +23,14 @@ pub fn public_router() -> axum::Router {
 ////////////////////////////////////////////////////////////////////////////////
 pub fn jobs_router() -> axum::Router {
     let middleware = ServiceBuilder::new()
-        .layer(RequireAuthorizationLayer::bearer("token"))
-        .layer(CorsLayer::new().allow_origin(Any));
+        .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any))
+        .layer(RequireAuthorizationLayer::bearer(bearer::jobs_auth_token().as_str()));
 
     Router::new()
         .route("/compute_all_models", get(controllers::jobs::compute_all_models))
         .route("/compute_normal_dist", get(controllers::jobs::compute_normal_dist))
         .route("/update_old_users", get(controllers::jobs::update_old_users))
+        .route("/update_airing_anime", get(controllers::jobs::update_airing_anime))
         .layer(middleware)
 }
 
@@ -38,8 +39,8 @@ pub fn jobs_router() -> axum::Router {
 ////////////////////////////////////////////////////////////////////////////////
 pub fn test_router() -> axum::Router {
     let middleware = ServiceBuilder::new()
-        //.layer(RequireAuthorizationLayer::bearer("token"))
-        .layer(CorsLayer::new().allow_origin(Any));
+        .layer(CorsLayer::new().allow_origin(Any))
+        .layer(RequireAuthorizationLayer::bearer(bearer::test_auth_token().as_str()));
 
     Router::new()
         .route("/stats/:user", get(controllers::test::get_user_model))
