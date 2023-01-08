@@ -1,14 +1,11 @@
-use time_elapsed;
+use super::{AffinityUsers, DBAffinityUsers, DBUserList, RawListData, UserList, DBUserModel, RawModelData};
 
-use super::{AffinityUsers, DBAffinityUsers};
-
-use crate::{utils::conversion, algorithm::model::Model};
+use crate::algorithm::model::Model;
 use crate::utils::database::connection;
 use crate::utils::database::schema::users::dsl::*;
 
 use diesel::{prelude::*, sql_query};
 use serde_json::json;
-use chrono::Utc;
 
 use crate::algorithm::user::affinity::AffinityModel;
 
@@ -16,13 +13,15 @@ use crate::algorithm::user::affinity::AffinityModel;
 // affinity users
 ////////////////////////////////////////////////////////////////////////////////
 
-pub fn get_affinity_users(affinity: AffinityModel, user: &String, banned: &Vec<String>) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
-    let time = time_elapsed::start("db affinity users");
-
-    let mut query = format!("
-        SELECT user_name, list, model FROM users
-        WHERE user_name != '{}'
-    ", user);
+pub fn get_affinity_users(
+    affinity: AffinityModel,
+    user: &String,
+    banned: &Vec<String>,
+) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
+    let mut query = format!(
+        "SELECT user_name, list, model FROM users WHERE user_name != '{}'",
+        user
+    );
 
     for banned_user in banned.iter() {
         query = format!("{} AND user_name != '{}'", query, banned_user);
@@ -36,69 +35,32 @@ pub fn get_affinity_users(affinity: AffinityModel, user: &String, banned: &Vec<S
                 }
                 query = format!(
                     "{} AND (model->{}->{}->{})::int >= {} AND (model->{}->{}->{})::int <= {}",
-                    query,
-                    x, y, z, affinity.min[x][y][z],
-                    x, y, z, affinity.max[x][y][z]
+                    query, x, y, z, affinity.min[x][y][z], x, y, z, affinity.max[x][y][z]
                 );
             }
         }
     }
 
-    query = format!("{} ORDER BY (model->0->0->0)::int DESC", query);
-    query = format!("{} LIMIT 8", query);
+    query = format!("{} ORDER BY (model->0->0->0)::int DESC LIMIT 8", query);
 
-    let affinity_users = sql_query(query)
-        .load::<DBAffinityUsers>(&mut connection::POOL.get().unwrap());
-
-    time.end();
+    let affinity_users =
+        sql_query(query).load::<DBAffinityUsers>(&mut connection::POOL.get().unwrap());
 
     match affinity_users {
-        Ok(u) => Ok(u.iter().map(|e| e.deserialize()).collect()),
-        Err(e) => Err(e)
+        Ok(u) => Ok(u.into_iter().map(|e| e.deserialize()).collect()),
+        Err(e) => Err(e),
     }
 }
 
-/*
-*  USER LIST
-*/
-
-pub type UserList = Vec<Vec<i32>>; // to move somewhere else
-
-pub struct DBUserList {
-    list: UserList,
-    updated_at: chrono::NaiveDateTime,
-}
-
-impl DBUserList {
-    pub fn requires_update(&self) -> bool {
-        let life = Utc::now().naive_local() - self.updated_at;
-        life.num_days() > 0
-    }
-    pub fn list(self) -> UserList {
-        self.list
-    }
-}
-
-#[derive(Queryable)]
-struct RawList {
-    data: serde_json::Value,
-    updated_at: chrono::NaiveDateTime,
-}
-
-impl RawList {
-    fn deserialize(self) -> DBUserList {
-        DBUserList {
-            list: conversion::from_json(self.data),
-            updated_at: self.updated_at,
-        }
-    }
-}
+////////////////////////////////////////////////////////////////////////////////
+// user list
+////////////////////////////////////////////////////////////////////////////////
 
 pub fn get_list(user: &String) -> Result<DBUserList, diesel::result::Error> {
     let user_list = users
         .select((list, updated_at))
         .filter(user_name.eq(&user))
-        .first::<RawList>(&mut connection::POOL.get().unwrap());
+        .first::<RawListData>(&mut connection::POOL.get().unwrap());
 
     match user_list {
         Ok(l) => Ok(l.deserialize()),
@@ -107,78 +69,33 @@ pub fn get_list(user: &String) -> Result<DBUserList, diesel::result::Error> {
 }
 
 pub fn insert_list(user: &String, l: UserList) {
-    let inserted = diesel::insert_into(users)
+    let _res = diesel::insert_into(users)
         .values((
             user_name.eq(&user),
             list.eq(json!(&l)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
         .execute(&mut connection::POOL.get().unwrap());
-
-    match inserted {
-        Ok(_) => println!("(db) inserted [{}] list", user),
-        Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed inserting [{}] list", user),
-    };
 }
 
 pub fn update_list(user: &String, l: UserList) {
-    let updated = diesel::update(users.find(&user))
+    let _res = diesel::update(users.find(&user))
         .set((
             list.eq(json!(&l)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
         .execute(&mut connection::POOL.get().unwrap());
-
-    match updated {
-        Ok(_) => println!("(db) updated [{}] list", user),
-        Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed updating [{}] list", user),
-    };
 }
 
-/*
-*  USER MODEL
-*/
-
-pub type UserModel = Vec<Vec<[i16; 9]>>; // to move somewhere else
-
-pub struct DBUserModel {
-    model: Option<UserModel>,
-    updated_at: chrono::NaiveDateTime,
-}
-
-impl DBUserModel {
-    pub fn requires_update(&self) -> bool {
-        let life = Utc::now().naive_local() - self.updated_at;
-        life.num_days() > 0
-    }
-    pub fn model(self) -> Option<UserModel> {
-        self.model
-    }
-}
-
-#[derive(Queryable)]
-struct RawModel {
-    data: Option<serde_json::Value>,
-    updated_at: chrono::NaiveDateTime,
-}
-
-impl RawModel {
-    fn deserialize(self) -> DBUserModel {
-        DBUserModel {
-            model: match self.data {
-                Some(data) => conversion::from_json(data),
-                None => None
-            },
-            updated_at: self.updated_at,
-        }
-    }
-}
+////////////////////////////////////////////////////////////////////////////////
+// user model
+////////////////////////////////////////////////////////////////////////////////
 
 pub fn get_model(user: &String) -> Result<DBUserModel, diesel::result::Error> {
     let user_model = users
         .select((model, updated_at))
         .filter(user_name.eq(&user))
-        .first::<RawModel>(&mut connection::POOL.get().unwrap());
+        .first::<RawModelData>(&mut connection::POOL.get().unwrap());
 
     match user_model {
         Ok(m) => Ok(m.deserialize()),
@@ -187,29 +104,16 @@ pub fn get_model(user: &String) -> Result<DBUserModel, diesel::result::Error> {
 }
 
 pub fn set_model(user: &String, m: &Model<i16>) {
-    let updated = diesel::update(users.find(&user))
+    let _res = diesel::update(users.find(&user))
         .set((
             model.eq(json!(m)),
             updated_at.eq(chrono::Utc::now().naive_local()),
         ))
         .execute(&mut connection::POOL.get().unwrap());
-
-    match updated {
-        Ok(_) => println!("(db) updated [{}] model", user),
-        Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed updating [{}] model", user),
-    };
 }
 
-/*
-*  USER
-*/
-
 pub fn delete(user: &String) {
-    let deleted = diesel::delete(users.find(user)).execute(&mut connection::POOL.get().unwrap());
-    match deleted {
-        Ok(_) => println!("(db) deleted [{}] user", user),
-        Err(_) => println!("\x1b[31m(db) \x1b[1mERROR!\x1b[0m failed deleting [{}] user", user),
-    };
+    let _res = diesel::delete(users.find(user)).execute(&mut connection::POOL.get().unwrap());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -218,8 +122,8 @@ pub fn delete(user: &String) {
 
 pub fn get_all_usernames() -> Result<Vec<String>, diesel::result::Error> {
     let usernames = users
-    .select(user_name)
-    .load::<String>(&mut connection::POOL.get().unwrap());
+        .select(user_name)
+        .load::<String>(&mut connection::POOL.get().unwrap());
 
     match usernames {
         Ok(res) => Ok(res),

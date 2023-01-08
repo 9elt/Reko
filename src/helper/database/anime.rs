@@ -5,32 +5,30 @@ use crate::utils::database::schema::anime;
 use crate::utils::database::schema::anime::dsl::*;
 use diesel::prelude::*;
 
-const MAX_QUERY_SIZE: usize = 300;
+const MAX_QUERY_SIZE: usize = 500;
 
 pub fn get(ids: &Vec<i32>) -> Result<Vec<AnimeDetails>, diesel::result::Error> {
     let mut complete_result: Vec<RawAnime> = vec![];
-    let query_max_size = (ids.len() / MAX_QUERY_SIZE) + 1;
+    let n_ids = ids.len();
+    let n_queries = (n_ids / MAX_QUERY_SIZE) + 1;
 
-    // A single query may stack overflow
-    // this is a quick fix
-    for i in 0..query_max_size {
-        let mut query = anime.into_boxed();
-        let paging = i * MAX_QUERY_SIZE;
+    for i in 0..n_queries {
+        let curr_start = i * MAX_QUERY_SIZE;
+        let curr_limit = curr_start + MAX_QUERY_SIZE;
 
-        if paging == ids.len() {
+        if curr_start == n_ids {
             break;
         }
 
-        query = query.filter(id.eq(ids[paging]));
-        for i in paging..ids.len() {
-            if i == paging + MAX_QUERY_SIZE {
+        let mut query = anime.into_boxed().filter(id.eq(ids[curr_start]));
+        for curr_id in (curr_start + 1)..n_ids {
+            if curr_id == curr_limit {
                 break;
             }
-            query = query.or_filter(id.eq(ids[i]));
+            query = query.or_filter(id.eq(ids[curr_id]));
         }
 
-        let result: Result<Vec<RawAnime>, diesel::result::Error> =
-            query.load::<RawAnime>(&mut connection::POOL.get().unwrap());
+        let result = query.load::<RawAnime>(&mut connection::POOL.get().unwrap());
 
         match result {
             Ok(mut r) => complete_result.append(&mut r),
@@ -38,7 +36,7 @@ pub fn get(ids: &Vec<i32>) -> Result<Vec<AnimeDetails>, diesel::result::Error> {
         };
     }
 
-    Ok(complete_result.iter().map(|e| e.deserialize()).collect())
+    Ok(complete_result.into_iter().map(|e| e.deserialize()).collect())
 }
 
 pub fn insert(entries: Vec<RawAnime>) {

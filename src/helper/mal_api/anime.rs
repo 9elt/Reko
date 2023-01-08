@@ -6,6 +6,27 @@ use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+/// ### GET anime details from MyAnimeList API
+pub async fn get(id: &i32) -> Result<APIAnime, u16> {
+    let query: &str = "fields=id,title,main_picture,start_date,mean,status,genres,num_episodes,rating,related_anime";
+    let url: String = format!("https://api.myanimelist.net/v2/anime/{}?{}", id, query);
+
+    let client = reqwest::Client::new();
+    let response = client.get(url).headers(mal_headers()).send().await;
+
+    match response {
+        Ok(response) => match response.status() {
+            reqwest::StatusCode::OK => match response.json::<APIAnime>().await {
+                Ok(r) => Ok(r),
+                Err(_) => return Err(500),
+            },
+            e => Err(e.as_u16()),
+        },
+        Err(_) => Err(500),
+    }
+}
+
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Genre {
     id: i16,
@@ -44,25 +65,6 @@ pub struct APIAnime {
     num_episodes: Option<i16>,
     rating: Option<String>,
     related_anime: Option<Vec<RawRelatedAnime>>,
-}
-
-pub async fn get(id: &i32) -> Result<APIAnime, u16> {
-    let query: &str = "fields=id,title,main_picture,start_date,mean,status,genres,num_episodes,rating,related_anime";
-    let url: String = format!("https://api.myanimelist.net/v2/anime/{}?{}", id, query);
-
-    let client = reqwest::Client::new();
-    let response = client.get(url).headers(mal_headers()).send().await;
-
-    match response {
-        Ok(response) => match response.status() {
-            reqwest::StatusCode::OK => match response.json::<APIAnime>().await {
-                Ok(r) => Ok(r),
-                Err(_) => return Err(500),
-            },
-            e => Err(e.as_u16()),
-        },
-        Err(_) => Err(500),
-    }
 }
 
 impl APIAnime {

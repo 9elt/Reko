@@ -11,7 +11,7 @@ use std::time::Duration;
 use crate::algorithm::analysis::NormalDist;
 use crate::algorithm::{model::Model, user::affinity::AffinityModel};
 
-use crate::helper::database::user::DBUserList;
+use crate::helper::database::DBUserList;
 
 use serde::{Deserialize, Serialize};
 
@@ -58,7 +58,7 @@ pub fn save_user_model(user: &String, model: &Model<i16>) {
     database::user::set_model(user, model);
 }
 
-pub fn get_user_model(user: &String) -> Result<database::user::DBUserModel, diesel::result::Error> {
+pub fn get_user_model(user: &String) -> Result<database::DBUserModel, diesel::result::Error> {
     database::user::get_model(user)
 }
 
