@@ -70,7 +70,7 @@ pub async fn get_user_recommendations(
         banned_ids: settings.banned_ids().to_owned(),
         banned_users: settings.banned_users().to_owned(),
         accuracy: final_accuracy,
-        force_list_update: settings.force_update(),
+        force_list_update: false,
     };
 
     match user::recommendation::extract(stats_model, user_list, &similar_users, &settings.banned_ids()).await {
