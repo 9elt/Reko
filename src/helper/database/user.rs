@@ -9,6 +9,7 @@ use diesel::{prelude::*, sql_query};
 use serde_json::json;
 
 use crate::algorithm::user::affinity::AffinityModel;
+use sql_lexer::sanitize_string;
 
 ////////////////////////////////////////////////////////////////////////////////
 // affinity users
@@ -21,11 +22,11 @@ pub fn get_affinity_users(
 ) -> Result<Vec<AffinityUsers>, diesel::result::Error> {
     let mut query = format!(
         "SELECT user_name, list, model FROM users WHERE user_name != '{}'",
-        user
+        sanitize_string(user.to_owned())
     );
 
     for banned_user in banned.iter() {
-        query = format!("{} AND user_name != '{}'", query, banned_user);
+        query = format!("{} AND user_name != '{}'", query, sanitize_string(banned_user.to_owned()));
     }
 
     for x in 0..affinity.min.len() {
