@@ -10,7 +10,7 @@ futures = "0.3.25"
 axum = { version = "0.6.1", features = ["headers", "http1", "http2", "json", "query"] }
 hyper = { version = "0.14.23", features = ["full"] }
 tokio = { version = "1.24.0", features = ["full"] }
-tower = { version = "0.4.13", features = ["limit"] }
+tower = "0.4.13"
 tower-http = { version = "0.3.5", features = ["map-request-body", "util", "cors", "auth"] }
 
 reqwest = { version = "0.11.12", features = ["json"] }
