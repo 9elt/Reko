@@ -51,10 +51,11 @@ pub async fn get_user_recommendations(
             Err(error) => return Err(error),
         };
 
-        similar_users = match helper::get_affinity_users(affinity_model, user, &settings.banned_users()) {
-            Ok(v) => v,
-            Err(_) => return Err(500),
-        };
+        similar_users =
+            match helper::get_affinity_users(affinity_model, user, &settings.banned_users()) {
+                Ok(v) => v,
+                Err(_) => return Err(500),
+            };
 
         if similar_users.len() > 4 {
             break;
@@ -66,19 +67,31 @@ pub async fn get_user_recommendations(
         Err(_) => return Err(500),
     };
 
+    let res = match user::recommendation::extract(
+        stats_model,
+        user_list,
+        &similar_users,
+        &settings.banned_ids(),
+    )
+    .await
+    {
+        Ok(v) => v,
+        Err(error) => return Err(error),
+    };
+
+    let mut banned_users = res.banned_users;
+    banned_users.append(&mut settings.banned_users());
+
     let next_request = NextRequest {
         banned_ids: settings.banned_ids().to_owned(),
-        banned_users: settings.banned_users().to_owned(),
+        banned_users: banned_users,
         accuracy: final_accuracy,
         force_list_update: false,
     };
 
-    match user::recommendation::extract(stats_model, user_list, &similar_users, &settings.banned_ids()).await {
-        Ok(v) => Ok(DevResult {
-            next_request,
-            users: users_info,
-            recommendations: v,
-        }),
-        Err(error) => Err(error),
-    }
+    Ok(DevResult {
+        next_request,
+        users: users_info,
+        recommendations: res.recommendations,
+    })
 }
