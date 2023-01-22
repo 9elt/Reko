@@ -72,7 +72,7 @@ pub async fn extract(
                 entry_details,
                 &user_model,
                 &normal_dist,
-                &score_distribution,
+                // &score_distribution,
             ),
         });
     }
@@ -185,7 +185,7 @@ impl EntryPredictions {
         entry: &AnimeDetails,
         model: &Model<i16>,
         normal_dist: &NormalDist,
-        score_distribution: &[i32; 11],
+        // score_distribution: &[i32; 11],
     ) -> Self {
         let mut enjoyment = 0;
         let mut score_dev = 0;
@@ -252,14 +252,14 @@ impl EntryPredictions {
         let r_score = (score_dev / 100) as usize - 1;
         let remainder = (score_dev - (r_score as i32 * 100)) / 10;
 
-        let r_ratio = score_distribution[r_score + 1] + score_distribution[r_score];
-        let max_rem = score_distribution[r_score] * 100
-            / match r_ratio > 0 {
-                true => r_ratio,
-                false => 1,
-            };
+        // let r_ratio = score_distribution[r_score + 1] + score_distribution[r_score];
+        // let max_rem = score_distribution[r_score] * 100
+        //     / match r_ratio > 0 {
+        //         true => r_ratio,
+        //         false => 1,
+        //     };
 
-        let score = match remainder > max_rem {
+        let score = match remainder > 5 {
             true => r_score + 2,
             false => r_score + 1,
         };
