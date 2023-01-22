@@ -14,6 +14,7 @@ pub fn public_router() -> axum::Router {
         .layer(CorsLayer::new().allow_origin(Any).allow_headers(Any));
 
     Router::new()
+        .route("/health", get(controllers::public::health))
         .route("/recommendations/:user", post(controllers::public::get_user_recommendations))
         .layer(middleware)
 }

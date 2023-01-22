@@ -56,3 +56,7 @@ pub async fn get_user_recommendations(
         Err(error) => Err(StatusCode::from_u16(error).unwrap()),
     }
 }
+
+pub async fn health() -> Result<Json<Value>, StatusCode> {
+    Ok(Json(json!("health is good")))
+}
