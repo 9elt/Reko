@@ -1,4 +1,4 @@
-![Reko API](https://github.com/9elt/Reko/blob/readme-media/reko-logo.png)
+[![Reko API](https://github.com/9elt/Reko/blob/readme-media/reko-logo.png)](https://reko.moe/)
 
 Reko is a Web API that provides **anime recommendations** to **MyAnimeList** users, by matching them with other similar users.
 
