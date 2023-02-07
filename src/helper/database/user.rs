@@ -137,7 +137,7 @@ pub fn get_old_usernames() -> Result<Vec<String>, diesel::result::Error> {
     let usernames = users
         .select(user_name)
         .filter(updated_at.lt(now - 5.days()))
-        .limit(100)
+        .limit(10)
         .load::<String>(&mut connection::POOL.get().unwrap());
 
     match usernames {
