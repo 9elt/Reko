@@ -6,10 +6,20 @@ Reko is a Web API that provides **anime recommendations** to **MyAnimeList** use
 > works thanks to [MyAnimeList API *beta v2*](https://myanimelist.net/apiconfig/references/api/v2)
 
 #### index
+* [documentation](#documentation)
+How it works
 * [statistics model](#statistics-model)
 * [normal distribution](#normal-distribution)
 * [recommendations](#recommendations)
+More
 * [project structure](#project-structure)
+* [to dos](#to-dos)
+
+# Documentation
+
+The Reko API docs are available [here](https://reko.moe/docs).
+
+# How it works
 
 # [statistics model](#statistics-model)
 > `src` / [**`algorithm`**](src/algorithm) / [**`user`**](src/algorithm/user) / [**`stats.rs`**](src/algorithm/user/stats.rs)
@@ -149,8 +159,9 @@ the enjoyment score will be:
       <i>...db connections, API headers, etc...</i>
 </pre>
 
-# dev to dos
+# [to dos](#to-dos)
+
 - [ ] helper refactory (optimize conversions etc)  
-- [ ] implement logger
-- [ ] implement rate limiter
+- [ ] logger implementation
+- [ ] rate limiter implementation
 - [ ] solve the prequel problem
