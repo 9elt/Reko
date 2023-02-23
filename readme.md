@@ -165,7 +165,10 @@ the enjoyment score will be:
 
 # [to dos](#to-dos)
 
-- [ ] helper refactory (optimize conversions etc)  
-- [ ] logger implementation
-- [ ] rate limiter implementation
-- [ ] solve the prequel problem
+- [ ] refactor helper (optimize conversions etc)  
+- [ ] implement logger
+- [ ] implement rate limiter
+- [ ] differentiate prequels
+- [ ] add episode duration to user model
+- [ ] separate modules into crates
+- [ ] discart inactive lists
