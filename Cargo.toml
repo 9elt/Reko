@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "clients",
+    "structs",
+    "config",
+    "api"
+]
