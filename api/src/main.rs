@@ -1,8 +1,11 @@
 use chrono::{Days, Utc};
 use clients::myanimelist::MALClient;
+use dotenvy::dotenv;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+
     let mal = MALClient::new();
 
     if true {
