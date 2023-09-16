@@ -7,13 +7,13 @@ pub struct Anime {
     pub title: String,
     pub airing_date: Option<NaiveDateTime>,
     pub length: Option<i32>,
-    pub mean: Option<f64>,
+    pub mean: Option<f32>,
     pub rating: Option<String>,
     pub picture: Option<String>,
     pub prequels: Vec<i32>,
     pub aired: bool,
     pub stats: Vec<i32>,
-    pub updated: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

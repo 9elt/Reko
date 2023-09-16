@@ -219,7 +219,7 @@ struct Anime {
     title: String,
     main_picture: Option<AnimePicture>,
     start_date: Option<String>,
-    mean: Option<f64>,
+    mean: Option<f32>,
     status: String,
     genres: Option<Vec<AnimeGenre>>,
     num_episodes: Option<i32>,
@@ -305,7 +305,7 @@ impl Anime {
             stats,
             prequels,
             aired: self.status == "finished_airing",
-            updated: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
         }
     }
 }
