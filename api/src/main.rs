@@ -2,7 +2,8 @@ use chrono::{Days, NaiveDateTime, Utc};
 use clients::database::DBClient;
 use clients::myanimelist::MALClient;
 use dotenvy::dotenv;
-use structs::{DetailedListEntry, User};
+use serde_json::json;
+use structs::{DetailedListEntry, User, Hash};
 
 #[tokio::main]
 async fn main() {
@@ -11,22 +12,26 @@ async fn main() {
     let mal = MALClient::new();
     let db = DBClient::new();
 
-    // if true {
-    //     for e in 0..60_000 {
-    //         let anime = match mal.anime(e).await {
-    //             Ok(anime) => anime,
-    //             Err(error) => continue,
-    //         };
-    //         db.insert_anime(vec![anime]);
-    //     }
-    //     println!("anime inserted");
-    // }
+    if false {
+        for e in 0..60_000 {
+            let anime = match mal.anime(e).await {
+                Ok(anime) => anime,
+                Err(_) => continue,
+            };
+            println!("{e}");
+            db.insert_anime(vec![anime]);
+        }
+        println!("anime inserted");
+    }
 
     if true {
-        let username1 = String::from("KoreanLunatic").to_lowercase();
+        let username1 = String::from("_nelt").to_lowercase();
         let user1 = get_user(&username1, (false, false), (&db, &mal)).await;
 
-        println!("name {} hash {:02x} ", user1.username, user1.hash);
+        println!(
+            "name | {} hash {} ({})",
+            user1.username, user1.hash, user1.hash
+        );
 
         let sim = db.get_similar_users(&user1, 0);
 
@@ -35,16 +40,17 @@ async fn main() {
         }
 
         for suser in sim {
-            println!("name {} hash {:02x} ", suser.username, suser.hash);
-
             println!(
-                "hamming distance {} | sim. {}%",
-                suser.distance,
-                100 - suser.distance * 100 / 64
+                "name {} | sim. {} |  hash {} ({}) ",
+                suser.username, suser.similarity, suser.hash, suser.hash
             );
         }
 
-        // db.get_rekos(user.id)
+        let rekos = db.get_recommendations(&user1, 1);
+
+        for reko in rekos {
+            println!("{}\n", json!(reko).to_string());
+        }
     }
 }
 
@@ -102,21 +108,31 @@ async fn get_user(
                 detailed_list.push(DetailedListEntry::new(a, e));
             }
 
-            let user = User {
+            let hash = calc_hash(detailed_list);
+
+            if hash.to_bigint() == 0 {
+                panic!("no details :/");
+            }
+
+            let mut user = User {
                 id: -1,
                 username: username.to_owned(),
-                hash: calc_hash(detailed_list),
+                hash,
                 updated_at: now(),
             };
 
-            db.insert_user(&user, list);
+            if let Some(id) = db.insert_user(&user, list) {
+                user.id = id;
+            } else {
+                panic!("cannot insert user");
+            }
 
             user
         }
     }
 }
 
-fn calc_hash(detailed_list: Vec<DetailedListEntry>) -> u64 {
+fn calc_hash(detailed_list: Vec<DetailedListEntry>) -> Hash {
     let mut hash = Hasher::new();
 
     for entry in detailed_list {
@@ -125,7 +141,7 @@ fn calc_hash(detailed_list: Vec<DetailedListEntry>) -> u64 {
         }
     }
 
-    hash.finalize()
+    Hash::BigInt(hash.finalize())
 }
 
 fn days_ago(days: u64) -> NaiveDateTime {

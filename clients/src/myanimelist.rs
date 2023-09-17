@@ -15,7 +15,7 @@ const MAL_API: &str = "https://api.myanimelist.net/v2";
 const ANIME_QUERY: &str =
     "?fields=id,title,main_picture,start_date,mean,status,genres,num_episodes,rating,related_anime";
 const LIST_QUERY: &str = "?fields=list_status&sort=list_updated_at&nsfw=1";
-const RELATED: &[&str] = &["full_story", "parent_story", "prequel"];
+const PARENT: &[&str] = &["prequel", "parent_story", "full_story"];
 const WATCHED: &[&str] = &["completed", "watching"];
 
 type MALResult<T> = Result<T, MALError>;
@@ -253,7 +253,6 @@ pub struct AnimePicture {
 impl Anime {
     fn to_public(self) -> PublicAnime {
         let mut stats: Vec<i32> = Vec::new();
-        let mut prequels: Vec<i32> = Vec::new();
 
         let airing_date = match self.start_date {
             Some(d) => match NaiveDate::parse_from_str(&d, "%Y-%m-%d") {
@@ -287,11 +286,10 @@ impl Anime {
             });
         }
 
-        self.related_anime.iter().for_each(|related| {
-            if RELATED.contains(&related.relation_type.as_str()) {
-                prequels.push(related.node.id);
-            }
-        });
+        let parent = match self.related_anime.iter().find(|r| PARENT.contains(&r.relation_type.as_str())) {
+            Some(p) => Some(p.node.id),
+            None => None,
+        };
 
         PublicAnime {
             id: self.id,
@@ -305,7 +303,7 @@ impl Anime {
                 None => None,
             },
             stats,
-            prequels,
+            parent,
             aired: self.status == "finished_airing",
             updated_at: Utc::now().naive_utc(),
         }

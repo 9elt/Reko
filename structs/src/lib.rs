@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Anime {
@@ -10,7 +10,7 @@ pub struct Anime {
     pub mean: Option<f32>,
     pub rating: Option<String>,
     pub picture: Option<String>,
-    pub prequels: Vec<i32>,
+    pub parent: Option<i32>,
     pub aired: bool,
     pub stats: Vec<i32>,
     pub updated_at: NaiveDateTime,
@@ -28,14 +28,15 @@ pub struct ListEntry {
 pub struct User {
     pub id: i32,
     pub username: String,
-    pub hash: u64,
+    pub hash: Hash,
     pub updated_at: NaiveDateTime,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SimilarUser {
     pub username: String,
-    pub hash: u64,
-    pub distance: i32,
+    pub hash: Hash,
+    pub similarity: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -57,5 +58,64 @@ impl DetailedListEntry {
                 None => 0,
             },
         }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Recommendation {
+    pub id: i32,
+    pub details: RecommendationDetails,
+    pub username: String,
+    pub hash: Hash,
+    pub similarity: i32,
+    pub score: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RecommendationDetails {
+    pub title: String,
+    pub airing_date: Option<NaiveDateTime>,
+    pub length: Option<i32>,
+    pub mean: Option<f32>,
+    pub rating: Option<String>,
+    pub picture: Option<String>,
+    pub genres: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub enum Hash {
+    BigInt(u64),
+    Hex(String),
+}
+
+impl Hash {
+    pub fn to_bigint(&self) -> u64 {
+        match self {
+            Self::BigInt(n) => n.to_owned(),
+            Self::Hex(h) => u64::from_str_radix(h, 16).unwrap_or(0),
+        }
+    }
+}
+
+use std::fmt;
+
+impl fmt::Display for Hash {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(
+            match self {
+                Self::BigInt(n) => format!("{:02x}", n),
+                Self::Hex(s) => s.to_owned(),
+            }
+            .as_str(),
+        )
+    }
+}
+
+impl Serialize for Hash {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.to_string().as_str())
     }
 }
