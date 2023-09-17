@@ -4,6 +4,8 @@ use hyper::StatusCode;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::json;
 
+pub const HD_MAX: u32 = 80;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RekoError {
     pub code: u16,

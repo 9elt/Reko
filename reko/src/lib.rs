@@ -127,13 +127,15 @@ impl Reko {
         }
     }
     pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<CompareResponseWrapper> {
-        let hd = (user.hash.to_bigint() ^ other.hash.to_bigint()).count_ones() as i32;
+        let hd_64 = (user.hash.to_bigint() ^ other.hash.to_bigint()).count_ones() as i32;
+        let hd_16 = ((user.hash.to_bigint() >> 48) ^ (other.hash.to_bigint() >> 48)).count_ones() as i32;
+
         Ok(CompareResponseWrapper::new(
             user,
             SimilarUser {
                 username: other.username.to_owned(),
                 hash: other.hash.to_owned(),
-                similarity: 100 - (hd * 100 / 64),
+                similarity: 100 - ((hd_64 + hd_16) * 100 / 80),
             },
         ))
     }
@@ -171,7 +173,7 @@ impl Hasher {
         let mut hash: u64 = 0;
         for i in 0..64 {
             if self.data[i] > self.data[i + 1] {
-                hash += 1 << i;
+                hash += 1 << (63 - i);
             }
         }
         hash

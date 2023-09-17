@@ -200,7 +200,10 @@ impl DBClient {
             "
             SELECT DISTINCT A.id, A.title, A.airing_date, A.length,
             A.mean, A.rating, A.picture, A.stats,
-            E.score, U.username, U.hash, BIT_COUNT({} ^ U.hash) distance
+            E.score, U.username, U.hash, (
+                BIT_COUNT({} ^ U.hash) +
+                BIT_COUNT(({} >> 48) ^ (U.hash >> 48))
+            ) distance
             FROM anime A
             INNER JOIN entries E ON E.anime = A.id
             INNER JOIN users U ON E.user = U.id
@@ -219,9 +222,10 @@ impl DBClient {
                 -- )
             )
             GROUP BY A.id
-            ORDER BY distance * (32 - A.mean) ASC
+            ORDER BY distance * (5 - A.mean / 2) ASC
             LIMIT 16 OFFSET {};
         ",
+            user.hash.to_bigint(),
             user.hash.to_bigint(),
             user.id,
             user.id,
@@ -249,12 +253,16 @@ impl DBClient {
 
         let raw = match diesel::sql_query(format!(
             "
-        SELECT username, hash, BIT_COUNT({} ^ hash) distance
+        SELECT username, hash, (
+            BIT_COUNT({} ^ hash) +
+            BIT_COUNT(({} >> 48) ^ (hash >> 48))
+        ) distance
         FROM users
         WHERE username != '{}'
         ORDER BY distance ASC
         LIMIT 16 OFFSET {};
         ",
+            user.hash.to_bigint(),
             user.hash.to_bigint(),
             user.username,
             page * 16
@@ -328,7 +336,7 @@ impl Recommendation {
             user: PublicSimilarUser {
                 username: self.username,
                 hash: Hash::BigInt(self.hash),
-                similarity: 100 - (self.distance * 100 / 64),
+                similarity: 100 - (self.distance * 100 / 80),
             },
         }
     }
@@ -349,7 +357,7 @@ impl SimilarUser {
         PublicSimilarUser {
             username: self.username,
             hash: Hash::BigInt(self.hash),
-            similarity: 100 - (self.distance * 100 / 64),
+            similarity: 100 - (self.distance * 100 / 80),
         }
     }
 }
