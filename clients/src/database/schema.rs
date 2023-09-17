@@ -22,6 +22,7 @@ diesel::table! {
 diesel::table! {
     entries (id) {
         id -> Integer,
+        score -> Integer,
         watched -> Bool,
         updated_at -> Timestamp,
         anime -> Integer,
@@ -39,7 +40,6 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(entries -> anime (anime));
 diesel::joinable!(entries -> users (user));
 
 diesel::allow_tables_to_appear_in_same_query!(

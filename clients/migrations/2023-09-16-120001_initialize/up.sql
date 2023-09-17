@@ -17,22 +17,28 @@ CREATE TABLE anime (
 );
 
 CREATE TABLE users (
-    id                      INT                     NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    id                      INT                     PRIMARY KEY AUTO_INCREMENT,
     username                VARCHAR(64)             NOT NULL UNIQUE,
     hash                    BIGINT                  UNSIGNED NOT NULL,
     updated_at              TIMESTAMP               NOT NULL
 );
 
 CREATE TABLE entries (
-    id                      INT                     NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    id                      INT                     PRIMARY KEY AUTO_INCREMENT,
+    score                   INT                     NOT NULL,
     watched                 BOOLEAN                 NOT NULL,
     updated_at              TIMESTAMP               NOT NULL,
 
+    -- an anime may not exist at the time of an entry creation
+    -- `anime_id` keeps track of the id indipentendly
+    -- so that `anime` can be null for the time being
     anime                   INT                     NOT NULL,
-    FOREIGN KEY (anime)     REFERENCES anime(id)    ON DELETE CASCADE,
+
+    -- anime                   INT,
+    -- FOREIGN KEY (anime)     REFERENCES anime(id)    ON DELETE CASCADE,
 
     user                    INT                     NOT NULL,    
     FOREIGN KEY (user)      REFERENCES users(id)    ON DELETE CASCADE,
 
-    UNIQUE unique_id (anime, user)
+    UNIQUE unique_entry (anime, user)
 );
