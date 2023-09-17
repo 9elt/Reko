@@ -327,9 +327,9 @@ impl Stat {
         } else if num_episodes < 19 {
             Self(0)
         } else if num_episodes < 33 {
-            Self(8)
+            Self(12)
         } else {
-            Self(9)
+            Self(23)
         }
     }
     fn from_rating(rating: String) -> Self {
