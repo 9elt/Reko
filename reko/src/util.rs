@@ -1,3 +1,5 @@
+use std::{time::Duration, thread};
+
 use chrono::{Days, NaiveDateTime, Utc};
 
 pub fn db_page(page: i32, max: u8) -> u8 {
@@ -16,4 +18,8 @@ pub fn days_ago(days: u64) -> NaiveDateTime {
 
 pub fn now() -> NaiveDateTime {
     Utc::now().naive_utc()
+}
+
+pub fn sleep(ms: u16) {
+    thread::sleep(Duration::from_millis(ms as u64));
 }

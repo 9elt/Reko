@@ -145,6 +145,7 @@ impl Reko {
 
         for user in users {
             self.get_user(&user.username, true, false).await.ok();
+            sleep(150);
         }
     }
     pub async fn update_airing_anime(&self) {
@@ -153,6 +154,7 @@ impl Reko {
         for anime in airing {
             if let Ok(anime) = self.mal.anime(anime.id).await {
                 self.db.update_anime(anime);
+                sleep(350);
             }
         }
     }
@@ -162,6 +164,7 @@ impl Reko {
         for id in missing {
             if let Ok(anime) = self.mal.anime(id).await {
                 self.db.insert_anime(vec![anime]);
+                sleep(350);
             }
         }
     }
