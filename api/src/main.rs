@@ -41,7 +41,7 @@ async fn get_user(username: &String, force_update: bool, db: &DBClient, mal: &MA
     let username = username.to_lowercase();
 
     match db.get_user(username.to_owned()) {
-        Some(user) => {
+        Some(mut user) => {
             if force_update || user.updated_at < days_ago(DAYS_FOR_UPDATE) {
                 let list_update = match mal.list(username, Some(user.updated_at)).await {
                     Ok(list) => list,
@@ -49,9 +49,12 @@ async fn get_user(username: &String, force_update: bool, db: &DBClient, mal: &MA
                 };
 
                 if list_update.len() > 0 {
-                    // create or update user entries
-                    // update user hash
+                    db.update_user_entries(&user, list_update);
+                    user.hash = calc_hash(db.get_user_entries(&user, ENTRIES_FOR_HASH));
                 }
+
+                user.updated_at = now();
+                db.update_user(&user);
             }
 
             user
@@ -81,18 +84,10 @@ async fn get_user(username: &String, force_update: bool, db: &DBClient, mal: &MA
                 detailed_list.push(DetailedListEntry::new(a, e));
             }
 
-            let mut hash = Hasher::new();
-
-            for entry in detailed_list {
-                for stat in entry.stats {
-                    hash.push(stat, if entry.score > 0 { entry.score } else { 1 });
-                }
-            }
-
             let user = User {
                 id: -1,
                 username: username.to_owned(),
-                hash: hash.finalize(),
+                hash: calc_hash(detailed_list),
                 updated_at: now(),
             };
 
@@ -101,6 +96,18 @@ async fn get_user(username: &String, force_update: bool, db: &DBClient, mal: &MA
             user
         }
     }
+}
+
+fn calc_hash(detailed_list: Vec<DetailedListEntry>) -> u64 {
+    let mut hash = Hasher::new();
+
+    for entry in detailed_list {
+        for stat in entry.stats {
+            hash.push(stat, if entry.score > 0 { entry.score } else { 1 });
+        }
+    }
+
+    hash.finalize()
 }
 
 fn days_ago(days: u64) -> NaiveDateTime {

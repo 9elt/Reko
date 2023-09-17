@@ -22,8 +22,8 @@ type MALResult<T> = Result<T, MALError>;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MALError {
-    code: u16,
-    message: String,
+    pub code: u16,
+    pub message: String,
 }
 
 impl MALError {
@@ -86,7 +86,7 @@ impl MALClient {
         let mut offset = 0;
         let mut res: Vec<PublicListEntry> = Vec::new();
 
-        while offset < 9 {
+        while offset < 16 {
             let raw = match self
                 .get::<List>(format!(
                     "{MAL_API}/users/{user}/animelist{LIST_QUERY}&limit={limit}&offset={}",

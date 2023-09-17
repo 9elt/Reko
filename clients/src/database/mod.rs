@@ -3,23 +3,15 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 
-use schema::{
-    anime as table_anime,
-    anime::dsl::{anime, id as anime_id},
-};
+use schema::{anime as table_anime, anime::dsl as anime};
 
-use schema::{
-    users as table_users,
-    users::dsl::{id as user_id, username, users},
-};
+use schema::{users as table_users, users::dsl as users};
 
-use schema::{
-    entries as table_entries,
-    entries::dsl::{anime as rel_anime, entries, id as entry_id},
-};
+use schema::{entries as table_entries, entries::dsl as entries};
 
 use std::env;
 use structs::Anime as PublicAnime;
+use structs::DetailedListEntry as PublicDetailedListEntry;
 use structs::ListEntry as PublicListEntry;
 use structs::User as PublicUser;
 
@@ -48,20 +40,18 @@ impl DBClient {
 
         let mut conn = self.connections.get().unwrap();
 
-        diesel::insert_into(anime)
+        diesel::insert_into(anime::anime)
             .values(data)
             .execute(&mut conn)
             .is_ok()
     }
-    pub fn get_anime(&self, mut ids: Vec<i32>) -> Vec<PublicAnime> {
+    pub fn get_anime(&self, ids: Vec<i32>) -> Vec<PublicAnime> {
         let mut conn = self.connections.get().unwrap();
 
-        let mut query = anime.into_boxed().filter(anime_id.eq(ids.pop().unwrap()));
-        for i in ids {
-            query = query.or_filter(anime_id.eq(i));
-        }
-
-        let raw: Vec<Anime> = match query.load::<Anime>(&mut conn) {
+        let raw: Vec<Anime> = match anime::anime
+            .filter(anime::id.eq_any(ids))
+            .load::<Anime>(&mut conn)
+        {
             Ok(res) => res,
             Err(_) => return Vec::new(),
         };
@@ -76,14 +66,14 @@ impl DBClient {
     pub fn insert_user(&self, user: &PublicUser, etrs: Vec<PublicListEntry>) -> bool {
         let mut conn = self.connections.get().unwrap();
 
-        let res = diesel::insert_into(users)
+        let res = diesel::insert_into(users::users)
             .values(UserInsert::from_public(user))
             .execute(&mut conn);
 
         if res.is_ok() {
-            let uid = users
-                .select(user_id)
-                .order_by(user_id.desc())
+            let uid = users::users
+                .select(users::id)
+                .order_by(users::id.desc())
                 .first::<i32>(&mut conn)
                 .unwrap();
 
@@ -92,7 +82,7 @@ impl DBClient {
                 .map(|e| ListEntryInsert::from_public(uid, e))
                 .collect::<Vec<_>>();
 
-            diesel::insert_into(entries)
+            diesel::insert_into(entries::entries)
                 .values(data)
                 .execute(&mut conn)
                 .is_ok()
@@ -100,12 +90,91 @@ impl DBClient {
             false
         }
     }
+    pub fn update_user_entries(&self, user: &PublicUser, etrs: Vec<PublicListEntry>) -> bool {
+        let mut conn = self.connections.get().unwrap();
+
+        let data = etrs
+            .iter()
+            .map(|e| ListEntryInsert::from_public(user.id, e))
+            .collect::<Vec<_>>();
+
+        let mut missing = Vec::new();
+
+        for e in data {
+            match diesel::update(entries::entries).set(&e).execute(&mut conn) {
+                Ok(_) => continue,
+                Err(_) => missing.push(e),
+            };
+        }
+
+        if missing.len() > 0 {
+            diesel::insert_into(entries::entries)
+                .values(missing)
+                .on_conflict(diesel::dsl::DuplicatedKeys)
+                .do_nothing()
+                .execute(&mut conn)
+                .is_ok()
+        } else {
+            true
+        }
+    }
+    pub fn get_user_entries(&self, user: &PublicUser, limit: usize) -> Vec<PublicDetailedListEntry> {
+        let mut conn = self.connections.get().unwrap();
+
+        let raw: Vec<DetailedListEntry> = match anime::anime
+            .inner_join(entries::entries.on(entries::id.eq(anime::id)))
+            .select((anime::id, anime::stats, anime::mean, entries::score))
+            .filter(entries::user.eq(user.id))
+            .limit(limit as i64)
+            .load::<DetailedListEntry>(&mut conn)
+        {
+            Ok(entries) => entries,
+            Err(_) => return Vec::new(),
+        };
+
+        let mut res = Vec::with_capacity(raw.len());
+        for e in raw {
+            res.push(e.to_public());
+        }
+
+        res
+    }
     pub fn get_user(&self, name: String) -> Option<PublicUser> {
         let mut conn = self.connections.get().unwrap();
 
-        match users.filter(username.eq(name)).first::<User>(&mut conn) {
+        match users::users
+            .filter(users::username.eq(name))
+            .first::<User>(&mut conn)
+        {
             Ok(user) => Some(user.to_public()),
             Err(_) => None,
+        }
+    }
+    pub fn update_user(&self, user: &PublicUser) -> bool {
+        let mut conn = self.connections.get().unwrap();
+
+        diesel::update(users::users)
+            .set(User::from_public(user))
+            .execute(&mut conn)
+            .is_ok()
+    }
+}
+
+#[derive(Queryable)]
+pub struct DetailedListEntry {
+    pub id: i32,
+    pub stats: String,
+    pub mean: Option<f32>,
+    pub score: i32,
+}
+
+impl DetailedListEntry {
+    fn to_public(self) -> PublicDetailedListEntry {
+        PublicDetailedListEntry {
+            id: self.id,
+            stats: serde_json::from_str::<Vec<i32>>(&self.stats).unwrap_or(Vec::new()),
+            score: self.score,
+            mean: self.mean.unwrap_or(0.0) as i32,
         }
     }
 }
