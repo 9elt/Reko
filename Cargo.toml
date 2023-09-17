@@ -3,6 +3,6 @@
 members = [
     "clients",
     "structs",
-    "config",
-    "api"
+    "web-server",
+    "reko"
 ]

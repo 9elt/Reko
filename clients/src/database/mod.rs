@@ -9,16 +9,18 @@ use schema::{users as table_users, users::dsl as users};
 use std::env;
 use structs::Anime as PublicAnime;
 use structs::DetailedListEntry as PublicDetailedListEntry;
+use structs::Hash;
 use structs::ListEntry as PublicListEntry;
 use structs::Recommendation as PublicRecommendation;
 use structs::RecommendationDetails as PublicRecommendationDetails;
+use structs::RecommendationUser as PublicRecommendationUser;
 use structs::SimilarUser as PublicSimilarUser;
 use structs::User as PublicUser;
-use structs::Hash;
 
 type DBConnectionPool = Pool<ConnectionManager<MysqlConnection>>;
 type DBConnection = PooledConnection<ConnectionManager<MysqlConnection>>;
 
+#[derive(Clone)]
 pub struct DBClient {
     connections: DBConnectionPool,
 }
@@ -174,8 +176,7 @@ impl DBClient {
 
         let raw = match diesel::sql_query(format!(
             "
-            SELECT 
-            DISTINCT(A.id), A.title, A.airing_date, A.length,
+            SELECT DISTINCT A.id, A.title, A.airing_date, A.length,
             A.mean, A.rating, A.picture, A.stats,
             E.score, U.username, U.hash, BIT_COUNT({} ^ U.hash) distance
             FROM anime A
@@ -192,7 +193,8 @@ impl DBClient {
                     WHERE E.user = {} AND E.anime = A.parent AND E.watched = 1
                 )
             )
-            ORDER BY distance * (10 - A.mean) ASC
+            GROUP BY A.id
+            ORDER BY distance * (20 - A.mean - E.score) ASC
             LIMIT 16 OFFSET {};
         ",
             user.hash.to_bigint(),
@@ -284,6 +286,7 @@ impl Recommendation {
     fn to_public(self) -> PublicRecommendation {
         PublicRecommendation {
             id: self.id,
+            score: self.score,
             details: PublicRecommendationDetails {
                 title: self.title,
                 airing_date: self.airing_date,
@@ -297,10 +300,11 @@ impl Recommendation {
                     .filter_map(|stat| genre_from_stat(stat))
                     .collect(),
             },
-            username: self.username,
-            hash: Hash::BigInt(self.hash),//format!("{:02x}", self.hash),
-            similarity: 100 - (self.distance * 100 / 64),
-            score: self.score,
+            user: PublicRecommendationUser {
+                username: self.username,
+                hash: Hash::BigInt(self.hash),
+                similarity: 100 - (self.distance * 100 / 64),
+            },
         }
     }
 }

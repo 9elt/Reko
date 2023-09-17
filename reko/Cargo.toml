@@ -1,5 +1,5 @@
 [package]
-name = "api"
+name = "reko"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,9 +9,7 @@ edition = "2021"
 clients = { path = "../clients" }
 structs = { path = "../structs" }
 futures = "0.3.25"
-tokio = { version = "1.24.0", features = ["full"] }
 reqwest = { version = "0.11.12", features = ["json"] }
 serde_json = "1.0.91"
 serde = { version = "1.0.152", features = ["derive"] }
 chrono = { version = "0.4.23", features = ["serde"] }
-dotenvy = "0.15"

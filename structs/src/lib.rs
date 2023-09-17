@@ -1,5 +1,34 @@
+use axum::response::IntoResponse;
 use chrono::NaiveDateTime;
+use hyper::StatusCode;
 use serde::{Deserialize, Serialize, Serializer};
+use serde_json::json;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RekoError {
+    pub code: u16,
+    pub message: String,
+}
+
+impl RekoError {
+    pub fn new<S: ToString>(code: u16, message: S) -> Self {
+        Self {
+            code,
+            message: message.to_string(),
+        }
+    }
+    pub fn status(&self) -> StatusCode {
+        StatusCode::from_u16(self.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+}
+
+impl IntoResponse for RekoError {
+    fn into_response(self) -> axum::response::Response {
+        (self.status(), json!(self).to_string()).into_response()
+    }
+}
+
+pub type RekoResult<T> = Result<T, RekoError>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Anime {
@@ -65,10 +94,15 @@ impl DetailedListEntry {
 pub struct Recommendation {
     pub id: i32,
     pub details: RecommendationDetails,
+    pub score: i32,
+    pub user: RecommendationUser,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RecommendationUser {
     pub username: String,
     pub hash: Hash,
     pub similarity: i32,
-    pub score: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -1,5 +1,3 @@
-use config::*;
-
 use structs::Anime as PublicAnime;
 use structs::ListEntry as PublicListEntry;
 
@@ -10,6 +8,10 @@ use std::env;
 use std::fs;
 use std::thread;
 use std::time::Duration;
+use structs::{RekoError, RekoResult};
+
+pub const ENABLE_FAKE_API: bool = true;
+pub const FAKE_API_PATH: &str = "/home/nelt/projects/anime/database";
 
 const MAL_API: &str = "https://api.myanimelist.net/v2";
 const ANIME_QUERY: &str =
@@ -18,35 +20,7 @@ const LIST_QUERY: &str = "?fields=list_status&sort=list_updated_at&nsfw=1";
 const PARENT: &[&str] = &["prequel", "parent_story", "full_story"];
 const WATCHED: &[&str] = &["completed", "watching"];
 
-type MALResult<T> = Result<T, MALError>;
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct MALError {
-    pub code: u16,
-    pub message: String,
-}
-
-impl MALError {
-    fn list(code: u16) -> Self {
-        let message = String::from(match code {
-            404 => "User not found",
-            403 => "User is private",
-            422 => "Could not parse user list",
-            _ => "Could not fetch user list",
-        });
-        Self { code, message }
-    }
-    fn anime(code: u16) -> Self {
-        let message = String::from(match code {
-            404 => "Anime not found",
-            403 => "Rate limited",
-            422 => "Could not parse anime details",
-            _ => "Could not fetch anime details",
-        });
-        Self { code, message }
-    }
-}
-
+#[derive(Clone)]
 pub struct MALClient {
     client_id: String,
     client: Client,
@@ -67,7 +41,7 @@ impl MALClient {
         &self,
         user: String,
         updated_at: Option<NaiveDateTime>,
-    ) -> MALResult<Vec<PublicListEntry>> {
+    ) -> RekoResult<Vec<PublicListEntry>> {
         let is_update = updated_at.is_some();
         let updated_at = if is_update {
             updated_at.unwrap()
@@ -97,7 +71,7 @@ impl MALClient {
                 Ok(res) => res,
                 Err(code) => {
                     if offset == 0 {
-                        return Err(MALError::list(code));
+                        return Err(list_err(code));
                     } else {
                         break;
                     }
@@ -127,11 +101,11 @@ impl MALClient {
 
         Ok(res)
     }
-    pub async fn anime(&self, id: i32) -> MALResult<PublicAnime> {
+    pub async fn anime(&self, id: i32) -> RekoResult<PublicAnime> {
         let raw = if ENABLE_FAKE_API {
             match fake_anime_api(id) {
                 Ok(res) => res,
-                Err(code) => return Err(MALError::anime(code)),
+                Err(code) => return Err(anime_err(code)),
             }
         } else {
             match self
@@ -139,7 +113,7 @@ impl MALClient {
                 .await
             {
                 Ok(res) => res,
-                Err(code) => return Err(MALError::anime(code)),
+                Err(code) => return Err(anime_err(code)),
             }
         };
 
@@ -286,7 +260,11 @@ impl Anime {
             });
         }
 
-        let parent = match self.related_anime.iter().find(|r| PARENT.contains(&r.relation_type.as_str())) {
+        let parent = match self
+            .related_anime
+            .iter()
+            .find(|r| PARENT.contains(&r.relation_type.as_str()))
+        {
             Some(p) => Some(p.node.id),
             None => None,
         };
@@ -439,6 +417,26 @@ impl Stat {
             _ => Self(-1),
         }
     }
+}
+
+fn list_err(code: u16) -> RekoError {
+    let message = String::from(match code {
+        404 => "User not found",
+        403 => "User is private",
+        422 => "Could not parse user list",
+        _ => "Could not fetch user list",
+    });
+    RekoError { code, message }
+}
+
+fn anime_err(code: u16) -> RekoError {
+    let message = String::from(match code {
+        404 => "Anime not found",
+        403 => "Rate limited",
+        422 => "Could not parse anime details",
+        _ => "Could not fetch anime details",
+    });
+    RekoError { code, message }
 }
 
 fn fake_anime_api(id: i32) -> Result<Anime, u16> {
