@@ -128,7 +128,8 @@ impl Reko {
     }
     pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<CompareResponseWrapper> {
         let hd_64 = (user.hash.to_bigint() ^ other.hash.to_bigint()).count_ones() as i32;
-        let hd_16 = ((user.hash.to_bigint() >> 48) ^ (other.hash.to_bigint() >> 48)).count_ones() as i32;
+        let hd_16 =
+            ((user.hash.to_bigint() >> 48) ^ (other.hash.to_bigint() >> 48)).count_ones() as i32;
 
         Ok(CompareResponseWrapper::new(
             user,
@@ -138,6 +139,31 @@ impl Reko {
                 similarity: 100 - ((hd_64 + hd_16) * 100 / 80),
             },
         ))
+    }
+    pub async fn update_old_users(&self) {
+        let users = self.db.get_old_users();
+
+        for user in users {
+            self.get_user(&user.username, true, false).await.ok();
+        }
+    }
+    pub async fn update_airing_anime(&self) {
+        let airing = self.db.get_airing_anime();
+
+        for anime in airing {
+            if let Ok(anime) = self.mal.anime(anime.id).await {
+                self.db.update_anime(anime);
+            }
+        }
+    }
+    pub async fn request_missing_anime(&self) {
+        let missing = self.db.get_missing_anime();
+
+        for id in missing {
+            if let Ok(anime) = self.mal.anime(id).await {
+                self.db.insert_anime(vec![anime]);
+            }
+        }
     }
     fn user_hash(&self, list: Vec<DetailedListEntry>) -> RekoResult<Hash> {
         let mut hash = Hasher::new();

@@ -4,5 +4,6 @@ members = [
     "clients",
     "structs",
     "web-server",
-    "reko"
+    "reko",
+    "jobs"
 ]
