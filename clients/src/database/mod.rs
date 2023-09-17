@@ -188,10 +188,13 @@ impl DBClient {
             AND NOT EXISTS (SELECT E.id from entries E WHERE E.user = {} AND E.anime = A.id)
             AND (
                 A.parent IS NULL
-                OR EXISTS (
-                    SELECT E.id from entries E
-                    WHERE E.user = {} AND E.anime = A.parent AND E.watched = 1
-                )
+                -- 
+                -- Uncomment to allow sequels/side stories into recommendations
+                -- 
+                -- OR EXISTS (
+                --     SELECT E.id from entries E
+                --     WHERE E.user = {} AND E.anime = A.parent AND E.watched = 1
+                -- )
             )
             GROUP BY A.id
             ORDER BY distance * (20 - A.mean - E.score) ASC
