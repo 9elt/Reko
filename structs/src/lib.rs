@@ -1,4 +1,4 @@
-use axum::response::IntoResponse;
+use axum::{response::{IntoResponse, Response}, Json};
 use chrono::NaiveDateTime;
 use hyper::StatusCode;
 use serde::{Deserialize, Serialize, Serializer};
@@ -23,8 +23,8 @@ impl RekoError {
 }
 
 impl IntoResponse for RekoError {
-    fn into_response(self) -> axum::response::Response {
-        (self.status(), json!(self).to_string()).into_response()
+    fn into_response(self) -> Response {
+        (self.status(), Json(json!(self))).into_response()
     }
 }
 
