@@ -36,6 +36,7 @@ fn router(reko: Reko) -> Router {
             "/:user/recommendations",
             get(controller::get_recommendations),
         )
+        .fallback(controller::not_found)
         .with_state(reko)
         .layer(cors)
 }
