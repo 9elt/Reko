@@ -219,7 +219,7 @@ impl DBClient {
                 -- )
             )
             GROUP BY A.id
-            ORDER BY distance * (20 - A.mean - E.score) ASC
+            ORDER BY distance * (32 - A.mean) ASC
             LIMIT 16 OFFSET {};
         ",
             user.hash.to_bigint(),
