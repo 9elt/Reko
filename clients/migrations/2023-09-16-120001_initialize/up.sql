@@ -30,7 +30,7 @@ CREATE TABLE entries (
     updated_at              TIMESTAMP               NOT NULL,
 
     -- an anime may not exist at the time of entry creation
-    -- so foreign key for the time being
+    -- so no foreign key for the time being
     anime                   INT                     NOT NULL,
 
     -- anime                   INT,
