@@ -71,7 +71,7 @@ impl MALClient {
                 Ok(res) => res,
                 Err(code) => {
                     if offset == 0 {
-                        return Err(list_err(code));
+                        return Err(list_err(code, &user));
                     } else {
                         break;
                     }
@@ -419,13 +419,13 @@ impl Stat {
     }
 }
 
-fn list_err(code: u16) -> RekoError {
-    let message = String::from(match code {
-        404 => "User not found",
-        403 => "User is private",
-        422 => "Could not parse user list",
-        _ => "Could not fetch user list",
-    });
+fn list_err(code: u16, user: &String) -> RekoError {
+    let message = match code {
+        404 => format!("User {user} not found"),
+        403 => format!("User {user} is private"),
+        422 => format!("Could not parse User {user} list"),
+        _ => format!("Could not fetch User {user} list"),
+    };
     RekoError { code, message }
 }
 

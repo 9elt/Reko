@@ -1,13 +1,13 @@
 use chrono::{Days, NaiveDateTime, Utc};
 
 pub fn db_page(page: i32, max: u8) -> u8 {
-    if page <= 1 {
-        0
+    (if page <= 1 {
+        1
     } else if page > max as i32 {
         max
     } else {
-        page as u8 - 1
-    }
+        page as u8
+    }) - 1
 }
 
 pub fn days_ago(days: u64) -> NaiveDateTime {

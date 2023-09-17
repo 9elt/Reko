@@ -3,11 +3,16 @@ mod util;
 use clients::database::DBClient;
 use clients::myanimelist::MALClient;
 
-use structs::{DetailedListEntry, Hash, Recommendation, RekoError, RekoResult, SimilarUser, User};
+use structs::{
+    CompareResponseWrapper, DetailedListEntry, Hash, RecommendationResponseWrapper, RekoError,
+    RekoResult, SimilarResponseWrapper, SimilarUser, User,
+};
 use util::*;
 
 const ENTRIES_TO_HASH: usize = 256;
 const DAYS_BEFORE_UPDATE: u64 = 3;
+const MAX_PAGE_SIMILAR_USERS: u8 = 40;
+const MAX_PAGE_RECOMMENDATIONS: u8 = 20;
 
 #[derive(Clone)]
 pub struct Reko {
@@ -88,21 +93,36 @@ impl Reko {
             }
         }
     }
-    pub fn get_recommendations(&self, user: &User, page: i32) -> RekoResult<Vec<Recommendation>> {
-        let res = self.db.get_recommendations(user, db_page(page, 20));
+    pub fn get_recommendations(
+        &self,
+        user: &User,
+        page: i32,
+    ) -> RekoResult<RecommendationResponseWrapper> {
+        let res = self.db.get_recommendations(user, db_page(page, MAX_PAGE_RECOMMENDATIONS));
         if res.len() == 0 {
             Err(RekoError::new(404, "No recommendations found"))
         } else {
-            Ok(res)
+            Ok(RecommendationResponseWrapper::new(user, res))
         }
     }
-    pub fn get_similar_users(&self, user: &User, page: i32) -> RekoResult<Vec<SimilarUser>> {
-        let res = self.db.get_similar_users(user, db_page(page, 100));
+    pub fn get_similar_users(&self, user: &User, page: i32) -> RekoResult<SimilarResponseWrapper> {
+        let res = self.db.get_similar_users(user, db_page(page, MAX_PAGE_SIMILAR_USERS));
         if res.len() == 0 {
             Err(RekoError::new(404, "No similar users found"))
         } else {
-            Ok(res)
+            Ok(SimilarResponseWrapper::new(user, res))
         }
+    }
+    pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<CompareResponseWrapper> {
+        let hd = (user.hash.to_bigint() ^ other.hash.to_bigint()).count_ones() as i32;
+        Ok(CompareResponseWrapper::new(
+            user,
+            SimilarUser {
+                username: other.username.to_owned(),
+                hash: other.hash.to_owned(),
+                similarity: 100 - (hd * 100 / 64),
+            },
+        ))
     }
     fn user_hash(&self, list: Vec<DetailedListEntry>) -> RekoResult<Hash> {
         let mut hash = Hasher::new();

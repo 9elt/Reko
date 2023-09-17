@@ -13,7 +13,6 @@ use structs::Hash;
 use structs::ListEntry as PublicListEntry;
 use structs::Recommendation as PublicRecommendation;
 use structs::RecommendationDetails as PublicRecommendationDetails;
-use structs::RecommendationUser as PublicRecommendationUser;
 use structs::SimilarUser as PublicSimilarUser;
 use structs::User as PublicUser;
 
@@ -231,11 +230,11 @@ impl DBClient {
         FROM users
         WHERE username != '{}'
         ORDER BY distance ASC
-        LIMIT 12 OFFSET {};
+        LIMIT 16 OFFSET {};
         ",
             user.hash.to_bigint(),
             user.username,
-            page * 10
+            page * 16
         ))
         .load::<SimilarUser>(&mut conn)
         {
@@ -303,7 +302,7 @@ impl Recommendation {
                     .filter_map(|stat| genre_from_stat(stat))
                     .collect(),
             },
-            user: PublicRecommendationUser {
+            user: PublicSimilarUser {
                 username: self.username,
                 hash: Hash::BigInt(self.hash),
                 similarity: 100 - (self.distance * 100 / 64),

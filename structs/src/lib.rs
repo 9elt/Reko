@@ -69,6 +69,21 @@ pub struct SimilarUser {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct RequestingUser {
+    pub username: String,
+    pub hash: Hash,
+}
+
+impl RequestingUser {
+    pub fn from_user(user: &User) -> Self {
+        Self {
+            username: user.username.to_owned(),
+            hash: user.hash.to_owned(),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct DetailedListEntry {
     pub id: i32,
     pub stats: Vec<i32>,
@@ -95,14 +110,7 @@ pub struct Recommendation {
     pub id: i32,
     pub details: RecommendationDetails,
     pub score: i32,
-    pub user: RecommendationUser,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct RecommendationUser {
-    pub username: String,
-    pub hash: Hash,
-    pub similarity: i32,
+    pub user: SimilarUser,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -116,7 +124,52 @@ pub struct RecommendationDetails {
     pub genres: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SimilarResponseWrapper {
+    requester: RequestingUser,
+    similar: Vec<SimilarUser>,
+}
+
+impl SimilarResponseWrapper {
+    pub fn new(user: &User, v: Vec<SimilarUser>) -> Self {
+        Self {
+            requester: RequestingUser::from_user(user),
+            similar: v,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CompareResponseWrapper {
+    requester: RequestingUser,
+    compare: SimilarUser,
+}
+
+impl CompareResponseWrapper {
+    pub fn new(user: &User, v: SimilarUser) -> Self {
+        Self {
+            requester: RequestingUser::from_user(user),
+            compare: v,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RecommendationResponseWrapper {
+    requester: RequestingUser,
+    recommendations: Vec<Recommendation>,
+}
+
+impl RecommendationResponseWrapper {
+    pub fn new(user: &User, v: Vec<Recommendation>) -> Self {
+        Self {
+            requester: RequestingUser::from_user(user),
+            recommendations: v,
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub enum Hash {
     BigInt(u64),
     Hex(String),

@@ -35,8 +35,28 @@ pub async fn get_recommendations(
     }
 }
 
+pub async fn compare_users(
+    Path(cmp): Path<ComparePath>,
+    State(reko): State<Reko>,
+) -> impl IntoResponse {
+    let user = reko.get_user(&cmp.user, false, false).await?;
+
+    let other_user = reko.get_user(&cmp.other_user, false, false).await?;
+
+    match reko.compare_users(&user, &other_user) {
+        Ok(res) => Ok(success(res)),
+        Err(err) => Err(err),
+    }
+}
+
 pub async fn health() -> impl IntoResponse {
     (StatusCode::OK, "Reko API is up and running")
+}
+
+#[derive(Deserialize)]
+pub struct ComparePath {
+    user: String,
+    other_user: String,
 }
 
 #[derive(Deserialize)]
