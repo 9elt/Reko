@@ -98,6 +98,14 @@ impl DBClient {
             None
         }
     }
+    pub fn delete_user(&self, user: &PublicUser) -> bool {
+        let mut conn = self.connect();
+
+        diesel::delete(users::users)
+            .filter(users::id.eq(user.id))
+            .execute(&mut conn)
+            .is_ok()
+    }
     pub fn update_user_entries(&self, user: &PublicUser, etrs: Vec<PublicListEntry>) -> bool {
         let mut conn = self.connect();
 
@@ -148,10 +156,9 @@ impl DBClient {
             ORDER BY E.updated_at DESC
             LIMIT {};
         ",
-            user.id,
-            limit
+            user.id, limit
         ))
-            .load::<DetailedListEntry>(&mut conn)
+        .load::<DetailedListEntry>(&mut conn)
         {
             Ok(entries) => entries,
             Err(_) => return Vec::new(),

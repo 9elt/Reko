@@ -39,7 +39,15 @@ impl Reko {
             Some(mut user) => {
                 if !prevent_update && force_update || user.updated_at < days_ago(DAYS_BEFORE_UPDATE)
                 {
-                    let list_update = self.mal.list(username, Some(user.updated_at)).await?;
+                    let list_update = match self.mal.list(username, Some(user.updated_at)).await {
+                        Ok(res) => res,
+                        Err(e) => {
+                            if e.code == 403 || e.code == 404 {
+                                self.db.delete_user(&user);
+                            }
+                            return Err(e);
+                        }
+                    };
 
                     if list_update.len() > 0 {
                         self.db.update_user_entries(&user, list_update);
