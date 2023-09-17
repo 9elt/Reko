@@ -101,18 +101,23 @@ impl DBClient {
     pub fn update_user_entries(&self, user: &PublicUser, etrs: Vec<PublicListEntry>) -> bool {
         let mut conn = self.connect();
 
-        let data = etrs
-            .iter()
-            .map(|e| ListEntryInsert::from_public(user.id, e))
-            .collect::<Vec<_>>();
-
         let mut missing = Vec::new();
 
-        for e in data {
-            match diesel::update(entries::entries).set(&e).execute(&mut conn) {
-                Ok(_) => continue,
-                Err(_) => missing.push(e),
+        for e in etrs {
+            let ie = ListEntryInsert::from_public(user.id, &e);
+
+            let res = match diesel::update(entries::entries)
+                .filter(entries::id.eq(e.id))
+                .set(&ie)
+                .execute(&mut conn)
+            {
+                Ok(n) => n,
+                Err(_) => 0,
             };
+
+            if res == 0 {
+                missing.push(ie);
+            }
         }
 
         if missing.len() > 0 {
@@ -133,11 +138,19 @@ impl DBClient {
     ) -> Vec<PublicDetailedListEntry> {
         let mut conn = self.connect();
 
-        let raw: Vec<DetailedListEntry> = match anime::anime
-            .inner_join(entries::entries.on(entries::id.eq(anime::id)))
-            .select((anime::id, anime::stats, anime::mean, entries::score))
-            .filter(entries::user.eq(user.id))
-            .limit(limit as i64)
+        let raw: Vec<DetailedListEntry> = match diesel::sql_query(format!(
+            "
+            SELECT A.id, A.mean, A.stats, E.score
+            FROM anime A
+            INNER JOIN entries E ON E.anime = A.id
+            WHERE E.user = {}
+            AND E.watched = 1
+            ORDER BY E.updated_at DESC
+            LIMIT {};
+        ",
+            user.id,
+            limit
+        ))
             .load::<DetailedListEntry>(&mut conn)
         {
             Ok(entries) => entries,
@@ -165,10 +178,13 @@ impl DBClient {
     pub fn update_user(&self, user: &PublicUser) -> bool {
         let mut conn = self.connect();
 
-        diesel::update(users::users)
-            .set(User::from_public(user))
+        let u = diesel::update(users::users)
+            .filter(users::id.eq(user.id))
+            .set(UserUpdate::from_public(user))
             .execute(&mut conn)
-            .is_ok()
+            .unwrap();
+        println!("number of updated users {u}");
+        true
     }
     pub fn get_recommendations(&self, user: &PublicUser, page: u8) -> Vec<PublicRecommendation> {
         let mut conn = self.connect();
@@ -331,11 +347,15 @@ impl SimilarUser {
     }
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, QueryableByName)]
 struct DetailedListEntry {
+    #[diesel(sql_type = sql::Integer)]
     id: i32,
+    #[diesel(sql_type = sql::VarChar)]
     stats: String,
+    #[diesel(sql_type = sql::Nullable<sql::Float>)]
     mean: Option<f32>,
+    #[diesel(sql_type = sql::Integer)]
     score: i32,
 }
 
@@ -359,6 +379,33 @@ struct User {
     updated_at: NaiveDateTime,
 }
 
+impl User {
+    fn to_public(self) -> PublicUser {
+        PublicUser {
+            id: self.id,
+            username: self.username,
+            hash: Hash::BigInt(self.hash),
+            updated_at: self.updated_at,
+        }
+    }
+}
+
+#[derive(Queryable, Insertable, AsChangeset)]
+#[diesel(table_name = table_users)]
+struct UserUpdate {
+    hash: u64,
+    updated_at: NaiveDateTime,
+}
+
+impl UserUpdate {
+    fn from_public(user: &PublicUser) -> Self {
+        Self {
+            hash: user.hash.to_bigint(),
+            updated_at: user.updated_at,
+        }
+    }
+}
+
 #[derive(Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = table_users)]
 struct UserInsert {
@@ -373,25 +420,6 @@ impl UserInsert {
             username: user.username.to_owned(),
             hash: user.hash.to_bigint(),
             updated_at: user.updated_at,
-        }
-    }
-}
-
-impl User {
-    fn from_public(user: &PublicUser) -> Self {
-        Self {
-            id: user.id,
-            username: user.username.to_owned(),
-            hash: user.hash.to_bigint(),
-            updated_at: user.updated_at,
-        }
-    }
-    fn to_public(self) -> PublicUser {
-        PublicUser {
-            id: self.id,
-            username: self.username,
-            hash: Hash::BigInt(self.hash),
-            updated_at: self.updated_at,
         }
     }
 }

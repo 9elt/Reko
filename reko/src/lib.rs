@@ -43,8 +43,9 @@ impl Reko {
 
                     if list_update.len() > 0 {
                         self.db.update_user_entries(&user, list_update);
-                        user.hash =
-                            self.user_hash(self.db.get_user_entries(&user, ENTRIES_TO_HASH))?;
+
+                        let list = self.db.get_user_entries(&user, ENTRIES_TO_HASH);
+                        user.hash = self.user_hash(list)?;
                     }
 
                     user.updated_at = now();
@@ -98,7 +99,9 @@ impl Reko {
         user: &User,
         page: i32,
     ) -> RekoResult<RecommendationResponseWrapper> {
-        let res = self.db.get_recommendations(user, db_page(page, MAX_PAGE_RECOMMENDATIONS));
+        let res = self
+            .db
+            .get_recommendations(user, db_page(page, MAX_PAGE_RECOMMENDATIONS));
         if res.len() == 0 {
             Err(RekoError::new(404, "No recommendations found"))
         } else {
@@ -106,7 +109,9 @@ impl Reko {
         }
     }
     pub fn get_similar_users(&self, user: &User, page: i32) -> RekoResult<SimilarResponseWrapper> {
-        let res = self.db.get_similar_users(user, db_page(page, MAX_PAGE_SIMILAR_USERS));
+        let res = self
+            .db
+            .get_similar_users(user, db_page(page, MAX_PAGE_SIMILAR_USERS));
         if res.len() == 0 {
             Err(RekoError::new(404, "No similar users found"))
         } else {

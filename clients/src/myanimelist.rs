@@ -52,7 +52,7 @@ impl MALClient {
         let limit = if is_update {
             let now = Utc::now().naive_utc();
             let days_since = now.signed_duration_since(updated_at).num_days();
-            days_since * 2
+            days_since * 3
         } else {
             1000
         };
@@ -122,7 +122,7 @@ impl MALClient {
     async fn get<R: for<'a> Deserialize<'a>>(&self, url: String) -> Result<R, u16> {
         let res = self
             .client
-            .get(url)
+            .get(&url)
             .header(USER_AGENT, "reqwest")
             .header("x-mal-client-id", self.client_id.as_str())
             .send()
@@ -130,11 +130,18 @@ impl MALClient {
 
         match res {
             Ok(res) => match res.status() {
-                StatusCode::OK => match res.json::<R>().await {
-                    Ok(res) => Ok(res),
-                    _ => Err(422),
-                },
-                code => Err(code.as_u16()),
+                StatusCode::OK => {
+                    println!("GET {} OK", &url);
+                    match res.json::<R>().await {
+                        Ok(res) => Ok(res),
+                        _ => Err(422),
+                    }
+                }
+                code => {
+                    let code = code.as_u16();
+                    println!("GET {} ERR {}", &url, code);
+                    Err(code)
+                }
             },
             _ => Err(500),
         }
