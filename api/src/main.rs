@@ -23,12 +23,26 @@ async fn main() {
     // }
 
     if true {
-        let username = String::from("Uji_Gintoki_Bowl").to_lowercase();
-        let force_update = false;
+        let username1 = String::from("KoreanLunatic").to_lowercase();
+        let user1 = get_user(&username1, (false, false), (&db, &mal)).await;
 
-        let user = get_user(&username, force_update, &db, &mal).await;
+        println!("name {} hash {:02x} ", user1.username, user1.hash);
 
-        println!("hash {:02x} ", user.hash);
+        let sim = db.get_similar_users(&user1, 0);
+
+        if sim.len() == 0 {
+            panic!("No users :/")
+        }
+
+        for suser in sim {
+            println!("name {} hash {:02x} ", suser.username, suser.hash);
+
+            println!(
+                "hamming distance {} | sim. {}%",
+                suser.distance,
+                100 - suser.distance * 100 / 64
+            );
+        }
 
         // db.get_rekos(user.id)
     }
@@ -37,12 +51,16 @@ async fn main() {
 const ENTRIES_FOR_HASH: usize = 256;
 const DAYS_FOR_UPDATE: u64 = 3;
 
-async fn get_user(username: &String, force_update: bool, db: &DBClient, mal: &MALClient) -> User {
+async fn get_user(
+    username: &String,
+    (force_update, prevent_update): (bool, bool),
+    (db, mal): (&DBClient, &MALClient),
+) -> User {
     let username = username.to_lowercase();
 
     match db.get_user(username.to_owned()) {
         Some(mut user) => {
-            if force_update || user.updated_at < days_ago(DAYS_FOR_UPDATE) {
+            if !prevent_update && force_update || user.updated_at < days_ago(DAYS_FOR_UPDATE) {
                 let list_update = match mal.list(username, Some(user.updated_at)).await {
                     Ok(list) => list,
                     Err(error) => panic!("{:#?}", error),

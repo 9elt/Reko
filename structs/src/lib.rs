@@ -32,6 +32,12 @@ pub struct User {
     pub updated_at: NaiveDateTime,
 }
 
+pub struct SimilarUser {
+    pub username: String,
+    pub hash: u64,
+    pub distance: i32,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DetailedListEntry {
     pub id: i32,
@@ -49,7 +55,7 @@ impl DetailedListEntry {
             mean: match anime.mean {
                 Some(mean) => mean as i32,
                 None => 0,
-            }
+            },
         }
     }
 }

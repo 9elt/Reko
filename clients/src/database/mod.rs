@@ -1,21 +1,20 @@
 mod schema;
+
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use diesel::r2d2::{ConnectionManager, Pool};
-
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use schema::{anime as table_anime, anime::dsl as anime};
-
-use schema::{users as table_users, users::dsl as users};
-
 use schema::{entries as table_entries, entries::dsl as entries};
-
+use schema::{users as table_users, users::dsl as users};
 use std::env;
 use structs::Anime as PublicAnime;
 use structs::DetailedListEntry as PublicDetailedListEntry;
 use structs::ListEntry as PublicListEntry;
+use structs::SimilarUser as PublicSimilarUser;
 use structs::User as PublicUser;
 
 type DBConnectionPool = Pool<ConnectionManager<MysqlConnection>>;
+type DBConnection = PooledConnection<ConnectionManager<MysqlConnection>>;
 
 pub struct DBClient {
     connections: DBConnectionPool,
@@ -32,13 +31,16 @@ impl DBClient {
                 .expect("Cannot connect to database"),
         }
     }
+    fn connect(&self) -> DBConnection {
+        self.connections.get().unwrap()
+    }
     pub fn insert_anime(&self, data: Vec<PublicAnime>) -> bool {
         let data = data
             .iter()
             .map(|ani| Anime::from_public(ani))
             .collect::<Vec<_>>();
 
-        let mut conn = self.connections.get().unwrap();
+        let mut conn = self.connect();
 
         diesel::insert_into(anime::anime)
             .values(data)
@@ -46,7 +48,7 @@ impl DBClient {
             .is_ok()
     }
     pub fn get_anime(&self, ids: Vec<i32>) -> Vec<PublicAnime> {
-        let mut conn = self.connections.get().unwrap();
+        let mut conn = self.connect();
 
         let raw: Vec<Anime> = match anime::anime
             .filter(anime::id.eq_any(ids))
@@ -64,7 +66,7 @@ impl DBClient {
         res
     }
     pub fn insert_user(&self, user: &PublicUser, etrs: Vec<PublicListEntry>) -> bool {
-        let mut conn = self.connections.get().unwrap();
+        let mut conn = self.connect();
 
         let res = diesel::insert_into(users::users)
             .values(UserInsert::from_public(user))
@@ -91,7 +93,7 @@ impl DBClient {
         }
     }
     pub fn update_user_entries(&self, user: &PublicUser, etrs: Vec<PublicListEntry>) -> bool {
-        let mut conn = self.connections.get().unwrap();
+        let mut conn = self.connect();
 
         let data = etrs
             .iter()
@@ -118,8 +120,12 @@ impl DBClient {
             true
         }
     }
-    pub fn get_user_entries(&self, user: &PublicUser, limit: usize) -> Vec<PublicDetailedListEntry> {
-        let mut conn = self.connections.get().unwrap();
+    pub fn get_user_entries(
+        &self,
+        user: &PublicUser,
+        limit: usize,
+    ) -> Vec<PublicDetailedListEntry> {
+        let mut conn = self.connect();
 
         let raw: Vec<DetailedListEntry> = match anime::anime
             .inner_join(entries::entries.on(entries::id.eq(anime::id)))
@@ -140,7 +146,7 @@ impl DBClient {
         res
     }
     pub fn get_user(&self, name: String) -> Option<PublicUser> {
-        let mut conn = self.connections.get().unwrap();
+        let mut conn = self.connect();
 
         match users::users
             .filter(users::username.eq(name))
@@ -151,21 +157,74 @@ impl DBClient {
         }
     }
     pub fn update_user(&self, user: &PublicUser) -> bool {
-        let mut conn = self.connections.get().unwrap();
+        let mut conn = self.connect();
 
         diesel::update(users::users)
             .set(User::from_public(user))
             .execute(&mut conn)
             .is_ok()
     }
+    pub fn get_similar_users(&self, user: &PublicUser, page: u8) -> Vec<PublicSimilarUser> {
+        let mut conn = self.connect();
+
+        let raw = match diesel::sql_query(format!(
+            "
+        SELECT username, hash, BIT_COUNT({} ^ hash) distance
+        FROM users
+        WHERE username != '{}'
+        ORDER BY distance ASC
+        LIMIT 10 OFFSET {};
+        ",
+            user.hash,
+            user.username,
+            page * 10
+        ))
+        .load::<SimilarUser>(&mut conn)
+        {
+            Ok(res) => res,
+            Err(err) => {
+                println!("err {:#?}", err);
+                return Vec::new()
+            },
+        };
+
+        let mut res = Vec::with_capacity(raw.len());
+        for u in raw {
+            res.push(u.to_public());
+        }
+
+        res
+    }
+}
+
+use diesel::sql_types as sql;
+
+#[derive(QueryableByName)]
+struct SimilarUser {
+    #[diesel(sql_type = sql::VarChar)]
+    username: String,
+    #[diesel(sql_type = sql::Unsigned<sql::Bigint>)]
+    hash: u64,
+    #[diesel(sql_type = sql::Integer)]
+    distance: i32,
+}
+
+impl SimilarUser {
+    fn to_public(self) -> PublicSimilarUser {
+        PublicSimilarUser {
+            username: self.username,
+            hash: self.hash,
+            distance: self.distance,
+        }
+    }
 }
 
 #[derive(Queryable)]
-pub struct DetailedListEntry {
-    pub id: i32,
-    pub stats: String,
-    pub mean: Option<f32>,
-    pub score: i32,
+struct DetailedListEntry {
+    id: i32,
+    stats: String,
+    mean: Option<f32>,
+    score: i32,
 }
 
 impl DetailedListEntry {
@@ -181,7 +240,7 @@ impl DetailedListEntry {
 
 #[derive(Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = table_users)]
-pub struct User {
+struct User {
     id: i32,
     username: String,
     hash: u64,
@@ -190,7 +249,7 @@ pub struct User {
 
 #[derive(Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = table_users)]
-pub struct UserInsert {
+struct UserInsert {
     username: String,
     hash: u64,
     updated_at: NaiveDateTime,
@@ -227,7 +286,7 @@ impl User {
 
 #[derive(Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = table_entries)]
-pub struct ListEntry {
+struct ListEntry {
     id: i32,
     user: i32,
     anime: Option<i32>,
@@ -238,7 +297,7 @@ pub struct ListEntry {
 
 #[derive(Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = table_entries)]
-pub struct ListEntryInsert {
+struct ListEntryInsert {
     user: i32,
     anime: i32,
     score: i32,
@@ -260,7 +319,7 @@ impl ListEntryInsert {
 
 #[derive(Queryable, Insertable, AsChangeset)]
 #[diesel(table_name = table_anime)]
-pub struct Anime {
+struct Anime {
     id: i32,
     title: String,
     airing_date: Option<NaiveDateTime>,
