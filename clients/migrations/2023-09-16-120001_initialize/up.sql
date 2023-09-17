@@ -29,9 +29,8 @@ CREATE TABLE entries (
     watched                 BOOLEAN                 NOT NULL,
     updated_at              TIMESTAMP               NOT NULL,
 
-    -- an anime may not exist at the time of an entry creation
-    -- `anime_id` keeps track of the id indipentendly
-    -- so that `anime` can be null for the time being
+    -- an anime may not exist at the time of entry creation
+    -- so foreign key for the time being
     anime                   INT                     NOT NULL,
 
     -- anime                   INT,
