@@ -1,4 +1,5 @@
 mod util;
+mod hash;
 
 use clients::database::DBClient;
 use clients::myanimelist::MALClient;
@@ -7,6 +8,7 @@ use structs::{
     RekoResult, SimilarResponseWrapper, SimilarUser, User,
 };
 use util::*;
+use hash::Hasher;
 
 const ENTRIES_TO_HASH: usize = 256;
 const DAYS_BEFORE_UPDATE: u64 = 3;
@@ -182,27 +184,5 @@ impl Reko {
         } else {
             Err(RekoError::new(500, "Could not generate User hash"))
         }
-    }
-}
-
-struct Hasher {
-    data: [i32; 92],
-}
-
-impl Hasher {
-    fn new() -> Self {
-        Self { data: [0; 92] }
-    }
-    fn push(&mut self, stat: i32, value: i32) {
-        self.data[stat as usize] += value;
-    }
-    fn finalize(&mut self) -> u64 {
-        let mut hash: u64 = 0;
-        for i in 0..64 {
-            if self.data[i] > self.data[i + 1] {
-                hash += 1 << (63 - i);
-            }
-        }
-        hash
     }
 }
