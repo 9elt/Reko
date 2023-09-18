@@ -10,3 +10,4 @@ reko = { path = "../reko" }
 clap = { version = "4.1.13", features=["derive"] }
 tokio = { version = "1.24.0", features = ["full"] }
 futures = "0.3.25"
+dotenvy = "0.15"

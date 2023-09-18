@@ -14,6 +14,7 @@ use structs::ListEntry as PublicListEntry;
 use structs::Recommendation as PublicRecommendation;
 use structs::RecommendationDetails as PublicRecommendationDetails;
 use structs::SimilarUser as PublicSimilarUser;
+use structs::Stat;
 use structs::User as PublicUser;
 
 type DBConnectionPool = Pool<ConnectionManager<MysqlConnection>>;
@@ -284,8 +285,8 @@ impl DBClient {
             ORDER BY distance * (5 - A.mean / 2) ASC
             LIMIT 16 OFFSET {};
         ",
-            user.hash.to_bigint(),
-            user.hash.to_bigint(),
+            user.hash.to_u64(),
+            user.hash.to_u64(),
             user.id,
             user.id,
             user.id,
@@ -321,8 +322,8 @@ impl DBClient {
         ORDER BY distance ASC
         LIMIT 16 OFFSET {};
         ",
-            user.hash.to_bigint(),
-            user.hash.to_bigint(),
+            user.hash.to_u64(),
+            user.hash.to_u64(),
             user.username,
             page * 16
         ))
@@ -389,7 +390,7 @@ impl Recommendation {
                 genres: serde_json::from_str::<Vec<i32>>(&self.stats)
                     .unwrap_or(Vec::new())
                     .iter()
-                    .filter_map(|stat| genre_from_stat(stat))
+                    .filter_map(|stat| Stat::new(stat).to_genre())
                     .collect(),
             },
             user: PublicSimilarUser {
@@ -474,7 +475,7 @@ struct UserUpdate {
 impl UserUpdate {
     fn from_public(user: &PublicUser) -> Self {
         Self {
-            hash: user.hash.to_bigint(),
+            hash: user.hash.to_u64(),
             updated_at: user.updated_at,
         }
     }
@@ -492,7 +493,7 @@ impl UserInsert {
     fn from_public(user: &PublicUser) -> Self {
         Self {
             username: user.username.to_owned(),
-            hash: user.hash.to_bigint(),
+            hash: user.hash.to_u64(),
             updated_at: user.updated_at,
         }
     }
@@ -609,92 +610,5 @@ impl AnimeUpdate {
             updated_at: ani.updated_at,
             parent: ani.parent,
         }
-    }
-}
-
-fn genre_from_stat(stat: &i32) -> Option<String> {
-    let g = match stat {
-        2 => Some("Action"),
-        13 => Some("Adventure"),
-        4 => Some("Comedy"),
-        9 => Some("Drama"),
-        3 => Some("Fantasy"),
-        10 => Some("Romance"),
-        17 => Some("SciFi"),
-        15 => Some("Supernatural"),
-        70 => Some("AvantGarde"),
-        25 => Some("AwardWinning"),
-        76 => Some("BoysLove"),
-        77 => Some("GirlsLove"),
-        68 => Some("Gourmet"),
-        36 => Some("Horror"),
-        19 => Some("Mystery"),
-        39 => Some("SliceofLife"),
-        41 => Some("Sports"),
-        29 => Some("Suspense"),
-        21 => Some("Ecchi"),
-        86 => Some("Erotica"),
-        71 => Some("Hentai"),
-        74 => Some("Josei"),
-        73 => Some("Kids"),
-        18 => Some("Seinen"),
-        38 => Some("Shoujo"),
-        5 => Some("Shounen"),
-        28 => Some("AdultCast"),
-        47 => Some("GagHumor"),
-        26 => Some("Gore"),
-        27 => Some("Harem"),
-        32 => Some("Historical"),
-        30 => Some("Isekai"),
-        53 => Some("Iyashikei"),
-        43 => Some("LovePolygon"),
-        49 => Some("MartialArts"),
-        35 => Some("Mecha"),
-        31 => Some("Military"),
-        45 => Some("Music"),
-        34 => Some("Mythology"),
-        42 => Some("Parody"),
-        20 => Some("Psychological"),
-        8 => Some("School"),
-        22 => Some("SuperPower"),
-        37 => Some("Survival"),
-        44 => Some("TimeTravel"),
-        46 => Some("Vampire"),
-        69 => Some("Anthropomorphic"),
-        57 => Some("CGDCT"),
-        67 => Some("Childcare"),
-        82 => Some("CombatSports"),
-        85 => Some("Crossdressing"),
-        78 => Some("Delinquents"),
-        55 => Some("Detective"),
-        89 => Some("Educational"),
-        64 => Some("HighStakesGame"),
-        81 => Some("IdolsFemale"),
-        90 => Some("IdolsMale"),
-        88 => Some("MagicalSexShift"),
-        66 => Some("MahouShoujo"),
-        87 => Some("Medical"),
-        60 => Some("OrganizedCrime"),
-        52 => Some("OtakuCulture"),
-        79 => Some("PerformingArts"),
-        91 => Some("Pets"),
-        84 => Some("Racing"),
-        48 => Some("Reincarnation"),
-        80 => Some("ReverseHarem"),
-        51 => Some("RomanticSubtext"),
-        63 => Some("Samurai"),
-        83 => Some("Showbiz"),
-        62 => Some("Space"),
-        65 => Some("StrategyGame"),
-        54 => Some("TeamSports"),
-        56 => Some("VideoGame"),
-        75 => Some("VisualArts"),
-        58 => Some("Workplace"),
-        _ => None,
-    };
-
-    match g {
-        Some(s) => Some(s.to_string()),
-        None => None,
     }
 }

@@ -1,5 +1,6 @@
 mod jobs;
 use clap::Parser;
+use dotenvy::dotenv;
 use reko::Reko;
 
 #[derive(Parser, Debug)]
@@ -12,6 +13,8 @@ pub struct Args {
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
+
     let args = Args::parse();
 
     let jobs = args.jobs.iter().filter(|id| is_job(id)).collect::<Vec<_>>();
