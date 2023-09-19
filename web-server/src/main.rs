@@ -26,7 +26,6 @@ fn router(reko: Reko) -> Router {
     let cors = ServiceBuilder::new().layer(CorsLayer::new().allow_origin(Any).allow_headers(Any));
 
     Router::new()
-        .route("/health", get(controller::health))
         .route("/version", get(controller::version))
         .route("/:user/similar", get(controller::get_similar_users))
         .route("/:user/compare/:other_user", get(controller::compare_users))

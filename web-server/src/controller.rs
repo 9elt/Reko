@@ -65,10 +65,6 @@ pub async fn compare_users(
     }
 }
 
-pub async fn health() -> impl IntoResponse {
-    (StatusCode::OK, "Reko API is up and running")
-}
-
 pub async fn not_found() -> impl IntoResponse {
     (StatusCode::NOT_FOUND, "Resource not found")
 }
