@@ -1,7 +1,8 @@
 use super::MALClient;
-use chrono::{NaiveDate, NaiveTime, Utc};
+use chrono::{NaiveDate, NaiveTime};
 use serde::{Deserialize, Serialize};
 use structs::{Anime as PublicAnime, RekoError, RekoResult, Stat};
+use util::now;
 
 const ANIME_QUERY: &str =
     "?fields=id,title,main_picture,start_date,mean,status,genres,num_episodes,rating,related_anime";
@@ -110,7 +111,7 @@ impl Anime {
             stats,
             parent,
             aired: self.status == "finished_airing",
-            updated_at: Utc::now().naive_utc(),
+            updated_at: now(),
         }
     }
 }

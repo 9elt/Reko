@@ -64,7 +64,7 @@ impl MALClient {
     /// parses files at:
     /// FAKE_API_PATH/anime/{id}.json
     /// or
-    /// FAKE_API_PATH/list/{username}.json
+    /// FAKE_API_PATH/users/{username}.json
     fn fake_api<R: for<'a> Deserialize<'a>>(&self, url: String) -> Result<R, u16> {
         let mut p = url.split("/");
         p.next();

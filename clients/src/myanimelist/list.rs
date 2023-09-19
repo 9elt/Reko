@@ -1,10 +1,9 @@
 use super::MALClient;
-use chrono::{NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use std::thread;
-use std::time::Duration;
 use structs::ListEntry as PublicListEntry;
 use structs::{RekoError, RekoResult};
+use util::{now, sleep};
 
 const LIST_QUERY: &str = "?fields=list_status&sort=list_updated_at&nsfw=1";
 const WATCHED: &[&str] = &["completed", "watching"];
@@ -19,12 +18,12 @@ impl MALClient {
         let updated_at = if is_update {
             updated_at.unwrap()
         } else {
-            Utc::now().naive_utc()
+            now()
         };
 
         let limit = if is_update {
-            let now = Utc::now().naive_utc();
-            let days_since = now.signed_duration_since(updated_at).num_days();
+            let time_now = now();
+            let days_since = time_now.signed_duration_since(updated_at).num_days();
             days_since * 3
         } else {
             1000
@@ -68,7 +67,7 @@ impl MALClient {
             }
 
             if offset > 2 {
-                thread::sleep(Duration::from_millis(250));
+                sleep(250);
             }
         }
 
@@ -117,7 +116,7 @@ impl ListEntry {
             Ok(date) => Some(date),
             _ => None,
         }
-        .unwrap_or(Utc::now().naive_utc());
+        .unwrap_or(now());
 
         PublicListEntry {
             id: self.node.id,

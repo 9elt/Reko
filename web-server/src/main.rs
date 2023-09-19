@@ -14,7 +14,7 @@ async fn main() {
 
     let reko = Reko::new();
 
-    println!("starting server at http://127.0.0.1:3000/health");
+    println!("listening on 127.0.0.1:3000");
 
     axum::Server::bind(&"127.0.0.1:3000".parse().unwrap())
         .serve(router(reko).into_make_service())

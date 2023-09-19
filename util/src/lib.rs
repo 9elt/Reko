@@ -1,6 +1,9 @@
-use std::{time::Duration, thread};
-
+use std::{thread, time::Duration};
 use chrono::{Days, NaiveDateTime, Utc};
+
+pub fn similarity(distance: i32) -> i32 {
+    100 - (distance * 100 / 80)
+}
 
 pub fn db_page(page: i32, max: u8) -> u8 {
     (if page <= 1 {

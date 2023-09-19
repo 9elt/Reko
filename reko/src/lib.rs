@@ -1,4 +1,3 @@
-mod util;
 mod hash;
 
 use clients::database::DBClient;
@@ -128,15 +127,15 @@ impl Reko {
         }
     }
     pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<CompareResponseWrapper> {
-        let hd_64 = (user.hash.to_u64() ^ other.hash.to_u64()).count_ones() as i32;
-        let hd_16 = ((user.hash.to_u64() >> 48) ^ (other.hash.to_u64() >> 48)).count_ones() as i32;
+        let hd_64 = (user.hash.to_u64() ^ other.hash.to_u64()).count_ones();
+        let hd_16 = ((user.hash.to_u64() >> 48) ^ (other.hash.to_u64() >> 48)).count_ones();
 
         Ok(CompareResponseWrapper::new(
             user,
             SimilarUser {
                 username: other.username.to_owned(),
                 hash: other.hash.to_owned(),
-                similarity: 100 - ((hd_64 + hd_16) * 100 / 80),
+                similarity: similarity((hd_64 + hd_16) as i32),
             },
         ))
     }
