@@ -80,13 +80,13 @@ impl DBClient {
             BIT_COUNT(({} >> {SHF_HASH}) ^ (hash >> {SHF_HASH}))
         ) distance
         FROM users
-        WHERE username != '{}'
+        WHERE id != '{}'
         ORDER BY distance ASC
         LIMIT 16 OFFSET {};
         ",
             user.hash.to_u64(),
             user.hash.to_u64(),
-            user.username,
+            user.id,
             page * 16
         ))
         .load::<SimilarUser>(&mut conn)
