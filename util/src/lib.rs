@@ -1,8 +1,15 @@
 use std::{thread, time::Duration};
 use chrono::{Days, NaiveDateTime, Utc};
 
+pub const SHF_HASH: u8 = 16;
+ 
+const SM_HASH_SIZE: u8 = 64 - SHF_HASH;
+
+/// max hamming distance
+const MAX_HD: i32 = 64 + SM_HASH_SIZE as i32;
+
 pub fn similarity(distance: i32) -> i32 {
-    100 - (distance * 100 / 80)
+    100 - (distance * 100 / MAX_HD)
 }
 
 pub fn db_page(page: i32, max: u8) -> u8 {

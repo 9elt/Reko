@@ -12,7 +12,7 @@ use structs::RecommendationDetails as PublicRecommendationDetails;
 use structs::SimilarUser as PublicSimilarUser;
 use structs::Stat;
 use structs::User as PublicUser;
-use util::similarity;
+use util::{similarity, SHF_HASH};
 
 impl DBClient {
     pub fn get_recommendations(&self, user: &PublicUser, page: u8) -> Vec<PublicRecommendation> {
@@ -24,7 +24,7 @@ impl DBClient {
             A.mean, A.rating, A.picture, A.stats,
             E.score, U.username, U.hash, (
                 BIT_COUNT({} ^ U.hash) +
-                BIT_COUNT(({} >> 48) ^ (U.hash >> 48))
+                BIT_COUNT(({} >> {SHF_HASH}) ^ (U.hash >> {SHF_HASH}))
             ) distance
             FROM anime A
             INNER JOIN entries E ON E.anime = A.id
@@ -77,7 +77,7 @@ impl DBClient {
             "
         SELECT username, hash, (
             BIT_COUNT({} ^ hash) +
-            BIT_COUNT(({} >> 48) ^ (hash >> 48))
+            BIT_COUNT(({} >> {SHF_HASH}) ^ (hash >> {SHF_HASH}))
         ) distance
         FROM users
         WHERE username != '{}'
