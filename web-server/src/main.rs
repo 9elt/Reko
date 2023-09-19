@@ -27,11 +27,9 @@ fn router(reko: Reko) -> Router {
 
     Router::new()
         .route("/health", get(controller::health))
+        .route("/version", get(controller::version))
         .route("/:user/similar", get(controller::get_similar_users))
-        .route(
-            "/:user/compare/:other_user",
-            get(controller::compare_users),
-        )
+        .route("/:user/compare/:other_user", get(controller::compare_users))
         .route(
             "/:user/recommendations",
             get(controller::get_recommendations),

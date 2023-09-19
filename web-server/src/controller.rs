@@ -5,6 +5,8 @@ use hyper::StatusCode;
 use reko::Reko;
 use serde::Deserialize;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub async fn get_similar_users(
     Path(user): Path<String>,
     Query(query): Query<GenericQuery>,
@@ -69,6 +71,10 @@ pub async fn health() -> impl IntoResponse {
 
 pub async fn not_found() -> impl IntoResponse {
     (StatusCode::NOT_FOUND, "Resource not found")
+}
+
+pub async fn version() -> impl IntoResponse {
+    VERSION
 }
 
 #[derive(Deserialize)]
