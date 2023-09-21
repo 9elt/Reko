@@ -1,9 +1,9 @@
 use std::{thread, time::Duration};
 use chrono::{Days, NaiveDateTime, Utc};
 
-pub const SHF_HASH: u8 = 16;
+pub const HASH_SHIFT: u8 = 16;
  
-const SM_HASH_SIZE: u8 = 64 - SHF_HASH;
+const SM_HASH_SIZE: u8 = 64 - HASH_SHIFT;
 
 /// max hamming distance
 const MAX_HD: i32 = 64 + SM_HASH_SIZE as i32;

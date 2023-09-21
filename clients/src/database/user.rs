@@ -12,47 +12,60 @@ use structs::RecommendationDetails as PublicRecommendationDetails;
 use structs::SimilarUser as PublicSimilarUser;
 use structs::Stat;
 use structs::User as PublicUser;
-use util::{similarity, SHF_HASH};
+use util::{similarity, HASH_SHIFT};
 
 impl DBClient {
     pub fn get_recommendations(&self, user: &PublicUser, page: u8) -> Vec<PublicRecommendation> {
         let mut conn = self.connect();
+
+        let id = user.id;
+        let hash = user.hash.to_u64();
+        let offset = page * 16;
 
         let raw = match diesel::sql_query(format!(
             "
             SELECT DISTINCT A.id, A.title, A.airing_date, A.length,
             A.mean, A.rating, A.picture, A.stats,
             E.score, U.username, U.hash, (
-                BIT_COUNT({} ^ U.hash) +
-                BIT_COUNT(({} >> {SHF_HASH}) ^ (U.hash >> {SHF_HASH}))
+                BIT_COUNT({hash} ^ U.hash) +
+                BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (U.hash >> {HASH_SHIFT}))
             ) distance
-            FROM anime A
-            INNER JOIN entries E ON E.anime = A.id
+            FROM entries E
             INNER JOIN users U ON E.user = U.id
-            WHERE U.id != {}
+            INNER JOIN anime A ON E.anime = A.id
+            -- WHERE E.user != {id}
+            WHERE E.user IN (SELECT * FROM (
+                SELECT id
+                FROM users
+                WHERE id != '{id}'
+                ORDER BY (
+                    BIT_COUNT({hash} ^ hash) +
+                    BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (hash >> {HASH_SHIFT}))
+                ) ASC
+                LIMIT 64
+            ) uids)
             AND E.watched = 1
             AND A.mean IS NOT NULL
-            AND NOT EXISTS (SELECT E.id from entries E WHERE E.user = {} AND E.anime = A.id)
-            AND (
-                A.parent IS NULL
-                -- 
-                -- Uncomment to allow sequels/side stories into recommendations
-                -- 
-                -- OR EXISTS (
-                --     SELECT E.id from entries E
-                --     WHERE E.user = {} AND E.anime = A.parent AND E.watched = 1
-                -- )
+            AND E.anime NOT IN (
+                SELECT anime
+                FROM entries
+                WHERE user = '{id}'
             )
+            AND A.parent IS NULL
+            -- Uncomment to allow sequels/side stories into recommendations
+            -- AND (
+            --     A.parent IS NULL
+            --     OR EXISTS (
+            --         SELECT E.id from entries E
+            --         WHERE E.user = {id} AND E.anime = A.parent AND E.watched = 1
+            --     )
+            -- )
             GROUP BY A.id
-            ORDER BY distance * (5 - A.mean / 2) ASC
-            LIMIT 16 OFFSET {};
-        ",
-            user.hash.to_u64(),
-            user.hash.to_u64(),
-            user.id,
-            user.id,
-            user.id,
-            page * 16
+            ORDER BY 
+                E.updated_at DESC,
+                distance * (20 - A.mean - E.score) ASC
+            LIMIT 16 OFFSET {offset};
+        "
         ))
         .load::<Recommendation>(&mut conn)
         {
@@ -73,21 +86,21 @@ impl DBClient {
     pub fn get_similar_users(&self, user: &PublicUser, page: u8) -> Vec<PublicSimilarUser> {
         let mut conn = self.connect();
 
+        let id = user.id;
+        let hash = user.hash.to_u64();
+        let offset = page * 16;
+
         let raw = match diesel::sql_query(format!(
             "
         SELECT username, hash, (
-            BIT_COUNT({} ^ hash) +
-            BIT_COUNT(({} >> {SHF_HASH}) ^ (hash >> {SHF_HASH}))
+            BIT_COUNT({hash} ^ hash) +
+            BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (hash >> {HASH_SHIFT}))
         ) distance
         FROM users
-        WHERE id != '{}'
+        WHERE id != '{id}'
         ORDER BY distance ASC
-        LIMIT 16 OFFSET {};
-        ",
-            user.hash.to_u64(),
-            user.hash.to_u64(),
-            user.id,
-            page * 16
+        LIMIT 16 OFFSET {offset};
+        "
         ))
         .load::<SimilarUser>(&mut conn)
         {
@@ -148,13 +161,11 @@ impl DBClient {
     pub fn update_user(&self, user: &PublicUser) -> bool {
         let mut conn = self.connect();
 
-        let u = diesel::update(users::users)
+        diesel::update(users::users)
             .filter(users::id.eq(user.id))
             .set(UserUpdate::from_public(user))
             .execute(&mut conn)
-            .unwrap();
-        println!("number of updated users {u}");
-        true
+            .is_ok()
     }
     pub fn delete_user(&self, user: &PublicUser) -> bool {
         let mut conn = self.connect();
