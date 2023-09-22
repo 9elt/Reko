@@ -1,8 +1,8 @@
-# [![Reko API](./media/logo.png)](https://reko.moe/)
-
-Reko is a Web API to match similar *MyAnimeList* users and get anime recommendations.
+### [![Reko API](./media/logo.png)](https://reko.moe/)
 
 > works thanks to [**MyAnimeList API *beta v2***](https://myanimelist.net/apiconfig/references/api/v2)
+
+Reko is a Web API to match similar *MyAnimeList* users and get anime recommendations.
 
 # Algorithm
 
