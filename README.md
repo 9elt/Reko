@@ -17,9 +17,9 @@ The hash is 64-bit and each position represents an anime statistic. The latter a
 ***`0`** 12 Episodes series, **`1`** Action genre, **`2`** Fantasy genre,  **. . .** **`6`** Aired in the 20s, **. . .** **`59`** PG rating **. . .***
 </blockquote>
 
-A user hash is generated from his list, using the statistics of the last 256 anime he's watched. Each bit is assigned `1` when the corresponding stat has `times watched * scores` greater than the next one.
+The hash is generated from a user list, using the statistics of the last 256 anime he's watched. Each bit is assigned `1` when the corresponding stat has `times watched * scores` greater than the next one.
 
-In few words, the hash contains information on what the user **watches and scores more** than average. Similar users generate similar hashes and vice versa.
+In few words, the hash roughly stores information on what the user **watches and scores** more than average. Similar users generate similar hashes and vice versa.
 
 ### user comparison
 
