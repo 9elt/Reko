@@ -23,7 +23,7 @@ In few words, the hash contains information on what the user **watches and score
 
 ### user comparison
 
-Users are compared by computing the [***hamming distance***](https://en.wikipedia.org/wiki/Hamming_distance) on their hashes, adding the *hamming distance* of the first 48-bits.
+Users are compared by computing the [***hamming distance***](https://en.wikipedia.org/wiki/Hamming_distance) on their hashes twice, first on the entire hash, than, on the first 48-bits.
 
 The result is a number between 0 and 112, where, 0 is 100% similarity and 112 is 0%.
 
