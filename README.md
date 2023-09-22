@@ -1,10 +1,8 @@
-### [![Reko API](./media/logo.png)](https://reko.moe/)
+# [Reko API](https://reko.moe/)
 
-> works thanks to [**MyAnimeList API *beta v2***](https://myanimelist.net/apiconfig/references/api/v2)
+Reko is a Web API to match similar [***MyAnimeList***](https://myanimelist.net) users and get anime recommendations. Works thanks to [*MyAnimeList API *beta v2**](https://myanimelist.net/apiconfig/references/api/v2).
 
-Reko is a Web API to match similar *MyAnimeList* users and get anime recommendations.
-
-# Algorithm
+## Algorithm
 
 Reko API matching algorithm is **hash based**.
 
@@ -31,6 +29,6 @@ The result is a number between 0 and 112, where, 0 is 100% similarity and 112 is
 
 Anime recommendations are taken from the 32 most similar users, and ordered by popularity and score among those users.
 
-# Documentation
+## Documentation
 
 The Reko API docs are available [**here**](https://reko.moe/docs).
