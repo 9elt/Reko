@@ -2,17 +2,15 @@ mod hash;
 
 use clients::database::DBClient;
 use clients::myanimelist::MALClient;
+use hash::Hasher;
 use structs::{
-    CompareResponseWrapper, DetailedListEntry, Hash, RecommendationResponseWrapper, RekoError,
-    RekoResult, SimilarResponseWrapper, SimilarUser, User,
+    Data, DetailedListEntry, Hash, PaginatedResponse, RekoError, RekoResult, Response, SimilarUser,
+    User,
 };
 use util::*;
-use hash::Hasher;
 
 const ENTRIES_TO_HASH: usize = 256;
 const DAYS_BEFORE_UPDATE: u64 = 3;
-const MAX_PAGE_SIMILAR_USERS: u8 = 40;
-const MAX_PAGE_RECOMMENDATIONS: u8 = 20;
 
 #[derive(Clone)]
 pub struct Reko {
@@ -102,41 +100,43 @@ impl Reko {
             }
         }
     }
-    pub fn get_recommendations(
-        &self,
-        user: &User,
-        page: i32,
-    ) -> RekoResult<RecommendationResponseWrapper> {
-        let res = self
+    pub fn get_recommendations(&self, user: &User, page: i32) -> RekoResult<PaginatedResponse> {
+        let (res, pagination) = self
             .db
             .get_recommendations(user, db_page(page, MAX_PAGE_RECOMMENDATIONS));
+
         if res.len() == 0 {
             Err(RekoError::new(404, "No recommendations found"))
         } else {
-            Ok(RecommendationResponseWrapper::new(user, res))
+            Ok(PaginatedResponse::new(
+                user,
+                Data::Recommendation(res),
+                pagination,
+            ))
         }
     }
-    pub fn get_similar_users(&self, user: &User, page: i32) -> RekoResult<SimilarResponseWrapper> {
-        let res = self
+    pub fn get_similar_users(&self, user: &User, page: i32) -> RekoResult<PaginatedResponse> {
+        let (res, pagination) = self
             .db
             .get_similar_users(user, db_page(page, MAX_PAGE_SIMILAR_USERS));
         if res.len() == 0 {
             Err(RekoError::new(404, "No similar users found"))
         } else {
-            Ok(SimilarResponseWrapper::new(user, res))
+            Ok(PaginatedResponse::new(user, Data::Similar(res), pagination))
         }
     }
-    pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<CompareResponseWrapper> {
+    pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<Response> {
         let hd_64 = (user.hash.to_u64() ^ other.hash.to_u64()).count_ones();
-        let hd_16 = ((user.hash.to_u64() >> HASH_SHIFT) ^ (other.hash.to_u64() >> HASH_SHIFT)).count_ones();
+        let hd_16 =
+            ((user.hash.to_u64() >> HASH_SHIFT) ^ (other.hash.to_u64() >> HASH_SHIFT)).count_ones();
 
-        Ok(CompareResponseWrapper::new(
+        Ok(Response::new(
             user,
-            SimilarUser {
+            Data::Compare(SimilarUser {
                 username: other.username.to_owned(),
                 hash: other.hash.to_owned(),
                 similarity: similarity((hd_64 + hd_16) as i32),
-            },
+            }),
         ))
     }
     pub async fn update_old_users(&self) {
@@ -172,7 +172,7 @@ impl Reko {
 
         for entry in list {
             for stat in entry.stats {
-                hash.push(stat, if entry.score > 0 { entry.score } else { 1 });
+                hash.push(stat, entry.score + 1);
             }
         }
 

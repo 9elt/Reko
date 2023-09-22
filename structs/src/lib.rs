@@ -51,6 +51,14 @@ pub struct User {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct RecoUser {
+    pub username: String,
+    pub hash: Hash,
+    pub similarity: i32,
+    pub score: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SimilarUser {
     pub username: String,
     pub hash: Hash,
@@ -99,7 +107,7 @@ pub struct Recommendation {
     pub id: i32,
     pub details: RecommendationDetails,
     pub score: i32,
-    pub user: SimilarUser,
+    pub users: Vec<RecoUser>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -114,48 +122,60 @@ pub struct RecommendationDetails {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct SimilarResponseWrapper {
-    requester: RequestingUser,
-    similar: Vec<SimilarUser>,
+pub struct Response {
+    pub requester: RequestingUser,
+    pub data: Data,
 }
 
-impl SimilarResponseWrapper {
-    pub fn new(user: &User, v: Vec<SimilarUser>) -> Self {
+impl Response {
+    pub fn new(user: &User, data: Data) -> Self {
         Self {
             requester: RequestingUser::from_user(user),
-            similar: v,
+            data: data,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CompareResponseWrapper {
-    requester: RequestingUser,
-    compare: SimilarUser,
+pub struct PaginatedResponse {
+    pub requester: RequestingUser,
+    pub data: Data,
+    pub pagination: Pagination,
 }
 
-impl CompareResponseWrapper {
-    pub fn new(user: &User, v: SimilarUser) -> Self {
+impl PaginatedResponse {
+    pub fn new(user: &User, data: Data, pagination: Pagination) -> Self {
         Self {
             requester: RequestingUser::from_user(user),
-            compare: v,
+            data: data,
+            pagination,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RecommendationResponseWrapper {
-    requester: RequestingUser,
-    recommendations: Vec<Recommendation>,
+pub struct Pagination {
+    pub previous: Option<u8>,
+    pub current: u8,
+    pub next: Option<u8>,
 }
 
-impl RecommendationResponseWrapper {
-    pub fn new(user: &User, v: Vec<Recommendation>) -> Self {
+impl Pagination {
+    pub fn new(page: u8) -> Self {
         Self {
-            requester: RequestingUser::from_user(user),
-            recommendations: v,
+            previous: if page > 1 { Some(page - 1) } else { None },
+            current: page,
+            next: None,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(untagged)]
+pub enum Data {
+    Compare(SimilarUser),
+    Similar(Vec<SimilarUser>),
+    Recommendation(Vec<Recommendation>),
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -334,16 +354,16 @@ impl Stat {
             9 => Some("Drama"),
             3 => Some("Fantasy"),
             10 => Some("Romance"),
-            17 => Some("SciFi"),
+            17 => Some("Sci-Fi"),
             15 => Some("Supernatural"),
-            70 => Some("AvantGarde"),
-            25 => Some("AwardWinning"),
-            76 => Some("BoysLove"),
-            77 => Some("GirlsLove"),
+            70 => Some("Avant Garde"),
+            25 => Some("Award Winning"),
+            76 => Some("Boys Love"),
+            77 => Some("Girls Love"),
             68 => Some("Gourmet"),
             36 => Some("Horror"),
             19 => Some("Mystery"),
-            39 => Some("SliceofLife"),
+            39 => Some("Slice of Life"),
             41 => Some("Sports"),
             29 => Some("Suspense"),
             21 => Some("Ecchi"),
@@ -354,15 +374,15 @@ impl Stat {
             18 => Some("Seinen"),
             38 => Some("Shoujo"),
             5 => Some("Shounen"),
-            28 => Some("AdultCast"),
+            28 => Some("Adult Cast"),
             47 => Some("GagHumor"),
             26 => Some("Gore"),
             27 => Some("Harem"),
             32 => Some("Historical"),
             30 => Some("Isekai"),
             53 => Some("Iyashikei"),
-            43 => Some("LovePolygon"),
-            49 => Some("MartialArts"),
+            43 => Some("Love Polygon"),
+            49 => Some("Martial Arts"),
             35 => Some("Mecha"),
             31 => Some("Military"),
             45 => Some("Music"),
@@ -370,39 +390,39 @@ impl Stat {
             42 => Some("Parody"),
             20 => Some("Psychological"),
             8 => Some("School"),
-            22 => Some("SuperPower"),
+            22 => Some("Super Power"),
             37 => Some("Survival"),
-            44 => Some("TimeTravel"),
+            44 => Some("Time Travel"),
             46 => Some("Vampire"),
             69 => Some("Anthropomorphic"),
             57 => Some("CGDCT"),
             67 => Some("Childcare"),
-            82 => Some("CombatSports"),
+            82 => Some("Combat Sports"),
             85 => Some("Crossdressing"),
             78 => Some("Delinquents"),
             55 => Some("Detective"),
             89 => Some("Educational"),
-            64 => Some("HighStakesGame"),
-            81 => Some("IdolsFemale"),
-            90 => Some("IdolsMale"),
-            88 => Some("MagicalSexShift"),
-            66 => Some("MahouShoujo"),
+            64 => Some("High Stakes Game"),
+            81 => Some("Idols Female"),
+            90 => Some("Idols Male"),
+            88 => Some("Magical Sex Shift"),
+            66 => Some("Mahou Shoujo"),
             87 => Some("Medical"),
-            60 => Some("OrganizedCrime"),
-            52 => Some("OtakuCulture"),
-            79 => Some("PerformingArts"),
+            60 => Some("Organized Crime"),
+            52 => Some("Otaku Culture"),
+            79 => Some("Performing Arts"),
             91 => Some("Pets"),
             84 => Some("Racing"),
             48 => Some("Reincarnation"),
-            80 => Some("ReverseHarem"),
-            51 => Some("RomanticSubtext"),
+            80 => Some("Reverse Harem"),
+            51 => Some("Romantic Subtext"),
             63 => Some("Samurai"),
             83 => Some("Showbiz"),
             62 => Some("Space"),
-            65 => Some("StrategyGame"),
-            54 => Some("TeamSports"),
-            56 => Some("VideoGame"),
-            75 => Some("VisualArts"),
+            65 => Some("Strategy Game"),
+            54 => Some("Team Sports"),
+            56 => Some("Video Game"),
+            75 => Some("Visual Arts"),
             58 => Some("Workplace"),
             _ => None,
         };

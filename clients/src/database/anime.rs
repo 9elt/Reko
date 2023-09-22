@@ -1,5 +1,5 @@
-use super::schema::entries::dsl as entries;
-use super::schema::{anime as table_anime, anime::dsl as anime};
+use super::schema::entries::dsl as E;
+use super::schema::{anime as AnimeTable, anime::dsl as A};
 use super::DBClient;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -9,10 +9,7 @@ impl DBClient {
     pub fn get_anime(&self, ids: Vec<i32>) -> Vec<PublicAnime> {
         let mut conn = self.connect();
 
-        let raw: Vec<Anime> = match anime::anime
-            .filter(anime::id.eq_any(ids))
-            .load::<Anime>(&mut conn)
-        {
+        let raw: Vec<Anime> = match A::anime.filter(A::id.eq_any(ids)).load::<Anime>(&mut conn) {
             Ok(res) => res,
             Err(_) => return Vec::new(),
         };
@@ -32,7 +29,7 @@ impl DBClient {
 
         let mut conn = self.connect();
 
-        diesel::insert_into(anime::anime)
+        diesel::insert_into(A::anime)
             .values(data)
             .execute(&mut conn)
             .is_ok()
@@ -40,8 +37,8 @@ impl DBClient {
     pub fn update_anime(&self, data: PublicAnime) -> bool {
         let mut conn = self.connect();
 
-        diesel::update(anime::anime)
-            .filter(anime::id.eq(data.id))
+        diesel::update(A::anime)
+            .filter(A::id.eq(data.id))
             .set(AnimeUpdate::from_public(&data))
             .execute(&mut conn)
             .is_ok()
@@ -49,10 +46,7 @@ impl DBClient {
     pub fn get_airing_anime(&self) -> Vec<PublicAnime> {
         let mut conn = self.connect();
 
-        let raw: Vec<Anime> = match anime::anime
-            .filter(anime::aired.eq(false))
-            .load::<Anime>(&mut conn)
-        {
+        let raw: Vec<Anime> = match A::anime.filter(A::aired.eq(false)).load::<Anime>(&mut conn) {
             Ok(res) => res,
             Err(_) => return Vec::new(),
         };
@@ -67,10 +61,10 @@ impl DBClient {
     pub fn get_missing_anime(&self) -> Vec<i32> {
         let mut conn = self.connect();
 
-        match entries::entries
-            .left_join(anime::anime.on(anime::id.eq(entries::anime)))
-            .select(entries::anime)
-            .filter(entries::anime.is_null())
+        match E::entries
+            .left_join(A::anime.on(A::id.eq(E::anime)))
+            .select(E::anime)
+            .filter(E::anime.is_null())
             .load::<i32>(&mut conn)
         {
             Ok(res) => res,
@@ -80,7 +74,7 @@ impl DBClient {
 }
 
 #[derive(Queryable, Insertable, AsChangeset)]
-#[diesel(table_name = table_anime)]
+#[diesel(table_name = AnimeTable)]
 struct Anime {
     id: i32,
     title: String,
@@ -129,7 +123,7 @@ impl Anime {
 }
 
 #[derive(Queryable, Insertable, AsChangeset)]
-#[diesel(table_name = table_anime)]
+#[diesel(table_name = AnimeTable)]
 struct AnimeUpdate {
     title: String,
     airing_date: Option<NaiveDateTime>,

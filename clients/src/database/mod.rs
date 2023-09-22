@@ -1,5 +1,7 @@
-mod animes;
+mod anime;
+mod recommendations;
 mod schema;
+mod similar;
 mod user;
 
 use diesel::prelude::*;

@@ -23,13 +23,13 @@ In few words, the hash contains information on what the user **watches and score
 
 ### user comparison
 
-Users are compared by computing the [***hamming distance***](https://en.wikipedia.org/wiki/Hamming_distance) on their hashes, adding the *hamming distance* of the first 16-bits (the most relevant).
+Users are compared by computing the [***hamming distance***](https://en.wikipedia.org/wiki/Hamming_distance) on their hashes, adding the *hamming distance* of the first 48-bits.
 
-The result is a number between 0 and 80, where, 0 is 100% similarity and 80 is 0%.
+The result is a number between 0 and 112, where, 0 is 100% similarity and 112 is 0%.
 
 ### user recommendations
 
-Recommendations are simply taken from similar users lists.
+Anime recommendations are taken from the 32 most similar users, and ordered by popularity and score among those users.
 
 # Documentation
 

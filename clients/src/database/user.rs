@@ -1,5 +1,5 @@
-use super::schema::{entries as table_entries, entries::dsl as entries};
-use super::schema::{users as table_users, users::dsl as users};
+use super::schema::{entries as EntriesTable, entries::dsl as E};
+use super::schema::{users as UsersTable, users::dsl as U};
 use super::DBClient;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -7,122 +7,14 @@ use diesel::sql_types as sql;
 use structs::DetailedListEntry as PublicDetailedListEntry;
 use structs::Hash;
 use structs::ListEntry as PublicListEntry;
-use structs::Recommendation as PublicRecommendation;
-use structs::RecommendationDetails as PublicRecommendationDetails;
-use structs::SimilarUser as PublicSimilarUser;
-use structs::Stat;
 use structs::User as PublicUser;
-use util::{similarity, HASH_SHIFT};
 
 impl DBClient {
-    pub fn get_recommendations(&self, user: &PublicUser, page: u8) -> Vec<PublicRecommendation> {
-        let mut conn = self.connect();
-
-        let id = user.id;
-        let hash = user.hash.to_u64();
-        let offset = page * 16;
-
-        let raw = match diesel::sql_query(format!(
-            "
-            SELECT DISTINCT A.id, A.title, A.airing_date, A.length,
-            A.mean, A.rating, A.picture, A.stats,
-            E.score, U.username, U.hash, (
-                BIT_COUNT({hash} ^ U.hash) +
-                BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (U.hash >> {HASH_SHIFT}))
-            ) distance
-            FROM entries E
-            INNER JOIN users U ON E.user = U.id
-            INNER JOIN anime A ON E.anime = A.id
-            -- WHERE E.user != {id}
-            WHERE E.user IN (SELECT * FROM (
-                SELECT id
-                FROM users
-                WHERE id != '{id}'
-                ORDER BY (
-                    BIT_COUNT({hash} ^ hash) +
-                    BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (hash >> {HASH_SHIFT}))
-                ) ASC
-                LIMIT 64
-            ) uids)
-            AND E.watched = 1
-            AND A.mean IS NOT NULL
-            AND E.anime NOT IN (
-                SELECT anime
-                FROM entries
-                WHERE user = '{id}'
-            )
-            AND A.parent IS NULL
-            -- Uncomment to allow sequels/side stories into recommendations
-            -- AND (
-            --     A.parent IS NULL
-            --     OR EXISTS (
-            --         SELECT E.id from entries E
-            --         WHERE E.user = {id} AND E.anime = A.parent AND E.watched = 1
-            --     )
-            -- )
-            GROUP BY A.id
-            ORDER BY 
-                E.updated_at DESC,
-                distance * (20 - A.mean - E.score) ASC
-            LIMIT 16 OFFSET {offset};
-        "
-        ))
-        .load::<Recommendation>(&mut conn)
-        {
-            Ok(res) => res,
-            Err(err) => {
-                println!("err {:#?}", err);
-                return Vec::new();
-            }
-        };
-
-        let mut res = Vec::with_capacity(raw.len());
-        for u in raw {
-            res.push(u.to_public());
-        }
-
-        res
-    }
-    pub fn get_similar_users(&self, user: &PublicUser, page: u8) -> Vec<PublicSimilarUser> {
-        let mut conn = self.connect();
-
-        let id = user.id;
-        let hash = user.hash.to_u64();
-        let offset = page * 16;
-
-        let raw = match diesel::sql_query(format!(
-            "
-        SELECT username, hash, (
-            BIT_COUNT({hash} ^ hash) +
-            BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (hash >> {HASH_SHIFT}))
-        ) distance
-        FROM users
-        WHERE id != '{id}'
-        ORDER BY distance ASC
-        LIMIT 16 OFFSET {offset};
-        "
-        ))
-        .load::<SimilarUser>(&mut conn)
-        {
-            Ok(res) => res,
-            Err(err) => {
-                println!("err {:#?}", err);
-                return Vec::new();
-            }
-        };
-
-        let mut res = Vec::with_capacity(raw.len());
-        for u in raw {
-            res.push(u.to_public());
-        }
-
-        res
-    }
     pub fn get_user(&self, name: String) -> Option<PublicUser> {
         let mut conn = self.connect();
 
-        match users::users
-            .filter(users::username.eq(name))
+        match U::users
+            .filter(U::username.eq(name))
             .first::<User>(&mut conn)
         {
             Ok(user) => Some(user.to_public()),
@@ -132,14 +24,14 @@ impl DBClient {
     pub fn insert_user(&self, user: &PublicUser, etrs: Vec<PublicListEntry>) -> Option<i32> {
         let mut conn = self.connect();
 
-        let res = diesel::insert_into(users::users)
+        let res = diesel::insert_into(U::users)
             .values(UserInsert::from_public(user))
             .execute(&mut conn);
 
         if res.is_ok() {
-            let uid = users::users
-                .select(users::id)
-                .order_by(users::id.desc())
+            let uid = U::users
+                .select(U::id)
+                .order_by(U::id.desc())
                 .first::<i32>(&mut conn)
                 .unwrap();
 
@@ -148,7 +40,7 @@ impl DBClient {
                 .map(|e| ListEntryInsert::from_public(uid, e))
                 .collect::<Vec<_>>();
 
-            diesel::insert_into(entries::entries)
+            diesel::insert_into(E::entries)
                 .values(data)
                 .execute(&mut conn)
                 .ok();
@@ -161,8 +53,8 @@ impl DBClient {
     pub fn update_user(&self, user: &PublicUser) -> bool {
         let mut conn = self.connect();
 
-        diesel::update(users::users)
-            .filter(users::id.eq(user.id))
+        diesel::update(U::users)
+            .filter(U::id.eq(user.id))
             .set(UserUpdate::from_public(user))
             .execute(&mut conn)
             .is_ok()
@@ -170,8 +62,8 @@ impl DBClient {
     pub fn delete_user(&self, user: &PublicUser) -> bool {
         let mut conn = self.connect();
 
-        diesel::delete(users::users)
-            .filter(users::id.eq(user.id))
+        diesel::delete(U::users)
+            .filter(U::id.eq(user.id))
             .execute(&mut conn)
             .is_ok()
     }
@@ -184,13 +76,13 @@ impl DBClient {
 
         let raw: Vec<DetailedListEntry> = match diesel::sql_query(format!(
             "
-            SELECT A.id, A.mean, A.stats, E.score
-            FROM anime A
-            INNER JOIN entries E ON E.anime = A.id
-            WHERE E.user = {}
-            AND E.watched = 1
-            ORDER BY E.updated_at DESC
-            LIMIT {};
+        SELECT A.id, A.mean, A.stats, E.score
+        FROM anime A
+        INNER JOIN entries E ON E.anime = A.id
+        WHERE E.user = {}
+        AND E.watched = 1
+        ORDER BY E.updated_at DESC
+        LIMIT {};
         ",
             user.id, limit
         ))
@@ -215,8 +107,8 @@ impl DBClient {
         for e in etrs {
             let ie = ListEntryInsert::from_public(user.id, &e);
 
-            let res = match diesel::update(entries::entries)
-                .filter(entries::id.eq(e.id))
+            let res = match diesel::update(E::entries)
+                .filter(E::id.eq(e.id))
                 .set(&ie)
                 .execute(&mut conn)
             {
@@ -230,7 +122,7 @@ impl DBClient {
         }
 
         if missing.len() > 0 {
-            diesel::insert_into(entries::entries)
+            diesel::insert_into(E::entries)
                 .values(missing)
                 .on_conflict(diesel::dsl::DuplicatedKeys)
                 .do_nothing()
@@ -243,8 +135,8 @@ impl DBClient {
     pub fn get_old_users(&self) -> Vec<PublicUser> {
         let mut conn = self.connect();
 
-        let raw = match users::users
-            .order_by(users::updated_at.asc())
+        let raw = match U::users
+            .order_by(U::updated_at.asc())
             .limit(100)
             .get_results::<User>(&mut conn)
         {
@@ -258,81 +150,6 @@ impl DBClient {
         }
 
         res
-    }
-}
-
-#[derive(QueryableByName)]
-struct Recommendation {
-    #[diesel(sql_type = sql::Integer)]
-    id: i32,
-    #[diesel(sql_type = sql::VarChar)]
-    title: String,
-    #[diesel(sql_type = sql::Nullable<sql::Timestamp>)]
-    airing_date: Option<NaiveDateTime>,
-    #[diesel(sql_type = sql::Nullable<sql::Integer>)]
-    length: Option<i32>,
-    #[diesel(sql_type = sql::Nullable<sql::Float>)]
-    mean: Option<f32>,
-    #[diesel(sql_type = sql::Nullable<sql::VarChar>)]
-    rating: Option<String>,
-    #[diesel(sql_type = sql::Nullable<sql::VarChar>)]
-    picture: Option<String>,
-    #[diesel(sql_type = sql::Longtext)]
-    stats: String,
-    #[diesel(sql_type = sql::Integer)]
-    score: i32,
-    #[diesel(sql_type = sql::VarChar)]
-    username: String,
-    #[diesel(sql_type = sql::Unsigned<sql::Bigint>)]
-    hash: u64,
-    #[diesel(sql_type = sql::Integer)]
-    distance: i32,
-}
-
-impl Recommendation {
-    fn to_public(self) -> PublicRecommendation {
-        PublicRecommendation {
-            id: self.id,
-            score: self.score,
-            details: PublicRecommendationDetails {
-                title: self.title,
-                airing_date: self.airing_date,
-                length: self.length,
-                mean: self.mean,
-                rating: self.rating,
-                picture: self.picture,
-                genres: serde_json::from_str::<Vec<i32>>(&self.stats)
-                    .unwrap_or(Vec::new())
-                    .iter()
-                    .filter_map(|stat| Stat::new(stat).to_genre())
-                    .collect(),
-            },
-            user: PublicSimilarUser {
-                username: self.username,
-                hash: Hash::BigInt(self.hash),
-                similarity: similarity(self.distance),
-            },
-        }
-    }
-}
-
-#[derive(QueryableByName)]
-struct SimilarUser {
-    #[diesel(sql_type = sql::VarChar)]
-    username: String,
-    #[diesel(sql_type = sql::Unsigned<sql::Bigint>)]
-    hash: u64,
-    #[diesel(sql_type = sql::Integer)]
-    distance: i32,
-}
-
-impl SimilarUser {
-    fn to_public(self) -> PublicSimilarUser {
-        PublicSimilarUser {
-            username: self.username,
-            hash: Hash::BigInt(self.hash),
-            similarity: similarity(self.distance),
-        }
     }
 }
 
@@ -360,7 +177,7 @@ impl DetailedListEntry {
 }
 
 #[derive(Queryable, Insertable, AsChangeset)]
-#[diesel(table_name = table_entries)]
+#[diesel(table_name = EntriesTable)]
 struct ListEntry {
     id: i32,
     user: i32,
@@ -371,7 +188,7 @@ struct ListEntry {
 }
 
 #[derive(Queryable, Insertable, AsChangeset)]
-#[diesel(table_name = table_entries)]
+#[diesel(table_name = EntriesTable)]
 struct ListEntryInsert {
     user: i32,
     anime: i32,
@@ -393,7 +210,7 @@ impl ListEntryInsert {
 }
 
 #[derive(Queryable, Insertable, AsChangeset)]
-#[diesel(table_name = table_users)]
+#[diesel(table_name = UsersTable)]
 struct User {
     id: i32,
     username: String,
@@ -413,7 +230,7 @@ impl User {
 }
 
 #[derive(Queryable, Insertable, AsChangeset)]
-#[diesel(table_name = table_users)]
+#[diesel(table_name = UsersTable)]
 struct UserInsert {
     username: String,
     hash: u64,
@@ -431,7 +248,7 @@ impl UserInsert {
 }
 
 #[derive(Queryable, Insertable, AsChangeset)]
-#[diesel(table_name = table_users)]
+#[diesel(table_name = UsersTable)]
 struct UserUpdate {
     hash: u64,
     updated_at: NaiveDateTime,
