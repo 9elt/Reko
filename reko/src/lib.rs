@@ -63,6 +63,10 @@ impl Reko {
             None => {
                 let list = self.mal.list(username.to_owned(), None).await?;
 
+                if list.len() == 0 {
+                    return Err(RekoError::new(500, "EmptyUserList", "User list is empty"))
+                }
+
                 let mut ids = Vec::new();
 
                 for entry in list.iter() {
@@ -95,7 +99,7 @@ impl Reko {
                     user.id = id;
                     Ok(user)
                 } else {
-                    Err(RekoError::new(500, "Could not save user"))
+                    Err(RekoError::new(500, "FailedSave", "Could not save user"))
                 }
             }
         }
@@ -106,7 +110,7 @@ impl Reko {
             .get_recommendations(user, db_page(page, MAX_PAGE_RECOMMENDATIONS));
 
         if res.len() == 0 {
-            Err(RekoError::new(404, "No recommendations found"))
+            Err(RekoError::new(404, "NoData", "No recommendations found"))
         } else {
             Ok(PaginatedResponse::new(
                 user,
@@ -120,7 +124,7 @@ impl Reko {
             .db
             .get_similar_users(user, db_page(page, MAX_PAGE_SIMILAR_USERS));
         if res.len() == 0 {
-            Err(RekoError::new(404, "No similar users found"))
+            Err(RekoError::new(404, "NoData", "No similar users found"))
         } else {
             Ok(PaginatedResponse::new(user, Data::Similar(res), pagination))
         }
@@ -181,7 +185,11 @@ impl Reko {
         if res > 0 {
             Ok(Hash::BigInt(res))
         } else {
-            Err(RekoError::new(500, "Could not generate User hash"))
+            Err(RekoError::new(
+                500,
+                "HashFailed",
+                "Could not generate User hash",
+            ))
         }
     }
 }

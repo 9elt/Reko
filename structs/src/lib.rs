@@ -7,13 +7,15 @@ pub type RekoResult<T> = Result<T, RekoError>;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RekoError {
     pub code: u16,
+    pub id: String,
     pub message: String,
 }
 
 impl RekoError {
-    pub fn new<S: ToString>(code: u16, message: S) -> Self {
+    pub fn new<I: ToString, M: ToString>(code: u16, id: I, message: M) -> Self {
         Self {
             code,
+            id: id.to_string(),
             message: message.to_string(),
         }
     }
@@ -131,7 +133,7 @@ impl Response {
     pub fn new(user: &User, data: Data) -> Self {
         Self {
             requester: RequestingUser::from_user(user),
-            data: data,
+            data,
         }
     }
 }

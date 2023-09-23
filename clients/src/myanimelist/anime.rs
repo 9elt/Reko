@@ -117,13 +117,19 @@ impl Anime {
 }
 
 fn anime_err(code: u16, id: i32) -> RekoError {
-    RekoError {
+    RekoError::new(
         code,
-        message: match code {
+        match code {
+            404 => "AnimeNotFound",
+            403 => "RateLimited",
+            422 => "InvalidAnime",
+            _ => "FetchFailed",
+        },
+        match code {
             404 => format!("Anime {id} not found"),
             403 => format!("Rate limited"),
             422 => format!("Could not parse Anime {id} details"),
             _ => format!("Could not fetch Anime {id} details"),
         },
-    }
+    )
 }

@@ -129,13 +129,19 @@ impl ListEntry {
 }
 
 fn list_err(code: u16, user: &String) -> RekoError {
-    RekoError {
+    RekoError::new(
         code,
-        message: match code {
+        match code {
+            404 => "UserNotFound",
+            403 => "PrivateUserList",
+            422 => "InvalidUserList",
+            _ => "FetchFailed",
+        },
+        match code {
             404 => format!("User {user} not found"),
             403 => format!("User {user} is private"),
             422 => format!("Could not parse User {user} list"),
             _ => format!("Could not fetch User {user} list"),
         },
-    }
+    )
 }
