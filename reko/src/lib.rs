@@ -64,7 +64,7 @@ impl Reko {
                 let list = self.mal.list(username.to_owned(), None).await?;
 
                 if list.len() == 0 {
-                    return Err(RekoError::new(500, "EmptyUserList", "User list is empty"))
+                    return Err(RekoError::new(422, "EmptyUserList", "User list is empty"))
                 }
 
                 let mut ids = Vec::new();
