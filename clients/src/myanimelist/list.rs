@@ -14,17 +14,13 @@ impl MALClient {
         user: String,
         updated_at: Option<NaiveDateTime>,
     ) -> RekoResult<Vec<PublicListEntry>> {
-        let is_update = updated_at.is_some();
-        let updated_at = if is_update {
-            updated_at.unwrap()
-        } else {
-            now()
+        let (is_update, updated_at) = match updated_at {
+            Some(date) => (true, date),
+            None => (false, now()),
         };
 
         let limit = if is_update {
-            let time_now = now();
-            let days_since = time_now.signed_duration_since(updated_at).num_days();
-            days_since * 3
+            now().signed_duration_since(updated_at).num_days() as usize * 3
         } else {
             1000
         };
@@ -57,10 +53,9 @@ impl MALClient {
                 .filter(|e| !is_update || e.updated_at > updated_at)
                 .collect();
 
-            let found = entries.len();
             res.append(&mut entries);
 
-            if raw.paging.next.is_some() && found > 0 {
+            if raw.paging.next.is_some() && entries.len() == limit {
                 offset += 1;
             } else {
                 break;

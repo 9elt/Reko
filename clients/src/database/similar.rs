@@ -45,7 +45,7 @@ impl DBClient {
             }
         };
 
-        let is_next_page = raw.len() == SIMILAR_PAGE_SIZE as usize + 1;
+        let is_next_page = raw.len() == SIMILAR_PAGE_TAKE as usize;
         if is_next_page {
             raw.pop();
         }

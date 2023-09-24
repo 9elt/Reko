@@ -27,7 +27,7 @@ The result is a number between 0 and 112, where, 0 is 100% similarity and 112 is
 
 ### user recommendations
 
-Anime recommendations are taken from the 32 most similar users, and ordered by popularity and score among those users.
+Anime recommendations are taken from the 32 most similar users lists, and ordered by popularity and score among them.
 
 ## Documentation
 

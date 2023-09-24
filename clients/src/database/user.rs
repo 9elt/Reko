@@ -99,25 +99,31 @@ impl DBClient {
 
         res
     }
-    pub fn update_user_entries(&self, user: &PublicUser, etrs: Vec<PublicListEntry>) -> bool {
+    pub fn update_user_entries(&self, user: &PublicUser, entries: Vec<PublicListEntry>) -> bool {
         let mut conn = self.connect();
+
+        let ids = entries.iter().map(|e| e.id).collect::<Vec<_>>();
+
+        let update_ids: Vec<i32> = E::entries
+            .select(E::anime)
+            .filter(E::user.eq(&user.id))
+            .filter(E::anime.eq_any(&ids))
+            .get_results::<i32>(&mut conn)
+            .unwrap_or(Vec::new());
 
         let mut missing = Vec::new();
 
-        for e in etrs {
-            let ie = ListEntryInsert::from_public(user.id, &e);
+        for entry in entries {
+            let insert = ListEntryInsert::from_public(user.id, &entry);
 
-            let res = match diesel::update(E::entries)
-                .filter(E::id.eq(e.id))
-                .set(&ie)
-                .execute(&mut conn)
-            {
-                Ok(n) => n,
-                Err(_) => 0,
-            };
-
-            if res == 0 {
-                missing.push(ie);
+            if update_ids.contains(&entry.id) {
+                diesel::update(E::entries)
+                    .filter(E::id.eq(entry.id))
+                    .set(&insert)
+                    .execute(&mut conn)
+                    .ok();
+            } else {
+                missing.push(insert);
             }
         }
 

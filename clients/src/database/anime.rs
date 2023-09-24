@@ -65,6 +65,7 @@ impl DBClient {
             .left_join(A::anime.on(A::id.eq(E::anime)))
             .select(E::anime)
             .filter(E::anime.is_null())
+            .group_by(E::anime)
             .load::<i32>(&mut conn)
         {
             Ok(res) => res,
