@@ -23,11 +23,11 @@ In few words, the hash roughly stores information on what the user **watches and
 
 Users are compared by computing the [***hamming distance***](https://en.wikipedia.org/wiki/Hamming_distance) on their hashes.
 
-Since genres and themes use most of the hash space (45 bits) the *hamming distance* is computed twice, first on the entire hash, than, with a mask that removes genres and themes bits.
+Since genres and themes use most of the hash space (45 bits) the *hamming distance* is computed twice, first on the entire hash, then, with a mask that removes genres and themes bits.
 
 The result is a number between 0 and 83, where 0 is 100% similarity and 83 is 0%.
 
-### user recommendations
+### anime recommendations
 
 Anime recommendations are taken from the 32 most similar users lists, and ordered by popularity and score among them.
 
