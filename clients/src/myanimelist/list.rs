@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use structs::ListEntry as PublicListEntry;
 use structs::{RekoError, RekoResult};
-use util::{now, sleep};
+use util::{clamp, days_from, now, sleep};
 
 const LIST_QUERY: &str = "?fields=list_status&sort=list_updated_at&nsfw=1";
 const WATCHED: &[&str] = &["completed", "watching"];
@@ -20,7 +20,7 @@ impl MALClient {
         };
 
         let limit = if is_update {
-            now().signed_duration_since(updated_at).num_days() as usize * 3
+            clamp(days_from(updated_at) * 3, 5, 1000)
         } else {
             1000
         };
