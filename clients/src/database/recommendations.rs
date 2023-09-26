@@ -10,7 +10,7 @@ use structs::Recommendation as PublicRecommendation;
 use structs::RecommendationDetails as PublicRecommendationDetails;
 use structs::Stat;
 use structs::User as PublicUser;
-use util::{pub_page, similarity, HASH_SHIFT, MAX_PAGE_RECOMMENDATIONS};
+use util::{pub_page, similarity, HASH_MASK, MAX_PAGE_RECOMMENDATIONS};
 
 const RECO_MAX_USERS: i32 = 32;
 const RECO_PAGE_SIZE: i32 = 16;
@@ -35,7 +35,7 @@ impl DBClient {
         SELECT id FROM users WHERE id != '{id}'
         ORDER BY (
             BIT_COUNT({hash} ^ hash) +
-            BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (hash >> {HASH_SHIFT}))
+            BIT_COUNT(({hash} & {HASH_MASK}) ^ (hash & {HASH_MASK}))
         ) ASC
         LIMIT {RECO_MAX_USERS};
         "
@@ -67,7 +67,7 @@ impl DBClient {
         GROUP_CONCAT(U.hash) hashes,
         GROUP_CONCAT((
             BIT_COUNT({hash} ^ U.hash) +
-            BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (U.hash >> {HASH_SHIFT}))
+            BIT_COUNT(({hash} & {HASH_MASK}) ^ (U.hash & {HASH_MASK}))
         )) distances,
         GROUP_CONCAT(E.score) scores
 

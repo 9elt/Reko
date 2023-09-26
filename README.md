@@ -10,9 +10,9 @@ Reko API matching algorithm is **hash based**.
 
 The hash is 64-bit and each position represents an anime statistic. The latter are ordered by mal popularity weighted for mean score.
 
-<blockquote><small><sup>example</sup></small>
+<blockquote><small><sup>complete <a href="./ref.statistics.txt">reference</a>, example:</sup></small>
 
-***`0`** 12 Episodes series, **`1`** Action genre, **`2`** Fantasy genre,  **. . .** **`6`** Aired in the 20s, **. . .** **`59`** PG rating **. . .***
+***`0`** PG-13 rating, **`1`** 12 Episodes series, **`2`** Aired in the 10s,  **`3`** Action genre, **. . .** **`63`** RX rating*
 </blockquote>
 
 The hash is generated from a user list, using the statistics of the last 256 anime he's watched. Each bit is assigned `1` when the corresponding stat has `times watched * scores` greater than the next one.
@@ -21,9 +21,11 @@ In few words, the hash roughly stores information on what the user **watches and
 
 ### user comparison
 
-Users are compared by computing the [***hamming distance***](https://en.wikipedia.org/wiki/Hamming_distance) on their hashes twice, first on the entire hash, than, on the first 48-bits.
+Users are compared by computing the [***hamming distance***](https://en.wikipedia.org/wiki/Hamming_distance) on their hashes.
 
-The result is a number between 0 and 112, where, 0 is 100% similarity and 112 is 0%.
+Since genres and themes use most of the hash space (45 bits) the *hamming distance* is computed twice, first on the entire hash, than, with a mask that removes genres and themes bits.
+
+The result is a number between 0 and 83, where 0 is 100% similarity and 83 is 0%.
 
 ### user recommendations
 

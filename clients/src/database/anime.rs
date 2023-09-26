@@ -4,6 +4,7 @@ use super::DBClient;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use structs::Anime as PublicAnime;
+use structs::Stat;
 
 impl DBClient {
     pub fn get_anime(&self, ids: Vec<i32>) -> Vec<PublicAnime> {
@@ -116,7 +117,11 @@ impl Anime {
             rating: self.rating,
             picture: self.picture,
             aired: self.aired,
-            stats: serde_json::from_str::<Vec<i32>>(&self.stats).unwrap_or(Vec::new()),
+            stats: serde_json::from_str::<Vec<i32>>(&self.stats)
+                .unwrap_or(Vec::new())
+                .iter()
+                .map(|id| Stat::new(id))
+                .collect(),
             updated_at: self.updated_at,
             parent: self.parent,
         }

@@ -5,12 +5,11 @@ pub const MAX_PAGE_SIMILAR_USERS: u8 = 40;
 
 pub const MAX_PAGE_RECOMMENDATIONS: u8 = 20;
 
-pub const HASH_SHIFT: u8 = 16;
+pub const HASH_MASK: u64 = 0b1110010101000110101000000110000001000011000000000001000010010001;
 
-const SM_HASH_SIZE: u8 = 64 - HASH_SHIFT;
+pub const MASK_SIZE: i32 = HASH_MASK.count_ones() as i32;
 
-/// max hamming distance
-pub const MAX_HD: i32 = 64 + SM_HASH_SIZE as i32;
+pub const MAX_HD: i32 = 64 + MASK_SIZE;
 
 pub fn similarity(distance: i32) -> i32 {
     100 - (distance * 100 / MAX_HD)

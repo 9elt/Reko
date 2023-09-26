@@ -54,7 +54,7 @@ pub struct AnimePicture {
 
 impl Anime {
     fn to_public(self) -> PublicAnime {
-        let mut stats: Vec<i32> = Vec::new();
+        let mut stats: Vec<Stat> = Vec::new();
 
         let airing_date = match self.start_date {
             Some(d) => match NaiveDate::parse_from_str(&d, "%Y-%m-%d") {
@@ -65,17 +65,17 @@ impl Anime {
         };
 
         if let Some(date) = airing_date {
-            stats.push(Stat::from_airing_date(date).uid());
+            stats.push(Stat::from_airing_date(date));
         }
 
         if let Some(num_episodes) = self.num_episodes {
-            stats.push(Stat::from_series_len(num_episodes).uid());
+            stats.push(Stat::from_series_len(num_episodes));
         }
 
         if let Some(rating) = self.rating.to_owned() {
             let stat = Stat::from_rating(rating);
             if stat.is_ok() {
-                stats.push(stat.uid());
+                stats.push(stat);
             }
         }
 
@@ -83,7 +83,7 @@ impl Anime {
             genres.iter().for_each(|genre| {
                 let stat = Stat::from_genre(genre.id);
                 if stat.is_ok() {
-                    stats.push(stat.uid());
+                    stats.push(stat);
                 }
             });
         }

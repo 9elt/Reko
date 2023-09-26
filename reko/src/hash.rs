@@ -1,13 +1,17 @@
+use structs::Stat;
+
 pub struct Hasher {
-    data: [i32; 92],
+    data: [i32; 65],
 }
 
 impl Hasher {
     pub fn new() -> Self {
-        Self { data: [0; 92] }
+        Self { data: [0; 65] }
     }
-    pub fn push(&mut self, stat: i32, value: i32) {
-        self.data[stat as usize] += value;
+    pub fn push(&mut self, stat: Stat, value: i32) {
+        if let Some(pos) = stat.hash_pos() {
+            self.data[pos] += value;
+        }
     }
     pub fn finalize(&mut self) -> u64 {
         let mut hash: u64 = 0;

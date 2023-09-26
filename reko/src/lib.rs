@@ -64,7 +64,7 @@ impl Reko {
                 let list = self.mal.list(username.to_owned(), None).await?;
 
                 if list.len() == 0 {
-                    return Err(RekoError::new(422, "EmptyUserList", "User list is empty"))
+                    return Err(RekoError::new(422, "EmptyUserList", "User list is empty"));
                 }
 
                 let mut ids = Vec::new();
@@ -130,16 +130,18 @@ impl Reko {
         }
     }
     pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<Response> {
-        let hd_64 = (user.hash.to_u64() ^ other.hash.to_u64()).count_ones();
-        let hd_16 =
-            ((user.hash.to_u64() >> HASH_SHIFT) ^ (other.hash.to_u64() >> HASH_SHIFT)).count_ones();
+        let user_hash = user.hash.to_u64();
+        let other_hash = other.hash.to_u64();
+
+        let full_hd = (user_hash ^ other_hash).count_ones();
+        let part_hd = ((user_hash & HASH_MASK) ^ (other_hash & HASH_MASK)).count_ones();
 
         Ok(Response::new(
             user,
             Data::Compare(SimilarUser {
                 username: other.username.to_owned(),
                 hash: other.hash.to_owned(),
-                similarity: similarity((hd_64 + hd_16) as i32),
+                similarity: similarity((full_hd + part_hd) as i32),
             }),
         ))
     }
