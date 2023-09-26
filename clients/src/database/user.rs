@@ -7,6 +7,7 @@ use diesel::sql_types as sql;
 use structs::DetailedListEntry as PublicDetailedListEntry;
 use structs::Hash;
 use structs::ListEntry as PublicListEntry;
+use structs::Stat;
 use structs::User as PublicUser;
 
 impl DBClient {
@@ -175,7 +176,11 @@ impl DetailedListEntry {
     fn to_public(self) -> PublicDetailedListEntry {
         PublicDetailedListEntry {
             id: self.id,
-            stats: serde_json::from_str::<Vec<i32>>(&self.stats).unwrap_or(Vec::new()),
+            stats: serde_json::from_str::<Vec<i32>>(&self.stats)
+                .unwrap_or(Vec::new())
+                .iter()
+                .map(|id| Stat::new(id))
+                .collect(),
             score: self.score,
             mean: self.mean.unwrap_or(0.0) as i32,
         }

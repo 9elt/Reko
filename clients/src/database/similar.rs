@@ -5,7 +5,7 @@ use structs::Hash;
 use structs::Pagination;
 use structs::SimilarUser as PublicSimilarUser;
 use structs::User as PublicUser;
-use util::{pub_page, similarity, HASH_SHIFT, MAX_PAGE_SIMILAR_USERS};
+use util::{pub_page, similarity, HASH_MASK, MAX_PAGE_SIMILAR_USERS};
 
 const SIMILAR_PAGE_SIZE: i32 = 32;
 const SIMILAR_PAGE_TAKE: i32 = SIMILAR_PAGE_SIZE + 1;
@@ -28,7 +28,7 @@ impl DBClient {
             "
         SELECT username, hash, (
             BIT_COUNT({hash} ^ hash) +
-            BIT_COUNT(({hash} >> {HASH_SHIFT}) ^ (hash >> {HASH_SHIFT}))
+            BIT_COUNT(({hash} & {HASH_MASK}) ^ (hash & {HASH_MASK}))
         ) distance
         FROM users
         WHERE id != '{id}'
