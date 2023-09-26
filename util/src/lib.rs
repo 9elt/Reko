@@ -33,10 +33,24 @@ pub fn days_ago(days: u64) -> NaiveDateTime {
     now().checked_sub_days(Days::new(days)).unwrap()
 }
 
+pub fn days_from(date: NaiveDateTime) -> usize {
+    now().signed_duration_since(date).num_days() as usize
+}
+
 pub fn now() -> NaiveDateTime {
     Utc::now().naive_utc()
 }
 
 pub fn sleep(ms: u16) {
     thread::sleep(Duration::from_millis(ms as u64));
+}
+
+pub fn clamp(n: usize, min: usize, max: usize) -> usize {
+    if n < min {
+        min
+    } else if n > max {
+        max
+    } else {
+        n
+    }
 }
