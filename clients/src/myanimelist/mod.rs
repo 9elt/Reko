@@ -1,10 +1,12 @@
 mod anime;
 mod list;
+mod timer;
 
 use reqwest::{header::USER_AGENT, Client, StatusCode};
 use serde::Deserialize;
 use std::env;
 use std::fs;
+use timer::{Timer, WrappedTimer};
 
 const MAL_API: &str = "https://api.myanimelist.net/v2";
 
@@ -13,6 +15,7 @@ pub struct MALClient {
     client_id: String,
     client: Client,
     config: ClientConfig,
+    timer: WrappedTimer,
 }
 
 impl MALClient {
@@ -25,12 +28,18 @@ impl MALClient {
             client_id,
             client: Client::new(),
             config: ClientConfig::new(),
+            timer: Timer::new(),
         }
     }
     async fn get<R: for<'a> Deserialize<'a>>(&self, url: String) -> Result<R, u16> {
         if self.config.enable_fake_api {
             return self.fake_api(url);
         }
+
+        // enforces max mal requests per second across threads
+        // the lock is released when `timer` goes out of scope
+        let mut timer = self.timer.lock().await;
+        timer.sleep();
 
         let res = self
             .client
@@ -59,7 +68,7 @@ impl MALClient {
         }
     }
     /// for development use
-    /// requires ENABLE_FAKE_API and FAKE_API_PATH envs
+    /// requires ENABLE_FAKE_API="true" and FAKE_API_PATH envs
     ///
     /// parses files at:
     /// FAKE_API_PATH/anime/{id}.json

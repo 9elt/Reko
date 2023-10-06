@@ -1,18 +1,18 @@
 use chrono::{Days, NaiveDateTime, Utc};
 use std::{thread, time::Duration};
 
+pub const MAX_MAL_REQ_PER_SECOND: u16 = 3;
+
 pub const MAX_PAGE_SIMILAR_USERS: u8 = 40;
 
 pub const MAX_PAGE_RECOMMENDATIONS: u8 = 20;
 
 pub const HASH_MASK: u64 = 0b1110010101000110101000000110000001000011000000000001000010010001;
 
-pub const MASK_SIZE: i32 = HASH_MASK.count_ones() as i32;
-
-pub const MAX_HD: i32 = 64 + MASK_SIZE;
+pub const MAX_HAMMING_DISTANCE: i32 = 64 + HASH_MASK.count_ones() as i32;
 
 pub fn similarity(distance: i32) -> i32 {
-    100 - (distance * 100 / MAX_HD)
+    100 - (distance * 100 / MAX_HAMMING_DISTANCE)
 }
 
 pub fn pub_page(page: u8) -> u8 {

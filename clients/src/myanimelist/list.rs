@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use structs::ListEntry as PublicListEntry;
 use structs::{RekoError, RekoResult};
-use util::{clamp, days_from, now, sleep};
+use util::{clamp, days_from, now};
 
 const LIST_QUERY: &str = "?fields=list_status&sort=list_updated_at&nsfw=1";
 const WATCHED: &[&str] = &["completed", "watching"];
@@ -59,10 +59,6 @@ impl MALClient {
                 offset += 1;
             } else {
                 break;
-            }
-
-            if offset > 2 {
-                sleep(250);
             }
         }
 
