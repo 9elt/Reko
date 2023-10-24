@@ -12,7 +12,7 @@ pub async fn get_similar_users(
     Query(query): Query<GenericQuery>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
-    println!("GET /{}/similar", &user);
+    println!("GET /{}/similar?page={}", &user, query.page.unwrap_or(1));
 
     let user = match reko
         .get_user(&user, query.force_update.unwrap_or(false), false)
@@ -33,7 +33,7 @@ pub async fn get_recommendations(
     Query(query): Query<GenericQuery>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
-    println!("GET /{}/recommendations", &user);
+    println!("GET /{}/recommendations?page={}", &user, query.page.unwrap_or(1));
 
     let user = match reko
         .get_user(&user, query.force_update.unwrap_or(false), false)
