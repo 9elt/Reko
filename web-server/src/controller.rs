@@ -12,6 +12,8 @@ pub async fn get_similar_users(
     Query(query): Query<GenericQuery>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
+    println!("GET /{}/similar", &user);
+
     let user = match reko
         .get_user(&user, query.force_update.unwrap_or(false), false)
         .await
@@ -31,6 +33,8 @@ pub async fn get_recommendations(
     Query(query): Query<GenericQuery>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
+    println!("GET /{}/recommendations", &user);
+
     let user = match reko
         .get_user(&user, query.force_update.unwrap_or(false), false)
         .await
@@ -49,6 +53,8 @@ pub async fn compare_users(
     Path(cmp): Path<ComparePath>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
+    println!("GET /{}/compare/{}", &cmp.user, &cmp.other_user);
+
     let user = match reko.get_user(&cmp.user, false, false).await {
         Ok(user) => user,
         Err(err) => return Err(error(err)),

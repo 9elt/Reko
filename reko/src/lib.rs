@@ -145,29 +145,44 @@ impl Reko {
             }),
         ))
     }
-    pub async fn update_old_users(&self) {
+    pub async fn update_old_users<F: Fn(u32, u32)>(&self, progress: F) {
         let users = self.db.get_old_users();
 
+        let tot = users.len() as u32;
+        let mut curr: u32 = 1;
+
         for user in users {
+            progress(curr, tot);
             self.get_user(&user.username, true, false).await.ok();
+            curr += 1;
         }
     }
-    pub async fn update_airing_anime(&self) {
+    pub async fn update_airing_anime<F: Fn(u32, u32)>(&self, progress: F) {
         let airing = self.db.get_airing_anime();
 
+        let tot = airing.len() as u32;
+        let mut curr: u32 = 1;
+
         for anime in airing {
+            progress(curr, tot);
             if let Ok(anime) = self.mal.anime(anime.id).await {
                 self.db.update_anime(anime);
             }
+            curr += 1;
         }
     }
-    pub async fn request_missing_anime(&self) {
+    pub async fn request_missing_anime<F: Fn(u32, u32)>(&self, progress: F) {
         let missing = self.db.get_missing_anime();
 
+        let tot = missing.len() as u32;
+        let mut curr: u32 = 1;
+
         for id in missing {
+            progress(curr, tot);
             if let Ok(anime) = self.mal.anime(id).await {
                 self.db.insert_anime(vec![anime]);
             }
+            curr += 1;
         }
     }
     fn user_hash(&self, list: Vec<DetailedListEntry>) -> RekoResult<Hash> {
