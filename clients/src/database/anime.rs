@@ -47,7 +47,11 @@ impl DBClient {
     pub fn get_airing_anime(&self) -> Vec<PublicAnime> {
         let mut conn = self.connect();
 
-        let raw: Vec<Anime> = match A::anime.filter(A::aired.eq(false)).load::<Anime>(&mut conn) {
+        let raw: Vec<Anime> = match A::anime
+            .filter(A::aired.eq(false))
+            .limit(100)
+            .load::<Anime>(&mut conn)
+        {
             Ok(res) => res,
             Err(_) => return Vec::new(),
         };
@@ -65,8 +69,9 @@ impl DBClient {
         match E::entries
             .left_join(A::anime.on(A::id.eq(E::anime)))
             .select(E::anime)
-            .filter(E::anime.is_null())
+            .filter(A::id.is_null())
             .group_by(E::anime)
+            .limit(100)
             .load::<i32>(&mut conn)
         {
             Ok(res) => res,

@@ -33,6 +33,7 @@ impl MALClient {
     }
     async fn get<R: for<'a> Deserialize<'a>>(&self, url: String) -> Result<R, u16> {
         if self.config.enable_fake_api {
+            println!("FAKE {}", &url);
             return self.fake_api(url);
         }
 
