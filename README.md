@@ -10,7 +10,7 @@ Reko API matching algorithm is **hash based**.
 
 The hash is 64-bit and each position represents an anime statistic. The latter are ordered by mal popularity weighted for mean score.
 
-<blockquote><small><sup>complete <a href="./ref.statistics.txt">reference</a>, example:</sup></small>
+<blockquote><small><sup>complete <a href="statistics.txt">reference</a>, example:</sup></small>
 
 ***`0`** PG-13 rating, **`1`** 12 Episodes series, **`2`** Aired in the 10s,  **`3`** Action genre, **. . .** **`63`** RX rating*
 </blockquote>

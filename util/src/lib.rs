@@ -1,7 +1,7 @@
 use chrono::{Days, NaiveDateTime, Utc};
 use std::{thread, time::Duration};
 
-pub const MAX_MAL_REQ_PER_SECOND: u16 = 3;
+pub const MAX_MAL_REQ_PER_SECOND: f64 = 2.5;
 
 pub const MAX_PAGE_SIMILAR_USERS: u8 = 40;
 

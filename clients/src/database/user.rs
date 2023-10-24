@@ -143,7 +143,7 @@ impl DBClient {
         let mut conn = self.connect();
 
         let raw = match U::users
-            .order_by(U::updated_at.asc())
+            .order(U::updated_at.asc())
             .limit(100)
             .get_results::<User>(&mut conn)
         {

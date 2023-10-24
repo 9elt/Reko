@@ -3,7 +3,7 @@ use std::time::Instant;
 use tokio::sync::Mutex;
 use util::{sleep, MAX_MAL_REQ_PER_SECOND};
 
-const MIN_SLEEP: u16 = 1100 / MAX_MAL_REQ_PER_SECOND;
+const MIN_SLEEP: u16 = (1000.0 / MAX_MAL_REQ_PER_SECOND) as u16;
 
 pub type WrappedTimer = Arc<Mutex<Timer>>;
 
