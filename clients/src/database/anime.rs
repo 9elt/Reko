@@ -50,7 +50,7 @@ impl DBClient {
         let raw: Vec<Anime> = match A::anime
             .filter(A::aired.eq(false))
             .limit(100)
-            .order(A::updated_at.desc())
+            .order(A::updated_at.asc())
             .load::<Anime>(&mut conn)
         {
             Ok(res) => res,
