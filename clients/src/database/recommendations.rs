@@ -10,6 +10,7 @@ use structs::Recommendation as PublicRecommendation;
 use structs::RecommendationDetails as PublicRecommendationDetails;
 use structs::Stat;
 use structs::User as PublicUser;
+use structs::UserRecommendation as PublicUserRecommendation;
 use util::{pub_page, similarity, HASH_MASK, MAX_PAGE_RECOMMENDATIONS};
 
 const RECO_MAX_USERS: i32 = 32;
@@ -126,6 +127,78 @@ impl DBClient {
 
         (res, pagination)
     }
+    pub fn get_recommendations_from(
+        &self,
+        user: &PublicUser,
+        other: &PublicUser,
+        page: u8,
+    ) -> (Vec<PublicUserRecommendation>, Pagination) {
+        let mut pagination = Pagination::new(pub_page(page));
+
+        let mut conn = self.connect();
+
+        let id = user.id;
+        let other_id = other.id;
+        let offset = page as i32 * RECO_PAGE_SIZE;
+
+        let mut raw = match diesel::sql_query(format!(
+            "
+        SELECT
+
+        DISTINCT A.id, A.title, A.airing_date, A.length,
+        A.mean, A.rating, A.picture, A.stats, E.score
+
+        FROM entries E
+        INNER JOIN anime A ON E.anime = A.id
+
+        WHERE E.user = {other_id}
+
+        AND E.watched = 1
+        AND E.score > 0
+        AND A.mean IS NOT NULL
+
+        AND E.anime != 21 -- we don't recommend One Piece in here
+
+        AND E.anime NOT IN (
+            SELECT anime
+            FROM entries
+            WHERE user = '{id}'
+        )
+
+        AND A.parent IS NULL -- no sequels/spinoffs
+
+        ORDER BY (E.score / (1 + (
+            DATEDIFF(NOW(),E.updated_at) / 30
+        ))) DESC
+
+        LIMIT {RECO_PAGE_TAKE} OFFSET {offset};
+        "
+        ))
+        .load::<UserRecommendation>(&mut conn)
+        {
+            Ok(res) => res,
+            Err(err) => {
+                println!("err {:#?}", err);
+                return (Vec::new(), pagination);
+            }
+        };
+
+        let is_next_page = raw.len() == RECO_PAGE_TAKE as usize;
+        if is_next_page {
+            raw.pop();
+        }
+
+        let mut res = Vec::with_capacity(raw.len());
+        for reco in raw {
+            res.push(reco.to_public());
+        }
+
+        if is_next_page && pub_page(page) < MAX_PAGE_RECOMMENDATIONS {
+            pagination.next = Some(pub_page(page) + 1);
+        }
+
+        (res, pagination)
+    }
 }
 
 #[derive(QueryableByName)]
@@ -211,4 +284,48 @@ fn group_concat<T: FromStr>(group_concat: &String) -> Vec<T> {
         .split(",")
         .filter_map(|id| T::from_str(id).ok())
         .collect::<Vec<_>>()
+}
+
+#[derive(QueryableByName)]
+struct UserRecommendation {
+    #[diesel(sql_type = sql::Integer)]
+    id: i32,
+    #[diesel(sql_type = sql::VarChar)]
+    title: String,
+    #[diesel(sql_type = sql::Nullable<sql::Timestamp>)]
+    airing_date: Option<NaiveDateTime>,
+    #[diesel(sql_type = sql::Nullable<sql::Integer>)]
+    length: Option<i32>,
+    #[diesel(sql_type = sql::Nullable<sql::Float>)]
+    mean: Option<f32>,
+    #[diesel(sql_type = sql::Nullable<sql::VarChar>)]
+    rating: Option<String>,
+    #[diesel(sql_type = sql::Nullable<sql::VarChar>)]
+    picture: Option<String>,
+    #[diesel(sql_type = sql::Longtext)]
+    stats: String,
+    #[diesel(sql_type = sql::Integer)]
+    score: i32,
+}
+
+impl UserRecommendation {
+    fn to_public(self) -> PublicUserRecommendation {
+        PublicUserRecommendation {
+            id: self.id,
+            score: self.score,
+            details: PublicRecommendationDetails {
+                title: self.title,
+                airing_date: self.airing_date,
+                length: self.length,
+                mean: self.mean,
+                rating: self.rating,
+                picture: self.picture,
+                genres: serde_json::from_str::<Vec<i32>>(&self.stats)
+                    .unwrap_or(Vec::new())
+                    .iter()
+                    .filter_map(|stat| Stat::new(stat).to_genre())
+                    .collect(),
+            },
+        }
+    }
 }

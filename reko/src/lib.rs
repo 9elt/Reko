@@ -4,8 +4,8 @@ use clients::database::DBClient;
 use clients::myanimelist::MALClient;
 use hash::Hasher;
 use structs::{
-    Data, DetailedListEntry, Hash, PaginatedResponse, RekoError, RekoResult, Response, SimilarUser,
-    User,
+    Data, DetailedListEntry, Hash, PaginatedResponse, RecommendationsFrom, RekoError, RekoResult,
+    Response, SimilarUser, User,
 };
 use util::*;
 
@@ -119,6 +119,31 @@ impl Reko {
             ))
         }
     }
+    pub fn get_recommendations_from(
+        &self,
+        user: &User,
+        other: &User,
+        page: i32,
+    ) -> RekoResult<PaginatedResponse> {
+        let (res, pagination) =
+            self.db
+                .get_recommendations_from(user, &other, db_page(page, MAX_PAGE_RECOMMENDATIONS));
+
+        let similar = self.user_comparison(user, other);
+
+        if res.len() == 0 {
+            Err(RekoError::new(404, "NoData", "No recommendations found"))
+        } else {
+            Ok(PaginatedResponse::new(
+                user,
+                Data::RecommendationFrom(RecommendationsFrom {
+                    user: similar,
+                    recommendations: res,
+                }),
+                pagination,
+            ))
+        }
+    }
     pub fn get_similar_users(&self, user: &User, page: i32) -> RekoResult<PaginatedResponse> {
         let (res, pagination) = self
             .db
@@ -130,19 +155,9 @@ impl Reko {
         }
     }
     pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<Response> {
-        let user_hash = user.hash.to_u64();
-        let other_hash = other.hash.to_u64();
-
-        let full_hd = (user_hash ^ other_hash).count_ones();
-        let part_hd = ((user_hash & HASH_MASK) ^ (other_hash & HASH_MASK)).count_ones();
-
         Ok(Response::new(
             user,
-            Data::Compare(SimilarUser {
-                username: other.username.to_owned(),
-                hash: other.hash.to_owned(),
-                similarity: similarity((full_hd + part_hd) as i32),
-            }),
+            Data::Compare(self.user_comparison(user, other)),
         ))
     }
     pub async fn update_old_users<F: Fn(u32, u32)>(&self, progress: F) {
@@ -183,6 +198,19 @@ impl Reko {
                 self.db.insert_anime(vec![anime]);
             }
             curr += 1;
+        }
+    }
+    fn user_comparison(&self, user: &User, other: &User) -> SimilarUser {
+        let user_hash = user.hash.to_u64();
+        let other_hash = other.hash.to_u64();
+
+        let full_hd = (user_hash ^ other_hash).count_ones();
+        let part_hd = ((user_hash & HASH_MASK) ^ (other_hash & HASH_MASK)).count_ones();
+
+        SimilarUser {
+            username: other.username.to_owned(),
+            hash: other.hash.to_owned(),
+            similarity: similarity((full_hd + part_hd) as i32),
         }
     }
     fn user_hash(&self, list: Vec<DetailedListEntry>) -> RekoResult<Hash> {

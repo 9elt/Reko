@@ -141,6 +141,19 @@ pub struct RecommendationDetails {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct RecommendationsFrom {
+    pub user: SimilarUser,
+    pub recommendations: Vec<UserRecommendation>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserRecommendation {
+    pub id: i32,
+    pub details: RecommendationDetails,
+    pub score: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Response {
     pub requester: RequestingUser,
     pub data: Data,
@@ -166,7 +179,7 @@ impl PaginatedResponse {
     pub fn new(user: &User, data: Data, pagination: Pagination) -> Self {
         Self {
             requester: RequestingUser::from_user(user),
-            data: data,
+            data,
             pagination,
         }
     }
@@ -195,6 +208,7 @@ pub enum Data {
     Compare(SimilarUser),
     Similar(Vec<SimilarUser>),
     Recommendation(Vec<Recommendation>),
+    RecommendationFrom(RecommendationsFrom),
 }
 
 #[derive(Deserialize, Debug, Clone)]

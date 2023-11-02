@@ -32,7 +32,25 @@ pub async fn get_recommendations(
 
     let user = unwrap!(reko.get_user(&user, false, false).await);
 
-    response!(reko.get_recommendations(&user, query.page.unwrap_or(1)))
+    response!(reko.get_recommendations(&user, page))
+}
+
+pub async fn get_recommendations_from(
+    Path(users): Path<Users>,
+    Query(query): Query<GenericQuery>,
+    State(reko): State<Reko>,
+) -> impl IntoResponse {
+    let page = query.page.unwrap_or(1);
+
+    println!(
+        "GET /{}/recommendations/{}?page={}",
+        &users.user, &users.other_user, page
+    );
+
+    let user = unwrap!(reko.get_user(&users.user, false, false).await);
+    let other_user = unwrap!(reko.get_user(&users.other_user, false, true).await);
+
+    response!(reko.get_recommendations_from(&user, &other_user, page))
 }
 
 pub async fn compare_users(
@@ -42,7 +60,7 @@ pub async fn compare_users(
     println!("GET /{}/compare/{}", &users.user, &users.other_user);
 
     let user = unwrap!(reko.get_user(&users.user, false, false).await);
-    let other_user = unwrap!(reko.get_user(&users.other_user, false, false).await);
+    let other_user = unwrap!(reko.get_user(&users.other_user, false, true).await);
 
     response!(reko.compare_users(&user, &other_user))
 }
