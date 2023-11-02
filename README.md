@@ -4,11 +4,9 @@ Reko is a Web API to match similar [***MyAnimeList***](https://myanimelist.net) 
 
 ## Algorithm
 
-Reko API matching algorithm is **hash based**.
-
 ### user hash
 
-The hash is 64-bit and each position represents an anime statistic. The latter are ordered by mal popularity weighted for mean score.
+Reko matching algorithm is **hash based**, it uses a 64-bit hash with each position representing an anime statistic. The latter are ordered by mal popularity weighted for mean score.
 
 <blockquote><small><sup>complete <a href="statistics.txt">reference</a>, example:</sup></small>
 
