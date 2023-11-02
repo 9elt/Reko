@@ -12,12 +12,11 @@ pub async fn get_similar_users(
     Query(query): Query<GenericQuery>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
-    println!("GET /{}/similar?page={}", &user, query.page.unwrap_or(1));
+    let page = query.page.unwrap_or(1);
 
-    let user = match reko
-        .get_user(&user, query.force_update.unwrap_or(false), false)
-        .await
-    {
+    println!("GET /{}/similar?page={}", &user, page);
+
+    let user = match reko.get_user(&user, false, false).await {
         Ok(user) => user,
         Err(err) => return Err(error(err)),
     };
@@ -33,12 +32,11 @@ pub async fn get_recommendations(
     Query(query): Query<GenericQuery>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
-    println!("GET /{}/recommendations?page={}", &user, query.page.unwrap_or(1));
+    let page = query.page.unwrap_or(1);
 
-    let user = match reko
-        .get_user(&user, query.force_update.unwrap_or(false), false)
-        .await
-    {
+    println!("GET /{}/recommendations?page={}", &user, page);
+
+    let user = match reko.get_user(&user, false, false).await {
         Ok(user) => user,
         Err(err) => return Err(error(err)),
     };
@@ -88,5 +86,7 @@ pub struct ComparePath {
 #[derive(Deserialize)]
 pub struct GenericQuery {
     page: Option<i32>,
+    // legacy
+    #[allow(dead_code)]
     force_update: Option<bool>,
 }
