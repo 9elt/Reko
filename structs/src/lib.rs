@@ -141,12 +141,6 @@ pub struct RecommendationDetails {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct RecommendationsFrom {
-    pub user: SimilarUser,
-    pub recommendations: Vec<UserRecommendation>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct UserRecommendation {
     pub id: i32,
     pub details: RecommendationDetails,
@@ -208,7 +202,7 @@ pub enum Data {
     Compare(SimilarUser),
     Similar(Vec<SimilarUser>),
     Recommendation(Vec<Recommendation>),
-    RecommendationFrom(RecommendationsFrom),
+    RecommendationFrom(Vec<UserRecommendation>),
 }
 
 #[derive(Deserialize, Debug, Clone)]

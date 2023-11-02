@@ -4,8 +4,8 @@ use clients::database::DBClient;
 use clients::myanimelist::MALClient;
 use hash::Hasher;
 use structs::{
-    DetailedListEntry, Hash, Pagination, Recommendation, RecommendationsFrom, RekoError,
-    RekoResult, SimilarUser, User,
+    DetailedListEntry, Hash, Pagination, Recommendation, RekoError,
+    RekoResult, SimilarUser, User, UserRecommendation,
 };
 use util::*;
 
@@ -124,23 +124,15 @@ impl Reko {
         user: &User,
         other: &User,
         page: i32,
-    ) -> RekoResult<(RecommendationsFrom, Pagination)> {
+    ) -> RekoResult<(Vec<UserRecommendation>, Pagination)> {
         let (result, pagination) =
             self.db
                 .get_recommendations_from(user, &other, db_page(page, MAX_PAGE_RECOMMENDATIONS));
 
-        let similar = self.compare_users(user, other);
-
         if result.len() == 0 {
             Err(RekoError::new(404, "NoData", "No recommendations found"))
         } else {
-            Ok((
-                RecommendationsFrom {
-                    user: similar,
-                    recommendations: result,
-                },
-                pagination,
-            ))
+            Ok((result, pagination))
         }
     }
     pub fn get_similar_users(

@@ -167,9 +167,9 @@ impl DBClient {
 
         AND A.parent IS NULL -- no sequels/spinoffs
 
-        ORDER BY (E.score / (1 + (
-            DATEDIFF(NOW(),E.updated_at) / 30
-        ))) DESC
+        ORDER BY (E.score / (
+            DATEDIFF(NOW(),E.updated_at) / 365
+        )) DESC
 
         LIMIT {RECO_PAGE_TAKE} OFFSET {offset};
         "
