@@ -16,15 +16,9 @@ pub async fn get_similar_users(
 
     println!("GET /{}/similar?page={}", &user, page);
 
-    let user = match reko.get_user(&user, false, false).await {
-        Ok(user) => user,
-        Err(err) => return Err(error(err)),
-    };
+    let user = unwrap!(reko.get_user(&user, false, false).await);
 
-    match reko.get_similar_users(&user, query.page.unwrap_or(1)) {
-        Ok(res) => Ok(success(res)),
-        Err(err) => Err(error(err)),
-    }
+    response!(reko.get_similar_users(&user, page))
 }
 
 pub async fn get_recommendations(
@@ -36,37 +30,21 @@ pub async fn get_recommendations(
 
     println!("GET /{}/recommendations?page={}", &user, page);
 
-    let user = match reko.get_user(&user, false, false).await {
-        Ok(user) => user,
-        Err(err) => return Err(error(err)),
-    };
+    let user = unwrap!(reko.get_user(&user, false, false).await);
 
-    match reko.get_recommendations(&user, query.page.unwrap_or(1)) {
-        Ok(res) => Ok(success(res)),
-        Err(err) => Err(error(err)),
-    }
+    response!(reko.get_recommendations(&user, query.page.unwrap_or(1)))
 }
 
 pub async fn compare_users(
-    Path(cmp): Path<ComparePath>,
+    Path(users): Path<Users>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
-    println!("GET /{}/compare/{}", &cmp.user, &cmp.other_user);
+    println!("GET /{}/compare/{}", &users.user, &users.other_user);
 
-    let user = match reko.get_user(&cmp.user, false, false).await {
-        Ok(user) => user,
-        Err(err) => return Err(error(err)),
-    };
+    let user = unwrap!(reko.get_user(&users.user, false, false).await);
+    let other_user = unwrap!(reko.get_user(&users.other_user, false, false).await);
 
-    let other_user = match reko.get_user(&cmp.other_user, false, false).await {
-        Ok(user) => user,
-        Err(err) => return Err(error(err)),
-    };
-
-    match reko.compare_users(&user, &other_user) {
-        Ok(res) => Ok(success(res)),
-        Err(err) => Err(error(err)),
-    }
+    response!(reko.compare_users(&user, &other_user))
 }
 
 pub async fn not_found() -> impl IntoResponse {
@@ -78,7 +56,7 @@ pub async fn version() -> impl IntoResponse {
 }
 
 #[derive(Deserialize)]
-pub struct ComparePath {
+pub struct Users {
     user: String,
     other_user: String,
 }
