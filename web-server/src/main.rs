@@ -1,8 +1,8 @@
-mod controller;
+#[macro_use]
 mod util;
+mod controller;
 
 use reko::Reko;
-
 use axum::{routing::get, Router};
 use dotenvy::dotenv;
 use tower::builder::ServiceBuilder;
