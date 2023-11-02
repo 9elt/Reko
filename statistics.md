@@ -19,7 +19,7 @@
 | 14 | 2 | 2000s | airing decade | 681956174 |
 | 15 | 23 | Supernatural | genre (*id 37*)| 639058698 |
 | 16 | 5 | 1 Episode | length | 605292841 |
-| 17 | 22 | Fi | genre (*id 24Sci*)| 529715512 |
+| 17 | 22 | Sci Fi | genre (*id 24*)| 529715512 |
 | 18 | 39 | Seinen | genre (*id 42*)| 381576293 |
 | 19 | 56 | Psychological | genre (*id 40*)| 351854056 |
 | 20 | 30 | Mystery | genre (*id 7*)| 347772806 |
