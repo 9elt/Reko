@@ -11,3 +11,23 @@ pub fn error(err: RekoError) -> impl IntoResponse {
     let status = StatusCode::from_u16(err.code).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
     (status, Json(json!(err))).into_response()
 }
+
+#[macro_export]
+macro_rules! unwrap {
+    ($result:expr) => {
+        match $result {
+            Ok(data) => data,
+            Err(err) => return Err(error(err)),
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! response {
+    ($result:expr) => {
+        match $result {
+            Ok(data) => Ok(success(data)),
+            Err(err) => Err(error(err)),
+        }
+    };
+}
