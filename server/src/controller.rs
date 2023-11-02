@@ -4,6 +4,7 @@ use axum::response::IntoResponse;
 use hyper::StatusCode;
 use reko::Reko;
 use serde::Deserialize;
+use structs::{Data, PaginatedResponse, RequestingUser, Response};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -18,7 +19,13 @@ pub async fn get_similar_users(
 
     let user = unwrap!(reko.get_user(&user, false, false).await);
 
-    response!(reko.get_similar_users(&user, page))
+    let (result, pagination) = unwrap!(reko.get_similar_users(&user, page));
+
+    response!(PaginatedResponse {
+        requester: RequestingUser::from_user(&user),
+        data: Data::Similar(result),
+        pagination,
+    })
 }
 
 pub async fn get_recommendations(
@@ -32,7 +39,13 @@ pub async fn get_recommendations(
 
     let user = unwrap!(reko.get_user(&user, false, false).await);
 
-    response!(reko.get_recommendations(&user, page))
+    let (result, pagination) = unwrap!(reko.get_recommendations(&user, page));
+
+    response!(PaginatedResponse {
+        requester: RequestingUser::from_user(&user),
+        data: Data::Recommendation(result),
+        pagination,
+    })
 }
 
 pub async fn get_recommendations_from(
@@ -50,7 +63,13 @@ pub async fn get_recommendations_from(
     let user = unwrap!(reko.get_user(&users.user, false, false).await);
     let other_user = unwrap!(reko.get_user(&users.other_user, false, true).await);
 
-    response!(reko.get_recommendations_from(&user, &other_user, page))
+    let (result, pagination) = unwrap!(reko.get_recommendations_from(&user, &other_user, page));
+
+    response!(PaginatedResponse {
+        requester: RequestingUser::from_user(&user),
+        data: Data::RecommendationFrom(result),
+        pagination,
+    })
 }
 
 pub async fn compare_users(
@@ -62,7 +81,12 @@ pub async fn compare_users(
     let user = unwrap!(reko.get_user(&users.user, false, false).await);
     let other_user = unwrap!(reko.get_user(&users.other_user, false, true).await);
 
-    response!(reko.compare_users(&user, &other_user))
+    let result = reko.compare_users(&user, &other_user);
+
+    response!(Response {
+        requester: RequestingUser::from_user(&user),
+        data: Data::Compare(result),
+    })
 }
 
 pub async fn not_found() -> impl IntoResponse {
