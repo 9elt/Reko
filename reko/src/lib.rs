@@ -35,7 +35,7 @@ impl Reko {
 
         match self.db.get_user(username.to_owned()) {
             Some(mut user) => {
-                if !prevent_update && force_update || user.updated_at < days_ago(DAYS_BEFORE_UPDATE)
+                if !prevent_update && (force_update || user.updated_at < days_ago(DAYS_BEFORE_UPDATE))
                 {
                     let list_update = match self.mal.list(username, Some(user.updated_at)).await {
                         Ok(res) => res,
