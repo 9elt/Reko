@@ -13,7 +13,7 @@ use structs::User as PublicUser;
 use structs::UserRecommendation as PublicUserRecommendation;
 use util::{pub_page, similarity, HASH_MASK, MAX_PAGE_RECOMMENDATIONS};
 
-const RECO_MAX_USERS: i32 = 32;
+const SIMILAR_PAGE_SIZE: i32 = 32;
 const RECO_PAGE_SIZE: i32 = 16;
 const RECO_PAGE_TAKE: i32 = RECO_PAGE_SIZE + 1;
 
@@ -22,6 +22,7 @@ impl DBClient {
         &self,
         user: &PublicUser,
         page: u8,
+        batch: u8,
     ) -> (Vec<PublicRecommendation>, Pagination) {
         let mut pagination = Pagination::new(pub_page(page));
 
@@ -29,6 +30,7 @@ impl DBClient {
 
         let id = user.id;
         let hash = user.hash.to_u64();
+        let user_offeset = batch as i32 * SIMILAR_PAGE_SIZE;
         let offset = page as i32 * RECO_PAGE_SIZE;
 
         let users_query = match diesel::sql_query(format!(
@@ -38,7 +40,7 @@ impl DBClient {
             BIT_COUNT({hash} ^ hash) +
             BIT_COUNT(({hash} & {HASH_MASK}) ^ (hash & {HASH_MASK}))
         ) ASC
-        LIMIT {RECO_MAX_USERS};
+        LIMIT {SIMILAR_PAGE_SIZE} OFFSET {user_offeset};
         "
         ))
         .load::<GenericId>(&mut conn)

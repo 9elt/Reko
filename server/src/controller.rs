@@ -34,12 +34,16 @@ pub async fn get_recommendations(
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
     let page = query.page.unwrap_or(1);
+    let batch = query.batch.unwrap_or(1);
 
-    println!("GET /{}/recommendations?page={}", &user, page);
+    println!(
+        "GET /{}/recommendations?page={}&batch={}",
+        &user, page, batch
+    );
 
     let user = unwrap!(reko.get_user(&user, false, false).await);
 
-    let (result, pagination) = unwrap!(reko.get_recommendations(&user, page));
+    let (result, pagination) = unwrap!(reko.get_recommendations(&user, page, batch));
 
     response!(PaginatedResponse {
         requester: RequestingUser::from_user(&user),
@@ -106,6 +110,7 @@ pub struct Users {
 #[derive(Deserialize)]
 pub struct GenericQuery {
     page: Option<i32>,
+    batch: Option<i32>,
     // legacy
     #[allow(dead_code)]
     force_update: Option<bool>,

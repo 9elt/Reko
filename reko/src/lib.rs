@@ -4,8 +4,8 @@ use clients::database::DBClient;
 use clients::myanimelist::MALClient;
 use hash::Hasher;
 use structs::{
-    DetailedListEntry, Hash, Pagination, Recommendation, RekoError,
-    RekoResult, SimilarUser, User, UserRecommendation,
+    DetailedListEntry, Hash, Pagination, Recommendation, RekoError, RekoResult, SimilarUser, User,
+    UserRecommendation,
 };
 use util::*;
 
@@ -35,7 +35,8 @@ impl Reko {
 
         match self.db.get_user(username.to_owned()) {
             Some(mut user) => {
-                if !prevent_update && (force_update || user.updated_at < days_ago(DAYS_BEFORE_UPDATE))
+                if !prevent_update
+                    && (force_update || user.updated_at < days_ago(DAYS_BEFORE_UPDATE))
                 {
                     let list_update = match self.mal.list(username, Some(user.updated_at)).await {
                         Ok(res) => res,
@@ -108,10 +109,13 @@ impl Reko {
         &self,
         user: &User,
         page: i32,
+        batch: i32,
     ) -> RekoResult<(Vec<Recommendation>, Pagination)> {
-        let (result, pagination) = self
-            .db
-            .get_recommendations(user, db_page(page, MAX_PAGE_RECOMMENDATIONS));
+        let (result, pagination) = self.db.get_recommendations(
+            user,
+            db_page(page, MAX_PAGE_RECOMMENDATIONS),
+            db_page(batch, MAX_PAGE_RECOMMENDATIONS),
+        );
 
         if result.len() == 0 {
             Err(RekoError::new(404, "NoData", "No recommendations found"))
