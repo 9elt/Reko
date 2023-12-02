@@ -117,11 +117,7 @@ impl Reko {
             db_page(batch, MAX_PAGE_RECOMMENDATIONS),
         );
 
-        if result.len() == 0 {
-            Err(RekoError::new(404, "NoData", "No recommendations found"))
-        } else {
-            Ok((result, pagination))
-        }
+        Ok((result, pagination))
     }
     pub fn get_recommendations_from(
         &self,
@@ -133,11 +129,7 @@ impl Reko {
             self.db
                 .get_recommendations_from(user, &other, db_page(page, MAX_PAGE_RECOMMENDATIONS));
 
-        if result.len() == 0 {
-            Err(RekoError::new(404, "NoData", "No recommendations found"))
-        } else {
-            Ok((result, pagination))
-        }
+        Ok((result, pagination))
     }
     pub fn get_similar_users(
         &self,
@@ -147,11 +139,8 @@ impl Reko {
         let (result, pagination) = self
             .db
             .get_similar_users(user, db_page(page, MAX_PAGE_SIMILAR_USERS));
-        if result.len() == 0 {
-            Err(RekoError::new(404, "NoData", "No similar users found"))
-        } else {
-            Ok((result, pagination))
-        }
+
+        Ok((result, pagination))
     }
     pub fn compare_users(&self, user: &User, other: &User) -> SimilarUser {
         let user_hash = user.hash.to_u64();
