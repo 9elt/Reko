@@ -3,7 +3,7 @@
 members = [
     "clients",
     "structs",
-    "web-server",
+    "server",
     "reko",
     "jobs",
     "util"

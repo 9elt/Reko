@@ -4,8 +4,8 @@ use clients::database::DBClient;
 use clients::myanimelist::MALClient;
 use hash::Hasher;
 use structs::{
-    Data, DetailedListEntry, Hash, PaginatedResponse, RekoError, RekoResult, Response, SimilarUser,
-    User,
+    DetailedListEntry, Hash, Pagination, Recommendation, RekoError, RekoResult, SimilarUser, User,
+    UserRecommendation,
 };
 use util::*;
 
@@ -35,7 +35,8 @@ impl Reko {
 
         match self.db.get_user(username.to_owned()) {
             Some(mut user) => {
-                if !prevent_update && force_update || user.updated_at < days_ago(DAYS_BEFORE_UPDATE)
+                if !prevent_update
+                    && (force_update || user.updated_at < days_ago(DAYS_BEFORE_UPDATE))
                 {
                     let list_update = match self.mal.list(username, Some(user.updated_at)).await {
                         Ok(res) => res,
@@ -104,46 +105,66 @@ impl Reko {
             }
         }
     }
-    pub fn get_recommendations(&self, user: &User, page: i32) -> RekoResult<PaginatedResponse> {
-        let (res, pagination) = self
-            .db
-            .get_recommendations(user, db_page(page, MAX_PAGE_RECOMMENDATIONS));
+    pub fn get_recommendations(
+        &self,
+        user: &User,
+        page: i32,
+        batch: i32,
+    ) -> RekoResult<(Vec<Recommendation>, Pagination)> {
+        let (result, pagination) = self.db.get_recommendations(
+            user,
+            db_page(page, MAX_PAGE_RECOMMENDATIONS),
+            db_page(batch, MAX_PAGE_RECOMMENDATIONS),
+        );
 
-        if res.len() == 0 {
+        if result.len() == 0 {
             Err(RekoError::new(404, "NoData", "No recommendations found"))
         } else {
-            Ok(PaginatedResponse::new(
-                user,
-                Data::Recommendation(res),
-                pagination,
-            ))
+            Ok((result, pagination))
         }
     }
-    pub fn get_similar_users(&self, user: &User, page: i32) -> RekoResult<PaginatedResponse> {
-        let (res, pagination) = self
+    pub fn get_recommendations_from(
+        &self,
+        user: &User,
+        other: &User,
+        page: i32,
+    ) -> RekoResult<(Vec<UserRecommendation>, Pagination)> {
+        let (result, pagination) =
+            self.db
+                .get_recommendations_from(user, &other, db_page(page, MAX_PAGE_RECOMMENDATIONS));
+
+        if result.len() == 0 {
+            Err(RekoError::new(404, "NoData", "No recommendations found"))
+        } else {
+            Ok((result, pagination))
+        }
+    }
+    pub fn get_similar_users(
+        &self,
+        user: &User,
+        page: i32,
+    ) -> RekoResult<(Vec<SimilarUser>, Pagination)> {
+        let (result, pagination) = self
             .db
             .get_similar_users(user, db_page(page, MAX_PAGE_SIMILAR_USERS));
-        if res.len() == 0 {
+        if result.len() == 0 {
             Err(RekoError::new(404, "NoData", "No similar users found"))
         } else {
-            Ok(PaginatedResponse::new(user, Data::Similar(res), pagination))
+            Ok((result, pagination))
         }
     }
-    pub fn compare_users(&self, user: &User, other: &User) -> RekoResult<Response> {
+    pub fn compare_users(&self, user: &User, other: &User) -> SimilarUser {
         let user_hash = user.hash.to_u64();
         let other_hash = other.hash.to_u64();
 
         let full_hd = (user_hash ^ other_hash).count_ones();
         let part_hd = ((user_hash & HASH_MASK) ^ (other_hash & HASH_MASK)).count_ones();
 
-        Ok(Response::new(
-            user,
-            Data::Compare(SimilarUser {
-                username: other.username.to_owned(),
-                hash: other.hash.to_owned(),
-                similarity: similarity((full_hd + part_hd) as i32),
-            }),
-        ))
+        SimilarUser {
+            username: other.username.to_owned(),
+            hash: other.hash.to_owned(),
+            similarity: similarity((full_hd + part_hd) as i32),
+        }
     }
     pub async fn update_old_users<F: Fn(u32, u32)>(&self, progress: F) {
         let users = self.db.get_old_users();

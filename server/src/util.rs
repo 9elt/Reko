@@ -24,10 +24,7 @@ macro_rules! unwrap {
 
 #[macro_export]
 macro_rules! response {
-    ($result:expr) => {
-        match $result {
-            Ok(data) => Ok(success(data)),
-            Err(err) => Err(error(err)),
-        }
+    ($data:expr) => {
+        Ok(success($data))
     };
 }
