@@ -53,9 +53,10 @@ impl MALClient {
                 .filter(|e| !is_update || e.updated_at > updated_at)
                 .collect();
 
+            let found = entries.len();
             res.append(&mut entries);
 
-            if raw.paging.next.is_some() && entries.len() == limit {
+            if raw.paging.next.is_some() && found == limit {
                 offset += 1;
             } else {
                 break;
