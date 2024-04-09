@@ -30,7 +30,7 @@ Anime recommendations are taken from other users lists.
 Recommendations from the most similar users lists are ordered by the following function:
 
 ```
-avg. entry score - floor(avg. years from entry update / 2)
+(entry scores / entry count + 1) - floor(avg. years from entry update / 2)
 ```
 
 Recommendations from specific users are ordered by:
