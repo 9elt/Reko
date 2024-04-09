@@ -99,7 +99,11 @@ impl DBClient {
 
         GROUP BY A.id
 
-        ORDER BY (SUM(E.score) / (COUNT(E.score) + 2)) DESC
+        ORDER BY (
+            SUM(E.score) / COUNT(E.score) - FLOOR(
+                SUM(DATEDIFF(NOW(), E.updated_at)) / (COUNT(E.score) * 730)
+            )
+        ) DESC
 
         LIMIT {RECO_PAGE_TAKE} OFFSET {offset};
         "
@@ -169,9 +173,9 @@ impl DBClient {
 
         AND A.parent IS NULL -- no sequels/spinoffs
 
-        ORDER BY (E.score / (
-            DATEDIFF(NOW(),E.updated_at) / 365
-        )) DESC
+        ORDER BY (
+            E.score - FLOOR(DATEDIFF(NOW(), E.updated_at) / 730)
+        ) DESC
 
         LIMIT {RECO_PAGE_TAKE} OFFSET {offset};
         "

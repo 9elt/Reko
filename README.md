@@ -25,7 +25,17 @@ The result is a number between 0 and 83, where 0 is 100% similarity and 83 is 0%
 
 ### anime recommendations
 
-Anime recommendations are taken from the 32 most similar users lists, and ordered by popularity and score among them.
+Anime recommendations from the most similar users lists are ordered by the following function:
+
+```
+avg. entry score - floor(avg. years from entry update / 2)
+```
+
+Recommendations from specific users are ordered
+
+```
+entry score - floor(years from entry update / 2)
+```
 
 ## Documentation
 
