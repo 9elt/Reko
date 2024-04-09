@@ -128,7 +128,7 @@ impl DBClient {
             }
         }
 
-        if missing.len() > 0 {
+        if !missing.is_empty() {
             diesel::insert_into(E::entries)
                 .values(missing)
                 .on_conflict(diesel::dsl::DuplicatedKeys)

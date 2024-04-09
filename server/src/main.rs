@@ -2,9 +2,9 @@
 mod util;
 mod controller;
 
-use reko::Reko;
 use axum::{routing::get, Router};
 use dotenvy::dotenv;
+use reko::Reko;
 use tower::builder::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -12,7 +12,7 @@ use tower_http::cors::{Any, CorsLayer};
 async fn main() {
     dotenv().ok();
 
-    let reko = Reko::new();
+    let reko = Reko::default();
 
     println!("listening on 127.0.0.1:3000");
 

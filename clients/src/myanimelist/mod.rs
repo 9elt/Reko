@@ -18,8 +18,8 @@ pub struct MALClient {
     timer: WrappedTimer,
 }
 
-impl MALClient {
-    pub fn new() -> Self {
+impl Default for MALClient {
+    fn default() -> Self {
         let client_id = env::var("MAL_CLIENT_ID")
             .expect("Missing MAL client id")
             .to_string();
@@ -31,12 +31,14 @@ impl MALClient {
             timer: Timer::new(),
         }
     }
+}
+
+impl MALClient {
     async fn get<R: for<'a> Deserialize<'a>>(&self, url: String) -> Result<R, u16> {
         if self.config.enable_fake_api {
             println!("FAKE {}", &url);
             return self.fake_api(url);
         }
-
         // enforces max mal requests per second across threads
         // the lock is released when `timer` goes out of scope
         let mut timer = self.timer.lock().await;
@@ -76,11 +78,11 @@ impl MALClient {
     /// or
     /// FAKE_API_PATH/users/{username}.json
     fn fake_api<R: for<'a> Deserialize<'a>>(&self, url: String) -> Result<R, u16> {
-        let mut p = url.split("/");
+        let mut p = url.split('/');
         p.next();
 
         let rt = p.next().unwrap_or("");
-        let id = p.next().unwrap_or("").split("?").next().unwrap_or("");
+        let id = p.next().unwrap_or("").split('?').next().unwrap_or("");
 
         match fs::read_to_string(format!("{}/{}/{}.json", self.config.fake_api_path, rt, id)) {
             Ok(f) => match serde_json::from_str::<R>(&f) {

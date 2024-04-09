@@ -1,5 +1,5 @@
-use chrono::{prelude::Datelike, NaiveDateTime};
 use super::Stat;
+use chrono::{prelude::Datelike, NaiveDateTime};
 
 impl Stat {
     pub fn from_airing_date(date: NaiveDateTime) -> Self {
