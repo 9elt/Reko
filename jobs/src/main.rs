@@ -22,7 +22,7 @@ async fn main() {
 
     let args = Args::parse();
 
-    let reko = Reko::new();
+    let reko = Reko::default();
 
     for id in args.jobs {
         match id.as_str() {

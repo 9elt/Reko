@@ -88,14 +88,11 @@ impl Anime {
             });
         }
 
-        let parent = match self
+        let parent = self
             .related_anime
             .iter()
             .find(|r| PARENT.contains(&r.relation_type.as_str()))
-        {
-            Some(p) => Some(p.node.id),
-            None => None,
-        };
+            .map(|p| p.node.id);
 
         PublicAnime {
             id: self.id,
@@ -127,7 +124,7 @@ fn anime_err(code: u16, id: i32) -> RekoError {
         },
         match code {
             404 => format!("Anime {id} not found"),
-            403 => format!("Rate limited"),
+            403 => "Rate limited".to_string(),
             422 => format!("Could not parse Anime {id} details"),
             _ => format!("Could not fetch Anime {id} details"),
         },

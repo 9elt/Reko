@@ -18,16 +18,19 @@ pub struct Reko {
     mal: MALClient,
 }
 
-impl Reko {
-    pub fn new() -> Self {
+impl Default for Reko {
+    fn default() -> Self {
         Reko {
             db: DBClient::new(),
-            mal: MALClient::new(),
+            mal: MALClient::default(),
         }
     }
+}
+
+impl Reko {
     pub async fn get_user(
         &self,
-        username: &String,
+        username: &str,
         force_update: bool,
         prevent_update: bool,
     ) -> RekoResult<User> {
@@ -48,7 +51,7 @@ impl Reko {
                         }
                     };
 
-                    if list_update.len() > 0 {
+                    if !list_update.is_empty() {
                         self.db.update_user_entries(&user, list_update);
 
                         let list = self.db.get_user_entries(&user, ENTRIES_TO_HASH);
@@ -64,7 +67,7 @@ impl Reko {
             None => {
                 let list = self.mal.list(username.to_owned(), None).await?;
 
-                if list.len() == 0 {
+                if list.is_empty() {
                     return Err(RekoError::new(422, "EmptyUserList", "User list is empty"));
                 }
 
@@ -127,7 +130,7 @@ impl Reko {
     ) -> RekoResult<(Vec<UserRecommendation>, Pagination)> {
         let (result, pagination) =
             self.db
-                .get_recommendations_from(user, &other, db_page(page, MAX_PAGE_RECOMMENDATIONS));
+                .get_recommendations_from(user, other, db_page(page, MAX_PAGE_RECOMMENDATIONS));
 
         Ok((result, pagination))
     }
