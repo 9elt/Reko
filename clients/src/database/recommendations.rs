@@ -100,7 +100,7 @@ impl DBClient {
         GROUP BY A.id
 
         ORDER BY (
-            SUM(E.score) / COUNT(E.score) - FLOOR(
+            SUM(E.score) / (COUNT(E.score) + 1) - FLOOR(
                 SUM(DATEDIFF(NOW(), E.updated_at)) / (COUNT(E.score) * 730)
             )
         ) DESC
