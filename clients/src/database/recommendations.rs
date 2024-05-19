@@ -14,6 +14,7 @@ use structs::UserRecommendation as PublicUserRecommendation;
 use util::{pub_page, similarity, HASH_MASK, MAX_PAGE_RECOMMENDATIONS};
 
 const SIMILAR_PAGE_SIZE: i32 = 32;
+const RANDOM_PAGE_SIZE: i32 = 32;
 const RECO_PAGE_SIZE: i32 = 16;
 const RECO_PAGE_TAKE: i32 = RECO_PAGE_SIZE + 1;
 
@@ -204,6 +205,104 @@ impl DBClient {
         }
 
         (res, pagination)
+    }
+    pub fn get_random_recommendations(
+        &self,
+        user: &PublicUser,
+        batch: u8,
+    ) -> Vec<PublicRecommendation> {
+        let mut conn = self.connect();
+
+        let id = user.id;
+        let hash = user.hash.to_u64();
+        let user_offeset = batch as i32 * SIMILAR_PAGE_SIZE;
+
+        let users_query = match diesel::sql_query(format!(
+            "
+        SELECT id FROM users WHERE id != '{id}'
+        ORDER BY (
+            BIT_COUNT({hash} ^ hash) +
+            BIT_COUNT(({hash} & {HASH_MASK}) ^ (hash & {HASH_MASK}))
+        ) ASC
+        LIMIT {SIMILAR_PAGE_SIZE} OFFSET {user_offeset};
+        "
+        ))
+        .load::<GenericId>(&mut conn)
+        {
+            Ok(res) => res,
+            Err(err) => {
+                println!("err {:#?}", err);
+                return Vec::new();
+            }
+        }
+        .iter()
+        .map(|u| format!("OR E.user = {} ", u.id))
+        .collect::<String>();
+
+        let mut raw = match diesel::sql_query(format!(
+            "
+        SELECT
+
+        DISTINCT A.id, A.title, A.airing_date, A.length,
+        A.mean, A.rating, A.picture, A.stats,
+
+        (SUM(E.score) / COUNT(E.score)) score, -- users mean score
+
+        -- recommending users data
+
+        GROUP_CONCAT(U.username) usernames,
+        GROUP_CONCAT(U.hash) hashes,
+        GROUP_CONCAT((
+            BIT_COUNT({hash} ^ U.hash) +
+            BIT_COUNT(({hash} & {HASH_MASK}) ^ (U.hash & {HASH_MASK}))
+        )) distances,
+        GROUP_CONCAT(E.score) scores
+
+        FROM entries E
+        INNER JOIN users U ON E.user = U.id
+        INNER JOIN anime A ON E.anime = A.id
+
+        WHERE (
+            E.user = 2147483647 -- initialize or statement
+            {users_query}
+        )
+
+        AND E.watched = 1
+        AND E.score > 0
+        AND A.mean IS NOT NULL
+
+        AND E.anime != 21 -- we don't recommend One Piece in here
+
+        AND E.anime NOT IN (
+            SELECT anime
+            FROM entries
+            WHERE user = '{id}'
+        )
+
+        AND A.parent IS NULL -- no sequels/spinoffs
+
+        GROUP BY A.id
+
+        ORDER BY RAND() DESC
+
+        LIMIT {RANDOM_PAGE_SIZE};
+        "
+        ))
+        .load::<Recommendation>(&mut conn)
+        {
+            Ok(res) => res,
+            Err(err) => {
+                println!("err {:#?}", err);
+                return Vec::new();
+            }
+        };
+
+        let mut res = Vec::with_capacity(raw.len());
+        for reco in raw {
+            res.push(reco.to_public());
+        }
+
+        res
     }
 }
 

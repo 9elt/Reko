@@ -76,6 +76,25 @@ pub async fn get_recommendations_from(
     })
 }
 
+pub async fn get_random_recommendations(
+    Path(user): Path<String>,
+    Query(query): Query<GenericQuery>,
+    State(reko): State<Reko>,
+) -> impl IntoResponse {
+    let batch = query.batch.unwrap_or(1);
+
+    println!("GET /{}/random?batch={}", &user, batch);
+
+    let user = unwrap!(reko.get_user(&user, false, false).await);
+
+    let result = unwrap!(reko.get_random_recommendations(&user, batch));
+
+    response!(Response {
+        requester: RequestingUser::from_user(&user),
+        data: Data::Recommendation(result),
+    })
+}
+
 pub async fn compare_users(
     Path(users): Path<Users>,
     State(reko): State<Reko>,
