@@ -117,10 +117,21 @@ impl Reko {
         let (result, pagination) = self.db.get_recommendations(
             user,
             db_page(page, MAX_PAGE_RECOMMENDATIONS),
-            db_page(batch, MAX_PAGE_RECOMMENDATIONS),
+            db_page(batch, MAX_PAGE_SIMILAR_USERS),
         );
 
         Ok((result, pagination))
+    }
+    pub fn get_random_recommendations(
+        &self,
+        user: &User,
+        batch: i32,
+    ) -> RekoResult<Vec<Recommendation>> {
+        let result = self
+            .db
+            .get_random_recommendations(user, db_page(batch, MAX_PAGE_SIMILAR_USERS));
+
+        Ok(result)
     }
     pub fn get_recommendations_from(
         &self,

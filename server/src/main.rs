@@ -33,6 +33,7 @@ fn router(reko: Reko) -> Router {
             "/:user/recommendations",
             get(controller::get_recommendations),
         )
+        .route("/:user/random", get(controller::get_random_recommendations))
         .route(
             "/:user/recommendations/:other_user",
             get(controller::get_recommendations_from),
