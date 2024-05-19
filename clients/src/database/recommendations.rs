@@ -283,7 +283,7 @@ impl DBClient {
 
         GROUP BY A.id
 
-        ORDER BY RAND() * 10 + E.mean DESC
+        ORDER BY RAND() * 10 + A.mean DESC
 
         LIMIT {RANDOM_PAGE_SIZE};
         "
