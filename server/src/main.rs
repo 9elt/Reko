@@ -48,9 +48,8 @@ async fn logger<B>(request: Request<B>, next: Next<B>) -> Response {
     let method = request.method().clone();
     let uri = request.uri().clone();
     let response = next.run(request).await;
-    let status = response.status();
 
-    println!("{} -- {} {}", status, method, uri);
+    println!("{} - {} {}", response.status(), method, uri);
 
     response
 }
