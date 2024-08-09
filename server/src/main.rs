@@ -45,6 +45,12 @@ fn router(reko: Reko) -> Router {
 }
 
 async fn logger<B>(request: Request<B>, next: Next<B>) -> Response {
-    println!("{} {}", request.method(), request.uri());
-    next.run(request).await
+    let method = request.method().clone();
+    let uri = request.uri().clone();
+    let response = next.run(request).await;
+    let status = response.status();
+
+    println!("{} -- {} {}", status, method, uri);
+
+    response
 }
