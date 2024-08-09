@@ -15,8 +15,6 @@ pub async fn get_similar_users(
 ) -> impl IntoResponse {
     let page = query.page.unwrap_or(1);
 
-    println!("GET /{}/similar?page={}", &user, page);
-
     let user = unwrap!(reko.get_user(&user, false, false).await);
 
     let (result, pagination) = unwrap!(reko.get_similar_users(&user, page));
@@ -36,11 +34,6 @@ pub async fn get_recommendations(
     let page = query.page.unwrap_or(1);
     let batch = query.batch.unwrap_or(1);
 
-    println!(
-        "GET /{}/recommendations?page={}&batch={}",
-        &user, page, batch
-    );
-
     let user = unwrap!(reko.get_user(&user, false, false).await);
 
     let (result, pagination) = unwrap!(reko.get_recommendations(&user, page, batch));
@@ -58,11 +51,6 @@ pub async fn get_recommendations_from(
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
     let page = query.page.unwrap_or(1);
-
-    println!(
-        "GET /{}/recommendations/{}?page={}",
-        &users.user, &users.other_user, page
-    );
 
     let user = unwrap!(reko.get_user(&users.user, false, false).await);
     let other_user = unwrap!(reko.get_user(&users.other_user, false, true).await);
@@ -83,8 +71,6 @@ pub async fn get_random_recommendations(
 ) -> impl IntoResponse {
     let batch = query.batch.unwrap_or(1);
 
-    println!("GET /{}/random?batch={}", &user, batch);
-
     let user = unwrap!(reko.get_user(&user, false, false).await);
 
     let result = unwrap!(reko.get_random_recommendations(&user, batch));
@@ -99,8 +85,6 @@ pub async fn compare_users(
     Path(users): Path<Users>,
     State(reko): State<Reko>,
 ) -> impl IntoResponse {
-    println!("GET /{}/compare/{}", &users.user, &users.other_user);
-
     let user = unwrap!(reko.get_user(&users.user, false, false).await);
     let other_user = unwrap!(reko.get_user(&users.other_user, false, true).await);
 

@@ -2,7 +2,7 @@
 mod util;
 mod controller;
 
-use axum::{routing::get, Router};
+use axum::{http::Request, middleware::Next, response::Response, routing::get, Router};
 use dotenvy::dotenv;
 use reko::Reko;
 use tower::builder::ServiceBuilder;
@@ -41,4 +41,10 @@ fn router(reko: Reko) -> Router {
         .fallback(controller::not_found)
         .with_state(reko)
         .layer(cors)
+        .layer(axum::middleware::from_fn(logger))
+}
+
+async fn logger<B>(request: Request<B>, next: Next<B>) -> Response {
+    println!("{} {}", request.method(), request.uri());
+    next.run(request).await
 }
