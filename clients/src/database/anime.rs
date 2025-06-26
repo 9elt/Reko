@@ -57,9 +57,25 @@ impl DBClient {
             Err(_) => return Vec::new(),
         };
 
-        let mut res = Vec::with_capacity(raw.len());
+        let raw_aired: Vec<Anime> = match A::anime
+            .filter(A::aired.eq(true))
+            .filter(A::parent.is_null())
+            .filter(A::picture.is_not_null())
+            .filter(A::mean.is_not_null())
+            .limit(600)
+            .order(A::updated_at.asc())
+            .load::<Anime>(&mut conn)
+        {
+            Ok(res) => res,
+            Err(_) => return Vec::new(),
+        };
+
+        let mut res = Vec::with_capacity(raw.len() + raw_aired.len());
         for ani in raw {
             res.push(ani.to_public());
+        }
+        for ani in raw_aired {
+            res.push(ani.to_public())
         }
 
         res
