@@ -239,7 +239,7 @@ impl DBClient {
         .map(|u| format!("OR E.user = {} ", u.id))
         .collect::<String>();
 
-        let mut raw = match diesel::sql_query(format!(
+        let raw = match diesel::sql_query(format!(
             "
         SELECT
 
