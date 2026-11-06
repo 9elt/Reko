@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.railpack.com",
+  "provider": "rust",
+  "steps": {
+    "build": {
+      "commands": [
+        "cargo build --release && mkdir -p bin && cp target/release/reko bin/reko"
+      ]
+    }
+  },
+  "deploy": {
+    "startCommand": "./bin/reko",
+    "aptPackages": ["ca-certificates"]
+  }
+}
